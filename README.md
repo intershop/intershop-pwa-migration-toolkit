@@ -152,5 +152,5 @@ rm -rf /tmp/toolkit
 
 ---
 
-**Maintained by:** [Your Company]  
-**Repo:** git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git
+**Maintained by:** [Intershop Communications AG - Training Department]  
+**Repo:** git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git

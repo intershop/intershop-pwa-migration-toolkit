@@ -33,7 +33,7 @@
 cd /path/to/your-custom-pwa
 
 # Clone toolkit temporarily
-git clone git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git /tmp/toolkit
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tpm/toolkit
 
 # Copy files
 mkdir -p .github/instructions scripts

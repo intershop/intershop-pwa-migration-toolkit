@@ -55,6 +55,92 @@ git push <project-remote> feature/migration-tooling
 - **CRITICAL**: Never push to the Intershop remote
 - Always push to your project remote
 
+## AI-Assisted Merge Guidance
+
+### For AI Coding Assistants (GitHub Copilot, etc.)
+
+**When handling merge conflicts during PWA migrations, follow these rules:**
+
+#### 1. **Automatic Resolution (OK to proceed)**
+
+You MAY automatically resolve conflicts for:
+
+- **Simple additions**: New code added to both sides that can coexist
+- **Import statements**: Merging different imports in module files
+- **Configuration arrays**: Adding entries from both sides (e.g., module imports)
+- **Comments and documentation**: Non-conflicting text changes
+
+#### 2. **Manual Review Required (STOP and recommend)**
+
+You MUST stop and recommend manual review for:
+
+- **Localization files (i18n/*.json)**: When both sides modified the same translation key
+  - **Detection criteria**: Same JSON key exists in both versions with different values
+  - **Action**: Compare versions, show differences, recommend but don't auto-apply
+  - See "Localization File Merge Strategy" section for detailed guidance
+
+- **Business logic conflicts**: When both sides modified the same function/method
+- **Configuration values**: When both sides changed the same setting with different values
+- **Template structures**: When both sides restructured the same component template
+
+#### 3. **AI Assistant Workflow for Localization Conflicts**
+
+When encountering localization file conflicts:
+
+```markdown
+**Step 1**: Detect conflict in i18n/*.json files
+
+**Step 2**: Extract and compare versions:
+- Base (common ancestor): "Original translation"
+- PWA version: "Updated PWA translation"
+- Custom version: "Your custom translation"
+
+**Step 3**: Analyze the conflict:
+- Is this a custom feature translation? → Keep custom version
+- Is this a PWA improvement to existing text? → Evaluate case-by-case
+- Did both sides change for different reasons? → Requires human decision
+
+**Step 4**: Present recommendation to user:
+"⚠️  Localization conflict detected in [file]:
+   Key: 'translation.key.name'
+   
+   Common ancestor: 'Original text'
+   PWA version (theirs): 'Improved text'
+   Custom version (ours): 'Customized text'
+   
+   Recommendation: [Keep custom | Use PWA | Create hybrid]
+   Reason: [Explain why]
+   
+   Please confirm or provide alternative resolution."
+
+**Step 5**: Wait for human confirmation before applying
+```
+
+#### 4. **Output Format for AI Recommendations**
+
+When the merge script (merge-i18n-files.js) runs, it outputs a summary. AI assistants should:
+
+1. **Parse the summary output**
+2. **Present conflicts in user-friendly format**
+3. **Provide context-aware recommendations**
+4. **Request confirmation** before committing changes
+
+#### 5. **Never Automatically Apply These Resolutions**
+
+❌ **DON'T** automatically:
+- Choose `--ours` or `--theirs` for localization files
+- Modify translation values without human review
+- Commit localization merges without explicit confirmation
+- Assume PWA translations are always better
+- Discard custom translations without analysis
+
+✅ **DO**:
+- Run the merge script and present results
+- Highlight genuine conflicts that need human decision
+- Provide recommendations with clear reasoning
+- Wait for explicit user approval
+- Document the merge strategy used
+
 ## Git Conflict Resolution Strategy
 
 ### Smart Conflict Resolution Order
@@ -118,6 +204,18 @@ const imports = [
 
 ## Localization File Merge Strategy
 
+### 🤖 AI Assistant Note
+
+**If you are an AI coding assistant helping with this migration:**
+
+1. **STOP** when you detect localization file conflicts where both sides modified the same key
+2. **RUN** the merge script (scripts/merge-i18n-files.js) to generate a comparison report
+3. **PRESENT** the conflicts to the user with recommendations (see AI-Assisted Merge Guidance section)
+4. **WAIT** for explicit user confirmation before committing merged localization files
+5. **DO NOT** automatically choose `--ours` or `--theirs` for localization files
+
+The automated merge script will help, but **human review is required** for conflicts where semantic meaning differs.
+
 ### Problem: Why Localization Files Need Special Attention
 
 Localization files (en_US.json, de_DE.json, fr_FR.json) are **ALWAYS** modified in both branches:
@@ -158,89 +256,48 @@ node scripts/merge-i18n-files.js
 
 #### Step 3: Automated Merge Script
 
-Create `scripts/merge-i18n-files.js`:
+Create `scripts/merge-i18n-files.js` (see complete enhanced script in the repository):
 
+The script will:
+- Merge all keys from both PWA and custom versions
+- Detect and report genuine conflicts (same key, different values)
+- Categorize conflicts for easier review
+- Generate a summary report for AI assistants
+- Output recommendations for conflict resolution
+
+**Key Features**:
 ```javascript
-#!/usr/bin/env node
-const fs = require('fs');
-const path = require('path');
-
-/**
- * Merges localization JSON files during PWA migration.
- * Strategy: Keep all keys from both sides, prefer customization values for duplicates.
- */
-
-function mergeI18nFiles(basePath, theirsPath, oursPath, outputPath) {
-  const base = JSON.parse(fs.readFileSync(basePath, 'utf8'));
-  const theirs = JSON.parse(fs.readFileSync(theirsPath, 'utf8'));
-  const ours = JSON.parse(fs.readFileSync(oursPath, 'utf8'));
-
-  // Start with new PWA translations (theirs)
-  const merged = { ...theirs };
-
-  // Merge keys from base that existed before (for context)
-  // Identify which keys were in base
-  const baseKeys = new Set(Object.keys(base));
-
-  // Add custom translations (ours)
-  for (const [key, value] of Object.entries(ours)) {
-    if (baseKeys.has(key) && theirs[key] && theirs[key] !== base[key]) {
-      // Key existed in base, both sides modified it
-      console.log(`⚠️  CONFLICT: "${key}"`);
-      console.log(`   Base:   "${base[key]}"`);
-      console.log(`   Theirs: "${theirs[key]}"`);
-      console.log(`   Ours:   "${value}"`);
-      console.log(`   → Using customized version (ours)\n`);
-      merged[key] = value; // Prefer customization
-    } else if (!theirs[key]) {
-      // Key only in customization (custom feature)
-      merged[key] = value;
-    } else if (theirs[key] === value) {
-      // Same value, no conflict
-      merged[key] = value;
-    }
-  }
-
-  // Sort keys alphabetically for consistency
-  const sorted = Object.keys(merged)
-    .sort()
-    .reduce((acc, key) => {
-      acc[key] = merged[key];
-      return acc;
-    }, {});
-
-  // Write merged result
-  fs.writeFileSync(outputPath, JSON.stringify(sorted, null, 2) + '\n');
-
-  console.log(`✓ Merged to: ${outputPath}`);
-  console.log(`  Total keys: ${Object.keys(sorted).length}`);
-  console.log(`  From theirs: ${Object.keys(theirs).length}`);
-  console.log(`  From ours: ${Object.keys(ours).length}`);
-}
-
-// Process all i18n files
-const i18nDir = 'src/assets/i18n';
-const locales = ['en_US', 'de_DE', 'fr_FR'];
-
-locales.forEach(locale => {
-  const basePath = `${locale}.base.json`;
-  const theirsPath = `${locale}.theirs.json`;
-  const oursPath = `${locale}.ours.json`;
-  const outputPath = path.join(i18nDir, `${locale}.json`);
-
-  if (fs.existsSync(basePath) && fs.existsSync(theirsPath) && fs.existsSync(oursPath)) {
-    console.log(`\n📝 Merging ${locale}.json...`);
-    mergeI18nFiles(basePath, theirsPath, oursPath, outputPath);
-
-    // Clean up temporary files
-    fs.unlinkSync(basePath);
-    fs.unlinkSync(theirsPath);
-    fs.unlinkSync(oursPath);
-  }
-});
-
-console.log('\n✅ All localization files merged successfully');
+// Conflict categories:
+// 1. CUSTOM_ONLY: Keys only in custom version (safe to keep)
+// 2. PWA_ONLY: Keys only in PWA version (safe to add)
+// 3. SEMANTIC_CONFLICT: Both modified same key with different meanings
+// 4. FORMATTING_ONLY: Same meaning, different formatting (auto-resolve)
 ```
+
+**Script outputs structured report** that AI assistants can parse:
+```json
+{
+  "summary": {
+    "totalConflicts": 5,
+    "semanticConflicts": 2,
+    "customOnlyKeys": 15,
+    "pwaOnlyKeys": 23
+  },
+  "conflicts": [
+    {
+      "key": "product.add_to_cart.link",
+      "base": "Add to Cart",
+      "theirs": "Add to Basket",
+      "ours": "In Warenkorb legen",
+      "category": "SEMANTIC_CONFLICT",
+      "recommendation": "KEEP_CUSTOM",
+      "reason": "Custom translation for German market"
+    }
+  ]
+}
+```
+
+**See the complete script in:** `scripts/merge-i18n-files.js`
 
 #### Step 4: Manual Review for Conflicts
 

@@ -160,6 +160,17 @@ function autoResolveConflicts() {
       }
     }
 
+    // Strategy 3: For SCSS/CSS files, try to merge both sections
+    if (file.endsWith('.scss') || file.endsWith('.css') || file.endsWith('.sass')) {
+      const isResolved = autoResolveStyles(file, content);
+      if (isResolved) {
+        exec(`git add ${file}`, true);
+        resolved++;
+        log.info(`Auto-resolved styles in: ${file}`);
+        return;
+      }
+    }
+
     failed++;
   });
 
@@ -195,6 +206,56 @@ function autoResolveImports(file, content) {
         } else {
           theirsImports.push(line);
         }
+      }
+    } else {
+      resolved.push(line);
+    }
+  });
+
+  // Only save if we successfully resolved everything
+  if (!inConflict) {
+    fs.writeFileSync(file, resolved.join('\n'));
+    return true;
+  }
+
+  return false;
+}
+
+// Smart styles conflict resolution (SCSS/CSS)
+function autoResolveStyles(file, content) {
+  const lines = content.split('\n');
+  const resolved = [];
+  let inConflict = false;
+  let oursStyles = [];
+  let theirsStyles = [];
+  let conflictType = null;
+
+  lines.forEach(line => {
+    if (line.startsWith('<<<<<<<')) {
+      inConflict = true;
+      conflictType = 'ours';
+      oursStyles = [];
+      theirsStyles = [];
+    } else if (line.startsWith('=======')) {
+      conflictType = 'theirs';
+    } else if (line.startsWith('>>>>>>>')) {
+      // Merge both style sections
+      // Add comment to indicate merged sections
+      if (oursStyles.length > 0 || theirsStyles.length > 0) {
+        resolved.push('  /* === Merged PWA 9.1 styles === */');
+        resolved.push(...theirsStyles);
+        if (oursStyles.length > 0) {
+          resolved.push('');
+          resolved.push('  /* === Custom project styles === */');
+          resolved.push(...oursStyles);
+        }
+      }
+      inConflict = false;
+    } else if (inConflict) {
+      if (conflictType === 'ours') {
+        oursStyles.push(line);
+      } else {
+        theirsStyles.push(line);
       }
     } else {
       resolved.push(line);

@@ -79,6 +79,136 @@ This guide covers the essential checklists to follow before and after migrating 
 - **Before migration (recommended)**: Ensures your customizations work with new Angular first
 - **After migration**: Simpler but may cause confusion between migration issues and Angular update issues
 
+### 3. Analyze Migration Complexity & Choose Pattern Detection Tier
+
+**NEW: Automated complexity analysis with tier recommendation**
+
+```bash
+# Run migration complexity analyzer
+./scripts/analyze-migration-complexity.sh [source-version] [target-version]
+./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+```
+
+**Output includes:**
+- Version gap analysis
+- Customization level (light/moderate/heavy)
+- Custom extensions detected
+- Custom themes identified
+- Modified core files percentage
+- **Recommended pattern detection tier**
+
+**Three Pattern Detection Tiers:**
+
+#### Tier 1: Manual CHANGELOG Review
+- **For:** Light customization (< 20%), 1-2 versions behind
+- **Time:** Fastest for simple migrations
+- **Tools:** Git remote, manual diff checking
+- **Effort:** Low, but easy to miss patterns
+
+#### Tier 2: Automated Pattern Detection (Recommended)
+- **For:** Moderate customization (20-50%), 2-4 versions behind
+- **Time:** Saves 2-3 hours of troubleshooting
+- **Tools:** `detect-pattern-changes.js`
+- **Effort:** Medium, comprehensive scanning
+
+```bash
+# Run Tier 2 pattern detection
+./scripts/detect-pattern-changes.js 4.0.0 9.1.0
+
+# Generates:
+# - Breaking changes list
+# - Pattern matches in your code
+# - Files affected
+# - pattern-detection-report.json (AI-parseable)
+```
+
+#### Tier 3: Comprehensive Pattern Database
+- **For:** Heavy customization (> 50%), 5+ versions behind
+- **Time:** Most thorough, best for complex migrations
+- **Tools:** `detect-pattern-changes.js --comprehensive`
+- **Effort:** High, but catches everything
+
+```bash
+# Run Tier 3 comprehensive detection
+./scripts/detect-pattern-changes.js --comprehensive 4.0.0 9.1.0
+
+# Uses data/pattern-migrations.json database
+# Includes examples and severity levels
+```
+
+**Decision Tree:**
+```
+Versions behind? Customization?  → Recommended Tier
+1-2 versions     Light (< 20%)   → Tier 1 (Manual)
+1-2 versions     Moderate        → Tier 2 (Automated)
+2-4 versions     Any level       → Tier 2 (Automated)
+5+ versions      Heavy (> 50%)   → Tier 3 (Comprehensive)
+```
+
+**See:** [migration-pattern-detection.instructions.md](./migration-pattern-detection.instructions.md) for complete guidance
+
+### 4. Run Pattern Detection (Based on Recommended Tier)
+
+After analyzing complexity, run the recommended pattern detection:
+
+**For Tier 1 (Manual):**
+```bash
+# Fetch CHANGELOG manually
+git fetch intershop-pwa
+git show intershop-pwa/9.1.0:CHANGELOG.md | less
+
+# Search for relevant patterns
+grep -r "darken(" src/styles/
+```
+
+**For Tier 2 or 3 (Automated):**
+```bash
+# Tier 2: Standard detection
+./scripts/detect-pattern-changes.js 4.0.0 9.1.0
+
+# Tier 3: Comprehensive with database
+./scripts/detect-pattern-changes.js --comprehensive 4.0.0 9.1.0
+
+# Review report
+cat pattern-detection-report.json | jq .
+```
+
+**Review detected patterns BEFORE starting migration:**
+- High-severity patterns should be addressed first
+- Plan time for manual review items
+- Understand scope of changes needed
+- Identify potential blocking issues
+
+### 5. Document Custom Features
+
+Before migrating, document your customizations:
+
+```bash
+# List custom extensions
+ls -la src/app/extensions/
+
+# List custom themes  
+ls -la src/styles/themes/
+
+# Document custom environment features
+grep -r "feature" src/environments/
+```
+
+**Create a checklist:**
+- [ ] Custom theme: `src/styles/themes/[name]/`
+- [ ] Custom extensions: List names
+- [ ] Custom components: List critical ones
+- [ ] Modified core files: List with justification
+- [ ] Environment features: List custom ones
+
+### 6. Create Backup Branch
+
+```bash
+# Create safety backup
+git branch backup-$(date +%Y%m%d)-before-migration
+git push <project-remote> backup-$(date +%Y%m%d)-before-migration
+```
+
 **Common Angular Version Requirements**:
 
 | PWA Version | Angular Version | Notes                                  |
@@ -329,14 +459,43 @@ git show feature/migration-4.0-to-9.1:src/app | grep -r "standalone: true" | wc 
 - [ ] Unit tests pass (or failures documented)
 - [ ] Manual smoke test of custom features succeeds
 - [ ] Documentation updated
+- [ ] **Migration report generated** (`./scripts/generate-migration-report.sh`)
 - [ ] Migration branch pushed to project remote (NOT Intershop remote)
 - [ ] Pull request created for review
+
+## Generate Migration Report
+
+**After completing migration, generate comprehensive documentation:**
+
+```bash
+# Generate migration report
+./scripts/generate-migration-report.sh
+
+# Creates: migration-report-YYYY-MM-DD.md
+```
+
+**Report includes:**
+- ✅ Executive summary with status indicators
+- ✅ Version information (Angular, PWA, Node)
+- ✅ Customization summary (extensions, themes, components)
+- ✅ Pattern detection results (if run)
+- ✅ Localization merge details (if applicable)
+- ✅ Build, test, and lint status
+- ✅ Files changed statistics
+- ✅ Next steps and recommendations
+
+**Use the report for:**
+- Documentation of migration work
+- Pull request description
+- Team handoff documentation
+- Future migration reference
+- Audit trail
 
 ## Documentation Requirements
 
 **Update After Migration**:
 
-1. `MIGRATION_SUCCESS_REPORT.md` - Document all fixes
+1. **Migration Report** - `migration-report-YYYY-MM-DD.md` (auto-generated)
 2. `CHANGELOG.md` - Add migration notes
 3. Extension READMEs - Update compatibility versions
 4. `environment.model.ts` - Add JSDoc for new features

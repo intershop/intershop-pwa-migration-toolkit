@@ -1,0 +1,293 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-04",
+  "description": "Comprehensive pattern migration database for Intershop PWA versions",
+  "migrations": [
+    {
+      "fromVersion": "8.0",
+      "toVersion": "9.0",
+      "description": "PWA 8.x → 9.0 Breaking Changes",
+      "patterns": [
+        {
+          "type": "scss",
+          "description": "SCSS: Sass module system - darken() deprecated",
+          "oldPattern": "darken\\s*\\(",
+          "newPattern": "color.adjust($color, $lightness: -X%)",
+          "searchRegex": "darken\\s*\\(",
+          "files": "**/*.scss",
+          "severity": "high",
+          "requiresImport": "@use 'sass:color';",
+          "example": {
+            "before": "$dark-color: darken($primary, 20%);",
+            "after": "$dark-color: color.adjust($primary, $lightness: -20%);"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "SCSS: Sass module system - lighten() deprecated",
+          "oldPattern": "lighten\\s*\\(",
+          "newPattern": "color.adjust($color, $lightness: X%)",
+          "searchRegex": "lighten\\s*\\(",
+          "files": "**/*.scss",
+          "severity": "high",
+          "requiresImport": "@use 'sass:color';",
+          "example": {
+            "before": "$light-color: lighten($primary, 20%);",
+            "after": "$light-color: color.adjust($primary, $lightness: 20%);"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "SCSS: Sass module system - map-get() deprecated",
+          "oldPattern": "map-get\\s*\\(",
+          "newPattern": "map.get(",
+          "searchRegex": "map-get\\s*\\(",
+          "files": "**/*.scss",
+          "severity": "medium",
+          "requiresImport": "@use 'sass:map';",
+          "example": {
+            "before": "$value: map-get($theme-colors, 'primary');",
+            "after": "$value: map.get($theme-colors, 'primary');"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "SCSS: Sass module system - map-merge() deprecated",
+          "oldPattern": "map-merge\\s*\\(",
+          "newPattern": "map.merge(",
+          "searchRegex": "map-merge\\s*\\(",
+          "files": "**/*.scss",
+          "severity": "medium",
+          "requiresImport": "@use 'sass:map';",
+          "example": {
+            "before": "$merged: map-merge($defaults, $custom);",
+            "after": "$merged: map.merge($defaults, $custom);"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "SCSS: Sass module system - str-length() deprecated",
+          "oldPattern": "str-length\\s*\\(",
+          "newPattern": "string.length(",
+          "searchRegex": "str-length\\s*\\(",
+          "files": "**/*.scss",
+          "severity": "low",
+          "requiresImport": "@use 'sass:string';",
+          "example": {
+            "before": "$len: str-length($text);",
+            "after": "$len: string.length($text);"
+          }
+        }
+      ]
+    },
+    {
+      "fromVersion": "9.0",
+      "toVersion": "9.1",
+      "description": "PWA 9.0 → 9.1 Breaking Changes",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "TypeScript: Stricter environment.model.ts typing",
+          "searchRegex": "export\\s+const\\s+environment\\s*=",
+          "files": "**/environment.model.ts",
+          "severity": "medium",
+          "manual": true,
+          "example": {
+            "before": "export const environment = { features: ['customFeature'] };",
+            "after": "export const environment: Environment = { features: ['customFeature' as const] };"
+          }
+        },
+        {
+          "type": "html",
+          "description": "Angular Templates: Empty paired tags should use self-closing syntax",
+          "searchRegex": "<(ish-[a-z-]+|ng-container|ng-template)([^>]*)></\\1>",
+          "files": "**/*.html",
+          "severity": "low",
+          "autoFixable": true,
+          "example": {
+            "before": "<ish-loading></ish-loading>",
+            "after": "<ish-loading />"
+          }
+        }
+      ]
+    },
+    {
+      "fromVersion": "14.0",
+      "toVersion": "15.0",
+      "description": "Angular 14 → 15 Migration",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Angular: Standalone Components introduction",
+          "searchRegex": "@NgModule\\s*\\(",
+          "files": "**/*.module.ts",
+          "severity": "medium",
+          "manual": true,
+          "note": "Angular 15 introduces standalone components. Consider migrating modules to standalone."
+        },
+        {
+          "type": "typescript",
+          "description": "Angular: RouterTestingModule deprecated",
+          "searchRegex": "RouterTestingModule",
+          "files": "**/*.spec.ts",
+          "severity": "low",
+          "autoFixable": true,
+          "example": {
+            "before": "imports: [RouterTestingModule]",
+            "after": "providers: [provideRouter([])]"
+          }
+        }
+      ]
+    },
+    {
+      "fromVersion": "15.0",
+      "toVersion": "16.0",
+      "description": "Angular 15 → 16 Migration",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Angular: Required inputs enforcement",
+          "searchRegex": "@Input\\(\\)\\s+(?!.*!)[a-zA-Z]",
+          "files": "**/*.component.ts",
+          "severity": "medium",
+          "manual": true,
+          "note": "Angular 16 enforces required inputs. Add '!' for optional or use { required: true }"
+        },
+        {
+          "type": "typescript",
+          "description": "RxJS: toPromise() deprecated, use firstValueFrom/lastValueFrom",
+          "searchRegex": "\\.toPromise\\(\\)",
+          "files": "**/*.ts",
+          "severity": "medium",
+          "example": {
+            "before": "const result = await observable.toPromise();",
+            "after": "const result = await firstValueFrom(observable);"
+          }
+        }
+      ]
+    },
+    {
+      "fromVersion": "16.0",
+      "toVersion": "17.0",
+      "description": "Angular 16 → 17 Migration",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Angular: Control flow syntax (@if, @for, @switch)",
+          "searchRegex": "\\*ngIf=",
+          "files": "**/*.html",
+          "severity": "low",
+          "manual": true,
+          "note": "Angular 17 introduces new control flow syntax. Consider migrating from *ngIf to @if"
+        },
+        {
+          "type": "typescript",
+          "description": "Angular: Standalone APIs become default",
+          "searchRegex": "bootstrapModule",
+          "files": "**/main.ts",
+          "severity": "medium",
+          "manual": true,
+          "note": "Angular 17 prefers bootstrapApplication over bootstrapModule"
+        }
+      ]
+    },
+    {
+      "fromVersion": "4.0",
+      "toVersion": "9.1",
+      "description": "PWA 4.x → 9.1 Major Version Jump",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Extensions: Check for removed extensions",
+          "searchRegex": "tacton|removed-extension-name",
+          "files": "src/app/extensions/**/*",
+          "severity": "high",
+          "manual": true,
+          "note": "Some extensions may have been removed. Check src/app/extensions/ against target PWA"
+        },
+        {
+          "type": "scss",
+          "description": "Themes: New theme variables required",
+          "searchRegex": "\\$CORPORATE-PRIMARY",
+          "files": "src/styles/themes/**/*.scss",
+          "severity": "high",
+          "manual": true,
+          "note": "Custom themes need new variables. Compare with b2b theme in target version"
+        },
+        {
+          "type": "typescript",
+          "description": "Environment: Features registration changed",
+          "searchRegex": "export\\s+const\\s+features",
+          "files": "**/environment.ts",
+          "severity": "high",
+          "manual": true,
+          "note": "Feature registration requires updates in both environment.model.ts and configuration"
+        }
+      ]
+    }
+  ],
+  "commonPatterns": {
+    "scss": [
+      {
+        "name": "Missing theme variables",
+        "detection": "Build fails with 'Undefined variable' in SCSS",
+        "solution": "Compare custom theme with b2b/b2c theme, add missing variables",
+        "tier": 1
+      },
+      {
+        "name": "Deprecated Sass functions",
+        "detection": "Deprecation warnings during SCSS compilation",
+        "solution": "Use Sass module system (@use 'sass:color', etc.)",
+        "tier": 2
+      }
+    ],
+    "typescript": [
+      {
+        "name": "Environment feature registration",
+        "detection": "Custom features not loaded at runtime",
+        "solution": "Register in both environment.model.ts and environment configuration",
+        "tier": 1
+      },
+      {
+        "name": "Module import conflicts",
+        "detection": "Build fails with 'X is not exported from module'",
+        "solution": "Merge imports from both branches in module files",
+        "tier": 1
+      }
+    ],
+    "templates": [
+      {
+        "name": "B2B template variants",
+        "detection": "B2B features broken after migration",
+        "solution": "Check for both .html and .b2b.html template files",
+        "tier": 1
+      },
+      {
+        "name": "Removed component selectors",
+        "detection": "Build fails with 'Unknown element'",
+        "solution": "Check if component was removed or renamed in target PWA",
+        "tier": 2
+      }
+    ]
+  },
+  "detectionTiers": {
+    "tier1": {
+      "name": "Manual CHANGELOG Review",
+      "description": "Human/AI reviews CHANGELOG.md manually",
+      "suitableFor": "Light customization, 1-2 versions behind",
+      "tools": ["Git remote setup", "Manual diff checking"]
+    },
+    "tier2": {
+      "name": "Automated Pattern Detection",
+      "description": "Script fetches CHANGELOG and scans codebase",
+      "suitableFor": "Moderate customization, 2-4 versions behind",
+      "tools": ["detect-pattern-changes.js", "grep-based scanning"]
+    },
+    "tier3": {
+      "name": "Comprehensive Pattern Database",
+      "description": "Full pattern library with transformation rules",
+      "suitableFor": "Heavy customization, 5+ versions behind",
+      "tools": ["detect-pattern-changes.js --comprehensive", "pattern-migrations.json"]
+    }
+  }
+}

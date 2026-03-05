@@ -2,25 +2,33 @@
 
 **Lean toolkit for migrating custom Intershop PWA projects between major versions.**
 
-## 📦 What's Included (12 Files Total)
+## 📦 What's Included (17 Files Total)
 
-### Migration Instructions (6 files in `.github/instructions/`)
-- `migration-checklist.instructions.md` - Pre/post-migration checklists
+### Migration Instructions (7 files in `.github/instructions/`)
+- `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
 - `migration-issues.instructions.md` - 11 common issues and solutions
 - `migration-workflow.instructions.md` - Step-by-step workflow patterns
-- `migration-git.instructions.md` - Git operations and conflict resolution
+- `migration-git.instructions.md` - Git operations, conflict resolution, AI merge guidance
 - `migration-patterns.instructions.md` - Comprehensive patterns reference
 - `migration-examples.instructions.md` - Concrete code examples
+- `migration-pattern-detection.instructions.md` - **NEW:** Pattern detection system guide
 
-### Migration Scripts (6 files in `scripts/`)
+### Migration Scripts (9 files in `scripts/`)
 - `migrate-custom-branch.sh` - Automated migration (CI/CD ready)
 - `migration-helper.js` - Interactive migration assistant
+- `analyze-migration-complexity.sh` - **NEW:** Complexity analyzer with tier recommendation
+- `detect-pattern-changes.js` - **NEW:** Tier 2/3 pattern detection and CHANGELOG analysis
+- `merge-i18n-files.js` - **NEW:** Enhanced localization merge with conflict detection
+- `generate-migration-report.sh` - **NEW:** Comprehensive migration documentation generator
 - `check-template-syntax.sh` - Detect old template syntax
 - `fix-template-syntax.js` - Auto-fix template syntax
 - `check-standalone-components.sh` - Architecture analysis
 - `check-lint-issues.sh` - Categorize lint errors
 
-**Total:** 12 files (6 instructions + 6 scripts)
+### Pattern Database (1 file in `data/`)
+- `pattern-migrations.json` - **NEW:** Comprehensive breaking change patterns across PWA versions
+
+**Total:** 17 files (7 instructions + 9 scripts + 1 database)
 
 ---
 
@@ -51,6 +59,16 @@ rm -rf /tmp/toolkit
 # Read pre-migration checklist
 cat .github/instructions/migration-checklist.instructions.md
 
+# NEW: Analyze migration complexity and get tier recommendation
+./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+
+# NEW: Run pattern detection (based on recommended tier)
+# Tier 2: Standard detection
+./scripts/detect-pattern-changes.js 4.0.0 9.1.0
+
+# Tier 3: Comprehensive with database
+./scripts/detect-pattern-changes.js --comprehensive 4.0.0 9.1.0
+
 # Check your current setup
 ./scripts/check-template-syntax.sh
 ./scripts/check-standalone-components.sh
@@ -77,7 +95,7 @@ git branch -r | grep intershop-pwa
 node scripts/migration-helper.js
 ```
 
-### STEP 4: Post-Migration Validation
+### STEP 4: Post-Migration Validation & Documentation
 
 ```bash
 # Check for remaining issues
@@ -88,6 +106,10 @@ node scripts/migration-helper.js
 npm install
 npm run build
 npm test
+
+# Generate comprehensive migration report
+./scripts/generate-migration-report.sh
+# Creates: migration-report-YYYY-MM-DD.md
 ```
 
 ---

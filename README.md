@@ -157,6 +157,9 @@ rm -rf /tmp/toolkit
 
 **Start here:** `.github/instructions/migration-checklist.instructions.md`
 
+**Tool guides:**
+- `docs/guides/migration-helper-guide.md` - Complete guide for the interactive migration helper
+
 **Common issues:** `.github/instructions/migration-issues.instructions.md`
 
 **Git strategies:** `.github/instructions/migration-git.instructions.md`

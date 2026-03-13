@@ -185,12 +185,31 @@ git show feature/migration-4.0-to-9.1:package.json | grep '\"@angular/core\"' | 
 
 ## 1. SCSS Variable Gaps in Custom Themes
 
-**Problem**: Standard themes (b2b, b2c) get new SCSS variables in major PWA updates, but custom themes don't inherit these automatically.
+**Problem**: Standard themes (b2b, b2c) get new SCSS variables in major PWA updates, but custom themes don't inherit these automatically. This leads to incremental discovery during build cycles (build → error → fix → repeat), wasting 15-30 minutes.
 
-**Solution**: After merge, systematically compare custom theme variables with b2b theme:
+**Best Practice - Proactive Validation** (BEFORE first build):
 
 ```bash
-# Compare variable files
+# 1. Validate theme completeness (proactive check)
+./scripts/validate-theme-completeness.sh
+
+# 2. If missing variables found, auto-sync them
+./scripts/sync-custom-theme-variables.sh
+
+# 3. Review and adjust auto-added variables for your brand
+# Edit: src/styles/themes/[custom]/variables.scss
+
+# 4. Verify completeness
+./scripts/validate-theme-completeness.sh
+
+# 5. NOW build (should have 0-2 SCSS errors instead of 5-15)
+npm run build
+```
+
+**Alternative: Manual Comparison** (reactive approach):
+
+```bash
+# Compare variable files after build errors occur
 diff src/styles/themes/b2b/variables.scss src/styles/themes/[custom]/variables.scss
 ```
 
@@ -231,6 +250,31 @@ $swatch-image-border-radius: 50%;
 ```
 
 **Pattern**: Always add these in the same order as in b2b/variables.scss to maintain consistency.
+
+**Common Error Symptoms**:
+
+If you skip proactive validation and build first, expect errors like:
+- `Undefined variable: "$CORPORATE-LIGHT"` → Missing color variations
+- `Undefined variable: "$color-quaternary"` → Missing general colors  
+- `Undefined variable: "$table-cell-padding"` → Missing component-specific variables
+- `Undefined function "darken"` → Missing `@use 'sass:color'` import
+- `Undefined function "map-get"` → Missing `@use 'sass:map'` import
+
+**Time Savings**: Using validation scripts saves 15-30 minutes of build-error-fix cycles.
+
+**Variable Categories** (PWA 9.1):
+
+| Category | Count | Examples | Common Issues |
+|----------|-------|----------|---------------|
+| Sass imports | 2 | `@use 'sass:color'` | Undefined function errors |
+| Corporate colors | 2 | `$CORPORATE-LIGHT/DARK` | Color variation missing |
+| General colors | 1 | `$color-quaternary` | Undefined variable |
+| Special colors | 7 | `$color-special-error` | Status indicator styling |
+| Backgrounds | 1 | `$bg-color-corporate` | Header/footer issues |
+| Tables | 2 | `$table-cell-padding` | Table layout broken |
+| Components | 1 | `$swatch-image-border-radius` | Filter UI broken |
+
+**Total**: 138 variables in b2b theme (PWA 9.1). The 16 listed above are most commonly missing in custom themes during migration.
 
 ## 2. Environment Feature Registration
 

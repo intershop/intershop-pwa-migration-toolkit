@@ -493,10 +493,23 @@ npm run sort-i18n
 
 ### Alternative: Simple Merge (When Time is Limited)
 
-If automated merge isn't feasible:
+**⚠️ WARNING**: Using `git checkout --theirs` or `--ours` for i18n files **WILL LOSE CUSTOM TRANSLATIONS**. Only use this approach if you have a backup and plan to manually restore custom keys.
+
+**Common Mistake**: Running `git checkout --theirs src/assets/i18n/*.json` to quickly resolve conflicts results in losing ALL custom feature translations (e.g., warehouse.*, custom feature keys). You'll need to restore them manually using git history:
 
 ```bash
-# 1. Accept one side first
+# If you accidentally lost custom translations:
+# 1. List your custom translation keys from old branch
+git show HEAD:src/assets/i18n/en_US.json | grep '"warehouse\.' | grep -v '^\s*//'
+
+# 2. Extract the full entries and add them back
+# (Manual editing required)
+```
+
+**If you still choose simple merge despite the risk**:
+
+```bash
+# 1. Accept one side first (WARNING: loses custom keys)
 git checkout --theirs src/assets/i18n/en_US.json
 
 # 2. Manually add missing custom keys
@@ -509,6 +522,8 @@ git checkout --theirs src/assets/i18n/en_US.json
 npm run sort-i18n
 git add src/assets/i18n/en_US.json
 ```
+
+**Recommended**: Use the merge-i18n-files.js script instead to avoid data loss.
 
 ### Common Localization Patterns
 

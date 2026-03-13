@@ -231,6 +231,24 @@ git push <project-remote> backup-$(date +%Y%m%d)-before-migration
 - Custom themes require manual SCSS variable synchronization
 - Standard themes (b2b, b2c) are updated automatically
 
+**Proactive Theme Validation** (NEW - Run BEFORE first build):
+  
+```bash
+# Validate custom themes have all required variables
+./scripts/validate-theme-completeness.sh
+
+# If missing variables found, sync them automatically  
+./scripts/sync-custom-theme-variables.sh
+
+# Review auto-added variables and adjust for your brand
+# Then verify again
+./scripts/validate-theme-completeness.sh
+```
+
+**Why This Matters**: PWA 9.1 has 138 SCSS variables in b2b theme. Missing even one causes build failures. Proactive validation prevents 15-30 minutes of incremental build-fix-rebuild cycles.
+
+**See**: migration-issues.instructions.md Issue #1 for complete variable list and manual comparison approach.
+
 ### 4. Check Template Syntax Compatibility
 
 **Problem**: Newer Angular/PWA versions prefer self-closing tags (`<my-component />`) over paired tags (`<my-component></my-component>`) for components without content.

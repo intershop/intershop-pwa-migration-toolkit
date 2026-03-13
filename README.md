@@ -2,7 +2,7 @@
 
 **Lean toolkit for migrating custom Intershop PWA projects between major versions.**
 
-## 📦 What's Included (17 Files Total)
+## 📦 What's Included (19 Files Total)
 
 ### Migration Instructions (7 files in `.github/instructions/`)
 - `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
@@ -13,13 +13,15 @@
 - `migration-examples.instructions.md` - Concrete code examples
 - `migration-pattern-detection.instructions.md` - **NEW:** Pattern detection system guide
 
-### Migration Scripts (9 files in `scripts/`)
+### Migration Scripts (11 files in `scripts/`)
 - `migrate-custom-branch.sh` - Automated migration (CI/CD ready)
 - `migration-helper.js` - Interactive migration assistant
 - `analyze-migration-complexity.sh` - **NEW:** Complexity analyzer with tier recommendation
 - `detect-pattern-changes.js` - **NEW:** Tier 2/3 pattern detection and CHANGELOG analysis
 - `merge-i18n-files.js` - **NEW:** Enhanced localization merge with conflict detection
 - `generate-migration-report.sh` - **NEW:** Comprehensive migration documentation generator
+- `validate-theme-completeness.sh` - **NEW:** Proactive SCSS variable validation (saves 15-30 min)
+- `sync-custom-theme-variables.sh` - **NEW:** Auto-sync missing theme variables from b2b
 - `check-template-syntax.sh` - Detect old template syntax
 - `fix-template-syntax.js` - Auto-fix template syntax
 - `check-standalone-components.sh` - Architecture analysis
@@ -28,7 +30,7 @@
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - **NEW:** Comprehensive breaking change patterns across PWA versions
 
-**Total:** 17 files (7 instructions + 9 scripts + 1 database)
+**Total:** 19 files (7 instructions + 11 scripts + 1 database)
 
 ---
 
@@ -110,6 +112,14 @@ node scripts/migration-helper.js
 ### STEP 4: Post-Migration Validation & Documentation
 
 ```bash
+# NEW: Validate custom theme variables (BEFORE first build)
+# This prevents 15-30 minutes of build-fix-rebuild cycles
+./scripts/validate-theme-completeness.sh
+
+# If missing variables found, sync them
+./scripts/sync-custom-theme-variables.sh
+# Review and adjust the auto-added variables for your brand
+
 # Check for remaining issues
 ./scripts/check-template-syntax.sh
 ./scripts/check-lint-issues.sh

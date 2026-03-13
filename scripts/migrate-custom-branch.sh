@@ -11,6 +11,8 @@
 # Options:
 #   --source-branch <branch>    Branch with customizations (default: training_4.0.0)
 #   --target-branch <branch>    Branch with new PWA version (default: feature/migration-4.0-to-9.1)
+#   --target-tag <tag>          Use a tag instead of branch (e.g., 9.1.0)
+#   --intershop-remote <name>   Name of Intershop PWA remote (default: auto-detect)
 #   --migration-branch <branch> Name for the migration branch (default: migration/training-to-9.1)
 #   --auto-resolve              Automatically resolve simple conflicts
 #   --dry-run                   Show what would be done without making changes
@@ -30,6 +32,8 @@ NC='\033[0m' # No Color
 # Default values
 SOURCE_BRANCH="training_4.0.0"
 TARGET_BRANCH="feature/migration-4.0-to-9.1"
+TARGET_TAG=""
+INTERSHOP_REMOTE=""
 MIGRATION_BRANCH="migration/training-to-9.1"
 AUTO_RESOLVE=false
 DRY_RUN=false
@@ -43,6 +47,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --target-branch)
       TARGET_BRANCH="$2"
+      shift 2
+      ;;
+    --target-tag)
+      TARGET_TAG="$2"
+      shift 2
+      ;;
+    --intershop-remote)
+      INTERSHOP_REMOTE="$2"
       shift 2
       ;;
     --migration-branch)
@@ -86,11 +98,97 @@ log_error() {
   echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Auto-detect Intershop PWA remote if not specified
+detect_intershop_remote() {
+  if [ -n "$INTERSHOP_REMOTE" ]; then
+    return 0
+  fi
+  
+  log_info "Auto-detecting Intershop PWA remote..."
+  
+  # Check for common remote names that point to intershop-pwa
+  for remote in upstream intershop-pwa intershop origin; do
+    if git remote get-url "$remote" 2>/dev/null | grep -q "intershop/intershop-pwa"; then
+      INTERSHOP_REMOTE="$remote"
+      log_success "Detected Intershop PWA remote: $INTERSHOP_REMOTE"
+      return 0
+    fi
+  done
+  
+  log_warning "Could not auto-detect Intershop PWA remote"
+  echo "Please specify with --intershop-remote option"
+  echo ""
+  echo "Available remotes:"
+  git remote -v
+  return 1
+}
+
+# Validate and resolve target (branch or tag)
+validate_target() {
+  local target="$1"
+  local is_tag="$2"
+  
+  # If using a tag
+  if [ -n "$TARGET_TAG" ]; then
+    log_info "Validating tag: $TARGET_TAG"
+    
+    # Try tags/ prefix first
+    if git rev-parse "tags/$TARGET_TAG" > /dev/null 2>&1; then
+      TARGET_BRANCH="tags/$TARGET_TAG"
+      log_success "Found tag: $TARGET_TAG"
+      return 0
+    fi
+    
+    # Try remote/tag format
+    if [ -n "$INTERSHOP_REMOTE" ]; then
+      if git rev-parse "$INTERSHOP_REMOTE/$TARGET_TAG" > /dev/null 2>&1; then
+        TARGET_BRANCH="$INTERSHOP_REMOTE/$TARGET_TAG"
+        log_success "Found tag: $INTERSHOP_REMOTE/$TARGET_TAG"
+        return 0
+      fi
+    fi
+    
+    # Tag not found, show available tags
+    log_error "Tag '$TARGET_TAG' not found"
+    echo ""
+    echo "Available release tags (last 10):"
+    git tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -10
+    echo ""
+    echo "Hint: Fetch tags with: git fetch $INTERSHOP_REMOTE --tags"
+    return 1
+  fi
+  
+  # Validate branch
+  if ! git rev-parse --verify "$TARGET_BRANCH" > /dev/null 2>&1; then
+    log_error "Target branch '$TARGET_BRANCH' does not exist"
+    echo ""
+    echo "Available branches:"
+    git branch -a | grep -E "remotes/.*/" | head -10
+    echo ""
+    echo "Hint: Fetch branches with: git fetch $INTERSHOP_REMOTE"
+    return 1
+  fi
+  
+  return 0
+}
+
 # Check if we're in a git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
   log_error "Not in a git repository"
   exit 1
 fi
+
+# Detect Intershop remote
+detect_intershop_remote || {
+  log_error "Please set up Intershop PWA remote or specify with --intershop-remote"
+  exit 1
+}
+
+# Fetch latest from Intershop remote
+log_info "Fetching from $INTERSHOP_REMOTE..."
+git fetch "$INTERSHOP_REMOTE" --tags > /dev/null 2>&1 || {
+  log_warning "Failed to fetch from $INTERSHOP_REMOTE"
+}
 
 # Check if branches exist
 if ! git rev-parse --verify "$SOURCE_BRANCH" > /dev/null 2>&1; then
@@ -98,10 +196,10 @@ if ! git rev-parse --verify "$SOURCE_BRANCH" > /dev/null 2>&1; then
   exit 1
 fi
 
-if ! git rev-parse --verify "$TARGET_BRANCH" > /dev/null 2>&1; then
-  log_error "Target branch '$TARGET_BRANCH' does not exist"
+# Validate target branch/tag
+validate_target "$TARGET_BRANCH" "$TARGET_TAG" || {
   exit 1
-fi
+}
 
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
@@ -247,6 +345,46 @@ if [ "$DRY_RUN" = false ]; then
     log_info "Installing dependencies..."
     npm ci --prefer-offline --no-audit
   fi
+  
+  # Check for global Angular CLI
+  log_info "Checking Angular CLI availability..."
+  if ! command -v ng &> /dev/null; then
+    log_warning "Global Angular CLI (ng command) is not available"
+    echo ""
+    echo "The local CLI is installed in node_modules, but the global"
+    echo "'ng' command will not work after stopping the dev server."
+    echo ""
+    
+    # Extract Angular CLI version from package.json
+    if [ -f "package.json" ]; then
+      CLI_VERSION=$(grep -oP '"@angular/cli":\s*"\K[^"]+' package.json | sed 's/[^0-9.]//g')
+      if [ -n "$CLI_VERSION" ]; then
+        echo -e "${BLUE}Required Angular CLI version:${NC} $CLI_VERSION"
+        echo ""
+        read -p "$(echo -e "${BLUE}Install Angular CLI globally now? (y/n):${NC} ")" install_cli
+        
+        if [[ "$install_cli" =~ ^[Yy] ]]; then
+          log_info "Installing @angular/cli@$CLI_VERSION globally..."
+          if npm install -g @angular/cli@$CLI_VERSION; then
+            log_success "Angular CLI installed globally"
+            ng version 2>/dev/null | head -n 1
+          else
+            log_error "Failed to install Angular CLI globally"
+            log_info "You can install it manually later with:"
+            echo -e "  ${BLUE}npm install -g @angular/cli@$CLI_VERSION${NC}"
+          fi
+        else
+          log_info "Skipping global CLI installation"
+          log_warning "Remember to install it later to use 'ng' commands:"
+          echo -e "  ${BLUE}npm install -g @angular/cli@$CLI_VERSION${NC}"
+        fi
+      fi
+    fi
+  else
+    log_success "Global Angular CLI is available"
+    ng version 2>/dev/null | head -n 1 || true
+  fi
+  echo ""
   
   # Run linting and auto-fix
   log_info "Running ESLint auto-fix..."

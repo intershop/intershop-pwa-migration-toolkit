@@ -344,7 +344,51 @@ git show feature/migration-4.0-to-9.1:src/app | grep -r "standalone: true" | wc 
 
 ## Post-Migration Verification Steps
 
-### Critical: Template-Component Consistency Check
+### 1. Verify Angular CLI Installation
+
+**Problem**: After merging the new PWA version, the old global Angular CLI may have been removed, but the new one is not installed globally. This causes the `ng` command to be unavailable after stopping the development server.
+
+**Symptoms**:
+- Running system continues to work
+- After stopping the dev server, `ng` command fails with "command not found"
+- `ng serve`, `ng build`, etc. do not work from terminal
+
+**Verification**:
+
+```bash
+# Check if global CLI is available
+which ng  # or "where ng" on Windows
+
+# Check version
+ng version
+```
+
+**Solution**:
+
+```bash
+# Check required version from package.json
+grep '@angular/cli' package.json
+
+# Install global CLI matching your project version
+npm install -g @angular/cli@16.2.12  # Use version from package.json
+
+# Verify installation
+ng version
+```
+
+**Why This Happens**:
+- `npm ci` or `npm install` installs Angular CLI locally in `node_modules/.bin/ng`
+- Local CLI works via npm scripts (`npm run` commands)
+- Global CLI is needed for direct `ng` commands in terminal
+- Global CLI is NOT automatically installed by npm install
+
+**Best Practice**:
+- Always keep global CLI version matched to project's package.json
+- Install global CLI immediately after successful merge and `npm install`
+
+**Note**: Both migration scripts (`migration-helper.js` and `migrate-custom-branch.sh`) now check for global CLI availability and offer to install it automatically.
+
+### 2. Template-Component Consistency Check
 
 **Problem**: During migrations, custom component implementations from the customization branch can be lost while templates remain unchanged, causing runtime errors.
 

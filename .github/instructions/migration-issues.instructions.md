@@ -50,6 +50,66 @@ git remote -v
 
 **Key Principle**: Remote names are project-specific conventions. The documentation describes the **concept** (two remotes: one for Intershop, one for your project), not mandatory naming.
 
+## -1. Missing Global Angular CLI After Migration
+
+**Problem**: After completing the migration and installing dependencies, the `ng` command is no longer available in the terminal, even though the project builds successfully.
+
+**Symptoms**:
+
+```bash
+# Dev server runs fine
+npm start  # Works
+
+# Stop the server (Ctrl+C)
+# Try to run ng command
+ng serve
+# Output: bash: ng: command not found
+
+ng build
+# Output: ng: command not found
+```
+
+**Root Cause**: 
+- `npm ci` or `npm install` installs Angular CLI **locally** in `node_modules/.bin/`
+- Local CLI is used by npm scripts but not available as global command
+- During migration, the old global CLI may have been removed/uninstalled
+- The new global CLI is **not** automatically installed by npm install
+
+**Solution**:
+
+```bash
+# 1. Check required CLI version from package.json
+grep '@angular/cli' package.json
+# Example output: "@angular/cli": "^16.2.12"
+
+# 2. Install global CLI matching the project version
+npm install -g @angular/cli@16.2.12
+
+# 3. Verify installation
+ng version
+# Should show Angular CLI version 16.2.12
+
+# 4. Now ng commands work directly
+ng serve
+ng build
+ng generate component my-component
+```
+
+**Prevention**:
+
+Both migration scripts (`migration-helper.js` and `migrate-custom-branch.sh`) now check for global CLI availability and offer to install it automatically. If you're migrating manually:
+
+```bash
+# After npm install, always verify and install global CLI
+which ng || npm install -g @angular/cli@$(node -p "require('./package.json').devDependencies['@angular/cli']")
+```
+
+**Why Two CLIs?**
+- **Local CLI** (`node_modules/.bin/ng`): Used by npm scripts, ensures consistent version per project
+- **Global CLI** (`ng` command): Convenient for direct terminal commands, shared across projects
+
+**Best Practice**: Keep global CLI version matched to your active project's version.
+
 ## 0. Angular Version Mismatch
 
 **Problem**: Attempting migration with mismatched Angular versions causes massive compilation errors (100+ errors) and wastes troubleshooting time.

@@ -91,6 +91,142 @@ function getBranches() {
     .filter(b => b && !b.startsWith('remotes/origin/HEAD'));
 }
 
+// Get list of tags (releases)
+function getTags() {
+  const result = exec('git tag -l', true);
+  if (!result.success) return [];
+
+  return result.output
+    .split('\n')
+    .filter(t => t.trim())
+    .filter(t => /^\d+\.\d+\.\d+/.test(t)) // Only version tags
+    .sort((a, b) => {
+      // Version sort
+      const aParts = a.split('.').map(Number);
+      const bParts = b.split('.').map(Number);
+      for (let i = 0; i < 3; i++) {
+        if (aParts[i] !== bParts[i]) return aParts[i] - bParts[i];
+      }
+      return 0;
+    });
+}
+
+// Detect Intershop PWA remote
+function detectIntershopRemote() {
+  const remotes = ['upstream', 'intershop-pwa', 'intershop', 'origin'];
+  
+  for (const remote of remotes) {
+    const urlResult = exec(`git remote get-url ${remote}`, true);
+    if (urlResult.success && urlResult.output.includes('intershop/intershop-pwa')) {
+      return remote;
+    }
+  }
+  
+  return null;
+}
+
+// Fetch tags and branches from Intershop remote
+async function setupIntershopRemote() {
+  log.info('Checking Intershop PWA remote...');
+  
+  let intershopRemote = detectIntershopRemote();
+  
+  if (!intershopRemote) {
+    log.warning('Intershop PWA remote not found');
+    const shouldAdd = await ask('Would you like to add it now?');
+    
+    if (shouldAdd) {
+      const remoteName = await askText('Remote name', 'intershop-pwa');
+      const result = exec(
+        `git remote add ${remoteName} git@github.com:intershop/intershop-pwa.git`,
+        true
+      );
+      
+      if (result.success) {
+        intershopRemote = remoteName;
+        log.success(`Added remote: ${remoteName}`);
+      } else {
+        log.error('Failed to add remote');
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+  
+  // Fetch from Intershop remote
+  log.info(`Fetching from ${intershopRemote}...`);
+  exec(`git fetch ${intershopRemote} --tags`, true);
+  
+  return intershopRemote;
+}
+
+// Interactive tag/branch selection
+async function selectTargetVersion(intershopRemote) {
+  console.log(`\n${colors.cyan}${'='.repeat(60)}${colors.reset}`);
+  console.log(`${colors.cyan}  Select Target PWA Version${colors.reset}`);
+  console.log(`${colors.cyan}${'='.repeat(60)}${colors.reset}\n`);
+  
+  const tags = getTags();
+  const recentTags = tags.slice(-10); // Last 10 tags
+  
+  if (recentTags.length > 0) {
+    console.log(`${colors.green}Available stable releases (tags):${colors.reset}`);
+    recentTags.forEach((tag, i) => {
+      const num = (i + 1).toString().padStart(2, ' ');
+      console.log(`  ${num}. ${tag}`);
+    });
+    console.log();
+  }
+  
+  console.log(`${colors.yellow}Recommendation:${colors.reset}`);
+  console.log('  • Use a stable TAG (e.g., 9.1.0) for production migrations');
+  console.log('  • Use a BRANCH (e.g., develop) only for testing bleeding edge\n');
+  
+  const useTag = await ask('Use a stable release tag? (recommended)');
+  
+  if (useTag) {
+    const targetTag = await askText(
+      'Enter target version tag',
+      recentTags.length > 0 ? recentTags[recentTags.length - 1] : '9.1.0'
+    );
+    
+    // Validate tag exists
+    const tagCheck = exec(`git rev-parse tags/${targetTag}`, true);
+    if (!tagCheck.success) {
+      const remoteTagCheck = exec(`git rev-parse ${intershopRemote}/${targetTag}`, true);
+      if (!remoteTagCheck.success) {
+        log.error(`Tag '${targetTag}' not found`);
+        log.info('Available tags:');
+        tags.slice(-5).forEach(t => console.log(`  - ${t}`));
+        return null;
+      }
+      return `${intershopRemote}/${targetTag}`;
+    }
+    
+    return `tags/${targetTag}`;
+  } else {
+    // Branch selection
+    const branches = getBranches().filter(b => 
+      b.startsWith(`remotes/${intershopRemote}/`) &&
+      !b.includes('HEAD')
+    );
+    
+    console.log(`\n${colors.green}Available branches from ${intershopRemote}:${colors.reset}`);
+    branches.slice(0, 10).forEach((b, i) => {
+      const displayName = b.replace(`remotes/${intershopRemote}/`, '');
+      console.log(`  ${i + 1}. ${displayName}`);
+    });
+    
+    const branchName = await askText(
+      '\nEnter branch name',
+      'develop'
+    );
+    
+    return `${intershopRemote}/${branchName}`;
+  }
+}
+
 // Detect customization files
 function analyzeCustomizations(sourceBranch, baseBranch = 'develop') {
   log.info('Analyzing customizations...');
@@ -431,6 +567,9 @@ ${colors.green}Tip:${colors.reset} You can safely exit with Ctrl+C and restart a
   // Step 2: Select branches
   log.step(2, 'Configure Migration');
 
+  // Set up Intershop remote if not already configured
+  const intershopRemote = await setupIntershopRemote();
+  
   const branches = getBranches();
   log.info(`Found ${branches.length} branches`);
 
@@ -443,32 +582,47 @@ ${colors.green}Tip:${colors.reset} You can safely exit with Ctrl+C and restart a
   console.log('='.repeat(60) + colors.reset);
   console.log('\n' + colors.yellow + 'What each branch means:' + colors.reset);
   console.log('  -> SOURCE branch: Your current customization branch (e.g., training_4.0.0)');
-  console.log('  -> TARGET branch: The PWA 9.1 branch to merge FROM (e.g., migration/training-to-9.1)');
+  console.log('  -> TARGET branch/tag: The PWA version to migrate TO (e.g., 9.1.0 tag)');
   console.log('  -> MIGRATION branch: New branch name to CREATE (e.g., migration/4.0-to-9.1)\n');
 
   console.log(colors.green + 'Local branches:' + colors.reset);
-  localBranches.forEach((b, i) => {
+  localBranches.slice(0, 10).forEach((b, i) => {
     const indicator = b === 'training_4.0.0' ? ' ' + colors.yellow + '<-- (likely your source)' + colors.reset : '';
     console.log(`  ${i + 1}. ${b}${indicator}`);
   });
-
-  if (migrationBranches.length > 0) {
-    console.log('\n' + colors.green + 'Available migration/target branches:' + colors.reset);
-    migrationBranches.forEach((b, i) => {
-      const indicator = b.includes('training-to-9.1') ? ' ' + colors.yellow + '<-- (likely your target)' + colors.reset : '';
-      console.log(`  ${i + 1}. ${b}${indicator}`);
-    });
-  }
 
   const sourceBranch = await askText(
     '\n' + colors.cyan + 'SOURCE branch' + colors.reset + ' (your customizations)',
     'training_4.0.0'
   );
-  
-  const targetBranch = await askText(
-    colors.cyan + 'TARGET branch' + colors.reset + ' (PWA 9.1 to merge from)',
-    'migration/training-to-9.1'
-  );
+
+  // Interactive target selection
+  let targetBranch;
+  if (intershopRemote) {
+    console.log(`\n${colors.blue}Now select the TARGET PWA version...${colors.reset}`);
+    targetBranch = await selectTargetVersion(intershopRemote);
+    
+    if (!targetBranch) {
+      log.error('Target version selection failed');
+      process.exit(1);
+    }
+    
+    log.success(`Selected target: ${targetBranch}`);
+  } else {
+    // Fallback to manual entry if no Intershop remote
+    if (migrationBranches.length > 0) {
+      console.log('\n' + colors.green + 'Available migration/target branches:' + colors.reset);
+      migrationBranches.forEach((b, i) => {
+        const indicator = b.includes('training-to-9.1') ? ' ' + colors.yellow + '<-- (recommended)' + colors.reset : '';
+        console.log(`  ${i + 1}. ${b}${indicator}`);
+      });
+    }
+    
+    targetBranch = await askText(
+      colors.cyan + 'TARGET branch/tag' + colors.reset + ' (PWA version to migrate to)',
+      'tags/9.1.0'
+    );
+  }
   
   const migrationBranch = await askText(
     colors.cyan + 'NEW MIGRATION branch' + colors.reset + ' (will be created)',
@@ -482,18 +636,7 @@ ${colors.green}Tip:${colors.reset} You can safely exit with Ctrl+C and restart a
 
   // Verify branches exist
   const sourceBranchCheck = exec(`git rev-parse --verify ${sourceBranch}`, true);
-  let targetBranchCheck = exec(`git rev-parse --verify ${targetBranch}`, true);
-  
-  // If target branch check fails, try with origin/ prefix
-  if (!targetBranchCheck.success && !targetBranch.startsWith('origin/')) {
-    targetBranchCheck = exec(`git rev-parse --verify origin/${targetBranch}`, true);
-    if (targetBranchCheck.success) {
-      log.info(`Using remote branch: origin/${targetBranch}`);
-      // Update targetBranch to include origin/ prefix
-      const updatedTarget = `origin/${targetBranch}`;
-      console.log(`  Updated target: ${colors.green}${updatedTarget}${colors.reset}\n`);
-    }
-  }
+  const targetBranchCheck = exec(`git rev-parse --verify ${targetBranch}`, true);
 
   if (!sourceBranchCheck.success) {
     log.error(`Source branch '${sourceBranch}' does not exist`);
@@ -760,6 +903,63 @@ ${'='.repeat(61)}${colors.reset}
   log.info(`Push branch: git push -u gitlab ${migrationBranch}`);
 }
 
+async function checkAngularCLI() {
+  // Check if Angular CLI is globally available
+  const globalNgCheck = exec('which ng || where ng', true);
+  const hasGlobalCLI = globalNgCheck.success && globalNgCheck.output;
+
+  if (!hasGlobalCLI) {
+    log.warning('Global Angular CLI (ng command) is not available');
+    console.log('');
+    console.log('The local CLI is installed in node_modules, but the global');
+    console.log('"ng" command will not work after stopping the dev server.');
+    console.log('');
+    
+    // Check what version is needed from package.json
+    if (fs.existsSync('package.json')) {
+      const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+      const cliVersion = packageJson.devDependencies?.['@angular/cli'] || packageJson.dependencies?.['@angular/cli'];
+      
+      if (cliVersion) {
+        const cleanVersion = cliVersion.replace(/[^0-9.]/g, '');
+        console.log(`${colors.blue}Required Angular CLI version:${colors.reset} ${cliVersion}`);
+        console.log('');
+        
+        const installGlobal = await ask('Install Angular CLI globally now?');
+        
+        if (installGlobal) {
+          log.info(`Installing @angular/cli@${cleanVersion} globally...`);
+          const installResult = exec(`npm install -g @angular/cli@${cleanVersion}`);
+          
+          if (installResult.success) {
+            log.success('Angular CLI installed globally');
+            const versionCheck = exec('ng version', true);
+            if (versionCheck.success) {
+              console.log('');
+              console.log('Installed version:');
+              console.log(versionCheck.output.split('\n')[0]);
+            }
+          } else {
+            log.error('Failed to install Angular CLI globally');
+            log.info('You can install it manually later with:');
+            log.info(`  ${colors.cyan}npm install -g @angular/cli@${cleanVersion}${colors.reset}`);
+          }
+        } else {
+          log.info('Skipping global CLI installation');
+          log.warning('Remember to install it later to use "ng" commands:');
+          log.info(`  ${colors.cyan}npm install -g @angular/cli@${cleanVersion}${colors.reset}`);
+        }
+      }
+    }
+  } else {
+    log.success('Global Angular CLI is available');
+    const version = exec('ng version 2>/dev/null | head -n 1', true);
+    if (version.success && version.output) {
+      console.log(`  ${version.output}`);
+    }
+  }
+}
+
 async function runAutomatedFixes() {
   log.step(7, 'Run Automated Fixes');
 
@@ -768,6 +968,11 @@ async function runAutomatedFixes() {
     log.info('Installing dependencies...');
     exec('npm ci --prefer-offline --no-audit');
   }
+  
+  // Check for global Angular CLI
+  console.log('');
+  await checkAngularCLI();
+  console.log('');
 
   const runLint = await ask('Run ESLint auto-fix?');
   if (runLint) {

@@ -76,10 +76,22 @@ cat .github/instructions/migration-checklist.instructions.md
 
 # Set up git remotes (reference latest standard PWA)
 git remote add intershop-pwa git@github.com:intershop/intershop-pwa.git
-git fetch intershop-pwa
+git fetch intershop-pwa --tags
 
-# Identify target version
+# IMPORTANT: Identify and select the correct target version
+# List available tags (recommended for stable versions)
+git tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -10
+
+# Or list branches
 git branch -r | grep intershop-pwa
+
+# Example: If migrating to 9.1.0, verify tag exists
+git ls-remote --tags intershop-pwa | grep '9.1.0'
+
+# Checkout the target version as a local branch
+git checkout -b feature/migration-to-9.1 intershop-pwa/9.1.0
+# OR use a tag:
+# git checkout -b feature/migration-to-9.1 tags/9.1.0
 ```
 
 ### STEP 3: Execute Migration

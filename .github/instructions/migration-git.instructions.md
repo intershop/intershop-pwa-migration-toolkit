@@ -4,7 +4,7 @@ applyTo: '**/migration*.{js,sh,ts}'
 
 # PWA Migration - Git Operations and Strategies
 
-This guide covers Git remote setup, conflict resolution strategies, and rollback procedures for PWA migrations.
+This guide covers Git remote setup, branch/tag selection, conflict resolution strategies, and rollback procedures for PWA migrations.
 
 ## Git Remote Strategy
 
@@ -53,6 +53,154 @@ git push <project-remote> feature/migration-tooling
 - Identify which remote points to Intershop PWA GitHub (READ-ONLY)
 - Identify which remote points to your project repository (READ-WRITE)
 - **CRITICAL**: Never push to the Intershop remote
+
+## Branch and Tag Selection Strategy
+
+### CRITICAL: Selecting the Correct Target Version
+
+**Problem**: When cloning or fetching the Intershop PWA, Git doesn't know which branch or tag represents the version you want to migrate to. By default, operations reference the default branch (usually `develop`), which may be:
+- Ahead of the stable version you want
+- Contains unreleased features
+- May have breaking changes
+
+**Solution**: Always explicitly specify the branch or tag for the target PWA version.
+
+### Step 1: Fetch Available Versions
+
+```bash
+# Fetch all branches and tags from Intershop PWA remote
+git fetch <intershop-remote> --tags
+
+# List available release tags (recommended for stable migrations)
+git tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V
+
+# Output example:
+#   4.0.0
+#   4.1.0
+#   9.0.0
+#   9.1.0
+#   10.0.0
+
+# Or check specific version availability
+git ls-remote --tags <intershop-remote> | grep '9.1.0'
+```
+
+### Step 2: Understand Version Types
+
+**Tags (Recommended)**:
+- Format: `X.Y.Z` (e.g., `9.1.0`, `10.0.0`)
+- Represent **stable, released versions**
+- Recommended for production migrations
+- Use: `tags/9.1.0` or `<intershop-remote>/9.1.0`
+
+**Branches**:
+- `develop`: **Unstable**, latest development work
+- `master` or `main`: May or may not be latest stable
+- Feature branches: Usually not suitable for migration base
+- Use only if you have specific requirements
+
+### Step 3: Select Your Target Version
+
+**Decision Matrix**:
+
+| Migration Goal | Recommended Target | Command |
+|----------------|-------------------|---------|
+| Migrate to specific stable version | Use release tag | `tags/9.1.0` |
+| Migrate to latest stable | Use latest tag | `tags/$(git tag -l \| sort -V \| tail -1)` |
+| Migrate to bleeding edge (not recommended) | Use develop branch | `<intershop-remote>/develop` |
+| Migrate for testing pre-release | Use release candidate tag | `tags/9.1.0-rc1` |
+
+### Step 4: Create Target Feature Branch
+
+```bash
+# Example: Migrating to PWA 9.1.0
+TARGET_VERSION="9.1.0"
+
+# Verify tag exists
+if git rev-parse "tags/$TARGET_VERSION" >/dev/null 2>&1; then
+  echo "✓ Tag $TARGET_VERSION found"
+else
+  echo "✗ Tag $TARGET_VERSION not found"
+  echo "Available versions:"
+  git tag -l | grep -E '^[0-9]' | sort -V | tail -5
+  exit 1
+fi
+
+# Create feature branch from the target tag
+git checkout -b "feature/migration-to-$TARGET_VERSION" "tags/$TARGET_VERSION"
+
+# Or from intershop remote directly
+git checkout -b "feature/migration-to-$TARGET_VERSION" "<intershop-remote>/$TARGET_VERSION"
+```
+
+### Step 5: Validation
+
+```bash
+# Verify you're on the correct version
+git log --oneline -1
+
+# Check package.json version matches
+grep '"version"' package.json
+
+# Verify Angular version (should match target PWA)
+grep '"@angular/core"' package.json
+
+# Expected output for PWA 9.1.0:
+#   "@angular/core": "~15.2.0"
+```
+
+### Common Mistakes to Avoid
+
+**❌ DON'T:**
+```bash
+# Don't use develop branch for stable migrations
+git checkout -b feature/migration <intershop-remote>/develop
+
+# Don't assume origin is intershop-pwa
+git pull origin develop  # May pull from wrong remote!
+
+# Don't forget to specify tags/ prefix
+git checkout 9.1.0  # May checkout local branch instead of tag
+```
+
+**✅ DO:**
+```bash
+# Use explicit tag reference
+git checkout -b feature/migration-to-9.1 tags/9.1.0
+
+# Or use full remote/tag syntax
+git checkout -b feature/migration-to-9.1 <intershop-remote>/9.1.0
+
+# Verify version after checkout
+git describe --tags
+```
+
+### Automation-Friendly Approach
+
+For scripts, use this pattern:
+
+```bash
+#!/bin/bash
+
+INTERSHOP_REMOTE="upstream"  # Replace with your actual remote name
+TARGET_VERSION="9.1.0"       # User-specified target version
+
+# Fetch latest tags
+git fetch "$INTERSHOP_REMOTE" --tags
+
+# Validate target exists
+if ! git rev-parse "tags/$TARGET_VERSION" >/dev/null 2>&1 && \
+   ! git rev-parse "$INTERSHOP_REMOTE/$TARGET_VERSION" >/dev/null 2>&1; then
+  echo "ERROR: Version $TARGET_VERSION not found"
+  echo ""
+  echo "Available tags:"
+  git tag -l | grep -E '^[0-9]' | sort -V | tail -10
+  exit 1
+fi
+
+# Create feature branch
+git checkout -b "feature/migration-to-$TARGET_VERSION" "tags/$TARGET_VERSION"
+```
 - Always push to your project remote
 
 ## AI-Assisted Merge Guidance

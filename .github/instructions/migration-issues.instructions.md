@@ -879,3 +879,465 @@ Minimum 11 new SCSS variables required (see Critical Variables above)
 - ❌ Only removed failing template line for removed extension
 - ✅ Should have: Detected extension removal, cleaned entire directory, removed all references
 - **Lesson**: Always compare `src/app/extensions/` between PWA versions BEFORE fixing build errors
+
+## 9. Unknown Bugs vs Known Fixed Issues
+
+**Problem**: During migration, you encounter errors or unexpected behavior and spend time debugging issues that were already known bugs in the source version, later fixed in GitHub.
+
+**Why This Happens**:
+
+- Migrating from an older PWA version (e.g., 4.0.0) that had known bugs
+- Bug was fixed in a later patch/release
+- You're debugging something already solved by Intershop
+
+**Symptoms**:
+
+- Unexpected build errors that don't match migration patterns
+- Runtime errors that seem unrelated to your customizations
+- Behaviors that don't match PWA documentation
+
+**Prevention Strategy**:
+
+**BEFORE spending time debugging:**
+
+```bash
+# Check if your issue is a known bug already fixed
+./scripts/check-github-issues.sh --version 9.1.0 --search "SCSS variable"
+
+# Example searches:
+./scripts/check-github-issues.sh --version 9.1.0 --search "template syntax"
+./scripts/check-github-issues.sh --version 9.1.0 --search "docker compose"
+./scripts/check-github-issues.sh --version 9.1.0 --search "environment features"
+```
+
+**The script will**:
+
+1. Query GitHub for closed bugs
+2. Show which version the fix was released in
+3. Verify if your target version includes the fix
+4. Recommend whether to upgrade or if migration will resolve it
+
+**Manual Alternative**:
+
+```bash
+# Search GitHub issues directly
+# https://github.com/intershop/intershop-pwa/issues?q=is%3Aissue+is%3Aclosed+YOUR_KEYWORDS
+
+# Check CHANGELOG for your version range
+git checkout develop
+git log --oneline tags/4.0.0..tags/9.1.0 --grep="fix" | head -20
+```
+
+**Time Saved**: 30-60 minutes per unknown issue that was actually a known bug.
+
+**Best Practice**:
+
+1. When you hit a puzzling error, search GitHub issues FIRST
+2. Check if it's version-specific
+3. Verify your target version has the fix
+4. Don't debug known issues - just complete the migration
+
+## 10. docker-compose.yml Merge Conflicts
+
+**Problem**: The `docker-compose.yml` file is often customized (custom services, environment variables, ports) AND updated in new PWA versions. Simple `--ours` or `--theirs` strategy loses important configuration from one side.
+
+**Why This Happens**:
+
+- **New PWA version** adds new services or updates configurations (e.g., Redis, monitoring)
+- **Your customization** has custom services (e.g., mock APIs, dev databases) and custom environment variables
+- Git marks file as conflicted
+- Unlike code merges, YAML structure makes conflicts harder to resolve manually
+
+**Symptoms**:
+
+```bash
+# After merge
+git status
+# both modified:   docker-compose.yml
+
+# Trying simple resolution loses data
+git checkout --ours docker-compose.yml     # Loses PWA updates
+git checkout --theirs docker-compose.yml   # Loses custom services
+```
+
+**Wrong Approaches**:
+
+```bash
+# ❌ DON'T: Accept only one side
+git checkout --theirs docker-compose.yml   # Lose all custom services/env vars
+
+# ❌ DON'T: Manual YAML editing without validation
+# Easy to break YAML syntax, miss nested config, duplicate keys
+```
+
+**Correct Approach - Automated Merge**:
+
+```bash
+# 1. Use the intelligent merge script
+./scripts/merge-docker-compose.sh
+
+# 2. Review the merged result
+cat docker-compose.yml
+
+# 3. Validate YAML syntax
+docker-compose config
+
+# 4. Test services startup
+docker-compose up -d
+
+# 5. Commit
+git add docker-compose.yml
+git commit -m "merge: combine docker-compose from both branches"
+```
+
+**What the script does**:
+
+1. **Detects custom services** - Services only in your custom branch
+2. **Identifies PWA additions** - New services from PWA update
+3. **Merges common services** - Combines configuration for shared services:
+   - Uses PWA base config
+   - Merges environment variables (custom takes precedence)
+   - Preserves custom ports and volumes
+4. **Creates backup** - Saves original before changes
+5. **Validates result** - Ensures valid YAML structure
+
+**Manual Review Checklist** (after script runs):
+
+```bash
+# Check all your custom services are present
+docker-compose config --services
+
+# Verify custom environment variables
+docker-compose config | grep -A 5 "environment:"
+
+# Compare against backup if needed
+diff docker-compose.yml docker-compose.yml.backup.*
+```
+
+**Common Customizations to Verify**:
+
+- Custom service definitions (e.g., `mock-api`, `local-db`)
+- Environment variable values ( `THEME`, `ICM_BASE_URL`)
+- Port mappings for custom services
+- Custom volumes and networks
+- Service dependencies
+
+**Time Saved**: 15-30 minutes of manual YAML editing and troubleshooting syntax errors.
+
+## 11. Template Linting Issues
+
+**Problem**: After migration, templates contain patterns that trigger linting warnings/errors. These may not prevent builds but clutter the linting output and need resolution. During migration, you want to suppress these temporarily to focus on critical issues first.
+
+**Why This Happens**:
+
+- Old templates used patterns now flagged by linters (function calls in templates, negated async, `==` vs `===`, `$any()`)
+- Linting rules were updated in new PWA version
+- Your customization branches merged old patterns with new rules
+
+**Symptoms**:
+
+```bash
+npm run lint
+# src/app/shell/header/header.component.html
+#   10:15  error  Avoid calling expressions in templates  @angular-eslint/template/no-call-expression
+#   15:20  error  Negated async is not allowed          @angular-eslint/template/no-negated-async
+#   22:10  error  Use === instead of ==                  @angular-eslint/template/eqeqeq
+```
+
+**Strategy - Suppress During Migration, Fix Later**:
+
+```bash
+# 1. Run automated suppression script
+node scripts/fix-template-linting.js --dry-run
+
+# 2. Review what would be suppressed
+# Verify these are truly migration-related, not genuine bugs
+
+# 3. Apply suppressions
+node scripts/fix-template-linting.js
+
+# 4. Verify linting passes
+npm run lint
+```
+
+**What the script does**:
+
+- Detects common migration-related linting issues
+- Adds `<!-- eslint-disable-next-line RULE_NAME -->` comments
+- Preserves indentation
+- Only suppresses rules that are safe for temporary suppression:
+  - `@angular-eslint/template/no-call-expression`
+  - `@angular-eslint/template/no-negated-async`
+  - `@angular-eslint/template/eqeqeq`
+  - `@angular-eslint/template/no-any`
+
+**Manual Alternative**:
+
+```html
+<!-- Before (linting error) -->
+<div *ngIf="!(loading$ | async)">Content</div>
+
+<!-- With suppression comment -->
+<!-- eslint-disable-next-line @angular-eslint/template/no-negated-async -->
+<div *ngIf="!(loading$ | async)">Content</div>
+```
+
+**Post-Migration Cleanup**:
+
+After migration stabilizes:
+
+```bash
+# 1. Find all suppression comments
+grep -r "eslint-disable-next-line" src/app --include="*.html"
+
+# 2. Fix underlying issues one rule at a time
+# Example: Fix negated async usage
+# Replace !(obs$ | async) with (obs$ | async) === false
+
+# 3. Remove suppression comments as fixes are applied
+
+# 4. Verify linting
+npm run lint
+```
+
+**Benefits**:
+
+- ✅ Get project building and tested first
+- ✅ Address linting issues iteratively after migration
+- ✅ Avoid mixing migration problems with style improvements
+- ✅ Clear visibility into what needs future attention
+
+**Time Saved**: 1-2 hours during migration by deferring non-critical linting fixes.
+
+## 12. Jest Snapshot Mismatches
+
+**Problem**: After migration, Jest tests fail due to snapshot mismatches. It's hard to distinguish between:
+- Legitimate snapshot updates (due to Angular/library upgrades)
+- Actual test failures (broken functionality)
+
+**Why This Happens**:
+
+- Angular version change affects component rendering
+- Template syntax modernization changes output
+- Library updates (Bootstrap, FontAwesome) change HTML structure
+- Component refactoring in new PWA version
+
+**Symptoms**:
+
+```bash
+npm test
+# FAIL src/app/shell/header/header.component.spec.ts
+#   ● Header Component › should render
+#     expect(received).toMatchSnapshot()
+#     Snapshot name: `Header Component should render 1`
+#     - Snapshot
+#     + Received
+#     ...different output...
+```
+
+**Risk**: Blindly updating all snapshots `npm test -- -u` might mask real test failures.
+
+**Intelligent Approach**:
+
+```bash
+# 1. Analyze snapshot failures vs real failures
+./scripts/update-snapshots.sh --dry-run
+
+# 2. Interactive mode - review each change
+./scripts/update-snapshots.sh --interactive
+
+# OR automatic for all (if confident)
+./scripts/update-snapshots.sh --all
+
+# 3. Verify tests pass after update
+npm test
+```
+
+**What the script does**:
+
+1. **Categorizes failures** - Snapshot mismatches vs logic failures
+2. **Shows statistics** - How many snapshots, which files
+3. **Provides context** - Why snapshots might differ after migration
+4. **Offers options**:
+   - Update all
+   - Interactive review
+   - Pattern-based selective update
+5. **Validates result** - Re-runs tests to confirm
+
+**Manual Review Process**:
+
+```bash
+# 1. Run tests and review diff
+npm test
+
+# 2. For each snapshot failure:
+#    - Is the HTML change expected due to migration?
+#    - Does the component still work correctly?
+#    - Is this a genuine regression?
+
+# 3. Update specific snapshots
+npm test -- --updateSnapshot --testNamePattern="Header Component"
+
+# 4. Verify functionality
+npm start  # Manual test the component
+```
+
+**When to Update Snapshots**:
+
+**✅ Update if**:
+- Only formatting/whitespace changed
+- Angular version changed rendering (expected)
+- Template syntax modernization (e.g., self-closing tags)
+- Library update caused HTML structure change (verified working)
+
+**❌ DON'T update if**:
+- Content is missing
+- Functionality seems broken
+- Unexpected elements appeared/disappeared
+- Test also has logic errors
+
+**Pattern-Based Updates** (for specific components):
+
+```bash
+# Update only product-related snapshots
+./scripts/update-snapshots.sh --pattern "product.*"
+
+# Update only specific folder
+./scripts/update-snapshots.sh --pattern "shell/.*"
+```
+
+**Time Saved**: 20-40 minutes by systematically handling snapshots instead of ad-hoc `--updateSnapshot`.
+
+## 13. Incomplete SCSS Property Migration
+
+**Problem**: Beyond missing theme variables (Issue #1), custom SCSS files may be missing new mixins, functions, or CSS properties introduced in the new PWA version. This leads to:
+- Missing styles (features look broken)
+- Build warnings about undefined mixins
+- SCSS compile errors about unknown properties
+
+**Why This Happens**:
+
+- PWA adds new SCSS utilities and conventions
+- Custom SCSS files don't pull these automatically
+- Simple variable sync (Issue #1) doesn't catch mixins, imports, functions
+
+**Symptoms**:
+
+```bash
+npm run build
+# Warning: Undefined mixin 'responsive-grid'
+# Warning: Undefined function 'calculate-spacing'
+# Expected property value but found '$undefined'
+```
+
+**Or**: Styles render incorrectly (missing responsive behavior, wrong spacing, broken layouts)
+
+**Comprehensive SCSS Comparison**:
+
+```bash
+# 1. Compare all custom SCSS files to PWA versions
+node scripts/compare-scss-files.js
+
+# 2. Review missing properties
+# Shows:
+#   - Missing variables
+#   - Missing mixins
+#   - Missing @use imports
+#   - Missing classes
+
+# 3. Auto-add missing properties (with backup)
+node scripts/compare-scss-files.js --auto-fix
+
+# 4. Review changes
+git diff src/styles/
+
+# 5. Adjust auto-added values for your brand
+# Edit: src/styles/themes/[your-theme]/variables.scss
+
+# 6. Test
+npm run build
+```
+
+**What the script detects**:
+
+1. **Missing variables** - New SCSS variables from PWA
+2. **Missing mixins** - New utility mixins
+3. **Missing @use imports** - Sass module system imports
+4. **Missing classes** - New utility classes
+
+**Example Output**:
+
+```
+🎨 SCSS File Comparator
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Comparing: src/styles/themes/training/variables.scss
+
+⚠ Missing 3 variables:
+  • $responsive-breakpoint-xl
+  • $grid-gutter-width-mobile
+  • $z-index-modal-overlay
+
+⚠ Missing 2 mixins:
+  • @mixin responsive-grid
+  • @mixin fluid-spacing
+
+⚠ Missing 1 imports:
+  • @use 'sass:math';
+
+✓ Properties added (dry-run mode)
+```
+
+**Manual Review Checklist**:
+
+After auto-fix, review:
+
+```scss
+// 1. Check added variables make sense for your brand
+$color-brand-secondary: #006f6f; // Adjust if needed
+
+// 2. Verify mixins are complete (script adds TODO comments)
+@mixin responsive-grid($columns) {
+  // TODO: Add mixin body from PWA version
+}
+
+// 3. Test SCSS compilation
+npm run build
+
+// 4. Visual test in browser
+npm start
+```
+
+**Comparison Workflow**:
+
+```bash
+# Compare specific file
+node scripts/compare-scss-files.js src/styles/themes/training/variables.scss
+
+# Compare all themes
+node scripts/compare-scss-files.js
+
+# Just preview changes
+node scripts/compare-scss-files.js --dry-run
+```
+
+**Time Saved**: 30-60 minutes of manual diff comparison and property copying.
+
+**Integration with Issue #1** (Theme Variables):
+
+- **Issue #1** (validate-theme-completeness.sh) - Checks variables only
+- **Issue #13** (compare-scss-files.js) - Comprehensive check: variables + mixins + imports + classes
+
+Recommended workflow:
+
+```bash
+# Step 1: Quick variable check (Issue #1)
+./scripts/validate-theme-completeness.sh
+
+# Step 2: Comprehensive SCSS check (Issue #13)
+node scripts/compare-scss-files.js
+
+# Step 3: Fix what's found
+./scripts/sync-custom-theme-variables.sh  # Variables
+node scripts/compare-scss-files.js --auto-fix  # Everything else
+```

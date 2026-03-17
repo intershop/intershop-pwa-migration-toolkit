@@ -51,9 +51,63 @@
 
 ---
 
-## 🚀 Usage Workflow
+## � Platform Requirements
+
+### Linux / macOS
+All scripts work natively. No additional setup required.
+
+### Windows
+
+**Option A: WSL2 (Recommended)**
+
+Most modern Windows development environments use WSL2 for Node.js, Docker, and Git workflows. All toolkit scripts work perfectly in WSL2:
+
+```powershell
+# Install WSL2 (Windows 10/11)
+wsl --install Ubuntu
+
+# After installation, open Ubuntu and clone your project
+cd ~
+git clone <your-pwa-repo>
+cd <your-pwa-repo>
+
+# Use all scripts exactly as documented
+./scripts/migrate-custom-branch.sh
+```
+
+**Benefits:** 100% compatibility, native Linux environment, integrates with VS Code
+
+**Option B: Git Bash (Simple Fallback)**
+
+If you prefer not to use WSL2, Git Bash provides good compatibility:
+
+```bash
+# Install Git for Windows (includes Git Bash)
+# Download from: https://git-scm.com/download/win
+
+# Run shell scripts through Git Bash terminal
+bash ./scripts/migrate-custom-branch.sh
+bash ./scripts/check-template-syntax.sh
+
+# JavaScript scripts work directly via Node.js
+node scripts/migration-helper.js
+node scripts/detect-pattern-changes.js
+```
+
+**Benefits:** Zero setup if Git is already installed, good compatibility for standard bash scripts
+
+**Compatibility Notes:**
+- ✅ All 6 JavaScript scripts (`.js`) work on all platforms via Node.js
+- ✅ All 11 shell scripts (`.sh`) work on Linux/macOS/WSL2 natively
+- ⚠️ Shell scripts work in Git Bash with minor limitations on advanced features
+
+---
+
+## �🚀 Usage Workflow
 
 ### STEP 1: Pull Toolkit into Custom PWA
+
+**Linux / macOS / WSL2 / Git Bash:**
 
 ```bash
 # In your custom PWA project
@@ -70,6 +124,26 @@ chmod +x scripts/*.sh
 
 # Cleanup
 rm -rf /tmp/toolkit
+```
+
+**Windows PowerShell (alternative):**
+
+```powershell
+# In your custom PWA project
+cd C:\path\to\your-custom-pwa
+
+# Clone toolkit temporarily
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git $env:TEMP\toolkit
+
+# Copy files
+New-Item -ItemType Directory -Force -Path .github\instructions, scripts
+Copy-Item -Path "$env:TEMP\toolkit\.github\instructions\*" -Destination .github\instructions\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\scripts\*" -Destination scripts\ -Recurse
+
+# Cleanup
+Remove-Item -Recurse -Force "$env:TEMP\toolkit"
+
+# Note: Use WSL2 or Git Bash for running .sh scripts
 ```
 
 ### STEP 2: Prepare & Evaluate

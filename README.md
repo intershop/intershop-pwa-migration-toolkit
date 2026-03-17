@@ -45,9 +45,59 @@
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - Comprehensive breaking change patterns across PWA versions
 
-**Total:** 24 files (7 instructions + 16 scripts + 1 database)
+### Migration Skills (3 files in `.github/skills/`) ⭐ NEW
+- `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
+- `pwa-troubleshooting.SKILL.md` - Specialized debugging and conflict resolution
+- `README.md` - Skills usage guide and architecture
+
+**Total:** 27 files (7 instructions + 16 scripts + 1 database + 3 skills)
 
 **Time Savings:** New scripts save 2-4 hours per migration by automating tedious tasks.
+
+---
+
+## 🤖 AI-Powered Migration Assistance
+
+### GitHub Copilot Skills (NEW)
+
+For complex migrations, this toolkit includes specialized **skills** that provide interactive, step-by-step guidance:
+
+#### 🎯 PWA Migration Skill
+**Invoke for:** Planning, complexity assessment, guided execution
+
+```
+User: "I need to migrate from PWA 4.0 to 9.1"
+Copilot: [Invokes pwa-migration skill for comprehensive guidance]
+```
+
+**What it does:**
+- Assesses migration complexity (Tier 1/2/3)
+- Recommends which scripts to run and when
+- Guides through Git operations
+- Provides context-aware troubleshooting
+- Generates comprehensive migration reports
+
+#### 🐛 PWA Troubleshooting Skill
+**Invoke for:** Debugging errors, resolving conflicts, fixing broken builds
+
+```
+User: "Build fails with 'Undefined variable $theme-color'"
+Copilot: [Invokes pwa-troubleshooting skill for diagnosis]
+```
+
+**What it does:**
+- Diagnoses build/SCSS/template errors
+- Provides step-by-step resolution playbooks
+- Resolves Git merge conflicts
+- Emergency recovery procedures
+- Investigates unknown error patterns
+
+#### Skills vs Instructions
+
+- **Instructions** (`.instructions.md`): Auto-loaded when editing migration scripts - passive reference
+- **Skills** (`.SKILL.md`): Explicitly invoked for complex workflows - active orchestration
+
+See [`.github/skills/README.md`](.github/skills/README.md) for detailed usage guide.
 
 ---
 

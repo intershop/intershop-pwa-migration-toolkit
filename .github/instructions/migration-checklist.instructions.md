@@ -8,6 +8,57 @@ This guide covers the essential checklists to follow before and after migrating 
 
 ## Pre-Migration Checklist
 
+### 0. Document Source and Target Versions **[CRITICAL - DO THIS FIRST]**
+
+**Before any migration work, explicitly identify and document:**
+
+```bash
+# 1. Identify your CURRENT (source) version
+git describe --tags --abbrev=0
+# OR
+grep '"version"' package.json
+# Result: e.g., "4.0.0", "9.1.0"
+
+# 2. Identify TARGET version (from target branch or tag)
+git checkout <target-branch-or-tag>
+grep '"version"' package.json
+git checkout -  # Return to your branch
+
+# 3. Check Angular versions (BOTH source and target)
+# Source:
+grep '"@angular/core"' package.json
+
+# Target:
+git show <target-branch>:package.json | grep '"@angular/core"'
+
+# 4. Check Node.js requirements
+cat .nvmrc
+# OR check target PWA documentation
+
+# 5. Document in migration plan
+echo "# Migration Plan
+Source: PWA <YOUR_VERSION>, Angular <SOURCE_ANGULAR>, Node <SOURCE_NODE>
+Target: PWA <TARGET_VERSION>, Angular <TARGET_ANGULAR>, Node <TARGET_NODE>
+Gap: <X> major versions, <Y> minor versions
+" > MIGRATION_PLAN.md
+```
+
+**Why this matters:**
+- Different versions have different breaking changes
+- Pattern detection scripts REQUIRE version parameters
+- Angular version mismatches cause 100+ build errors
+- Node.js version affects build process and dependencies
+- Complexity analysis depends on version gap
+
+**Export for scripts:**
+```bash
+export SOURCE_VERSION="X.Y.Z"
+export TARGET_VERSION="A.B.C"
+# Now use in all migration scripts
+./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
+```
+
 ### 1. Verify Git Remotes Setup
 
 - Identify your **Intershop PWA remote** (READ-ONLY) - for pulling updates (commonly `origin` or `upstream`)
@@ -217,6 +268,52 @@ git push <project-remote> backup-$(date +%Y%m%d)-before-migration
 | PWA 5.x-7.x | Angular 15.x    | Standalone components support          |
 | PWA 8.x-9.x | Angular 16.x    | Signals, improved SSR, required inputs |
 | PWA 10.x+   | Angular 17.x+   | New control flow syntax, SSR hydration |
+
+### 7. PWA 10.0-Specific Pre-Migration Steps
+
+If migrating to PWA 10.0.0, additional preparation is required:
+
+**a) Control Flow Syntax Detection:**
+
+```bash
+# Detect old control flow usage (*ngIf, *ngFor, *ngSwitch)
+grep -r "\*ngIf=" src/ --include="*.html" | wc -l
+grep -r "\*ngFor=" src/ --include="*.html" | wc -l
+grep -r "\*ngSwitch" src/ --include="*.html" | wc -l
+
+# After merge, run Angular CLI migration schematic
+./scripts/migrate-control-flow.sh
+```
+
+**b) Font Awesome Icons Detection:**
+
+```bash
+# Detect Font Awesome usage
+node scripts/migrate-bootstrap-icons.js
+
+# Generate detailed report
+node scripts/migrate-bootstrap-icons.js --report icons-migration.md
+
+# Auto-replace common icons (after review)
+node scripts/migrate-bootstrap-icons.js --auto-replace
+```
+
+**c) Node.js Upgrade:**
+
+```bash
+# Update to Node.js 22 LTS
+echo "22" > .nvmrc
+nvm install 22
+nvm use 22
+
+# Update Dockerfiles
+sed -i 's/FROM node:[0-9]\+/FROM node:22/' Dockerfile*
+```
+
+**Why these matter:**
+- Control flow migration is **not automatic during merge** - requires Angular CLI schematic
+- Bootstrap Icons require different CSS classes and may need mapping
+- Node.js 22 has different build optimizations and dependencies
 
 **Benefits of Pre-Migration Angular Update**:
 

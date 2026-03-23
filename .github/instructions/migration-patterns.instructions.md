@@ -6,6 +6,87 @@ applyTo: '**/migration*.{js,sh,ts}'
 
 **NOTE:** This guide has been split into focused, manageable sections for better readability and AI processing.
 
+## Version-Aware Migration Approach
+
+**CRITICAL:** All migrations must track source and target versions explicitly. The migration process, patterns, and breaking changes vary significantly between PWA versions.
+
+### Version Information to Capture
+
+**Always document:**
+1. **Source PWA version** - Current version you're migrating FROM (e.g., `4.0.0`, `9.1.0`)
+2. **Target PWA version** - Desired version you're migrating TO (e.g., `9.1.0`, `10.0.0`)
+3. **Angular version** - Both source and target (critical for compatibility)
+4. **Node.js version** - Required for target PWA
+5. **ICM version** - Backend compatibility requirements
+
+### Why Version Tracking Matters
+
+- **Breaking changes** are version-specific and cumulative
+- **Pattern detection** needs to analyze ALL versions between source and target
+- **Intermediate versions** may introduce obstacles that need addressing
+- **Migration complexity** scales with version gap (1 minor vs 2 major versions)
+- **Automation scripts** use version parameters to fetch correct CHANGELOGs and patterns
+
+### Version Detection Commands
+
+```bash
+# Check current PWA version
+git describe --tags --abbrev=0
+# OR
+grep '"version"' package.json
+
+# Check Angular version
+grep '"@angular/core"' package.json
+
+# Check Node.js version requirement
+cat .nvmrc
+# OR
+grep "node" package.json | grep "engines"
+
+# List available PWA tags (for target selection)
+git ls-remote --tags https://github.com/intershop/intershop-pwa.git | grep -v '\^{}' | sort -V | tail -20
+```
+
+### General Migration Pattern (Any Version)
+
+```bash
+# 1. Identify versions
+SOURCE_VERSION="X.Y.Z"  # Your current version
+TARGET_VERSION="A.B.C"  # Desired version
+
+# 2. Analyze complexity and get tier recommendation
+./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+
+# 3. Detect breaking changes between versions
+./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
+
+# 4. Execute migration with version parameters
+./scripts/migrate-custom-branch.sh --from $SOURCE_VERSION --to $TARGET_VERSION
+```
+
+### Major Version Milestones (Reference)
+
+| PWA Version | Angular | Node.js | Key Changes |
+|-------------|---------|---------|-------------|
+| 4.0.x | 14 | 16 | Baseline legacy architecture |
+| 9.0.x | 15/16 | 18 | Sass module system, standalone components |
+| 9.1.x | 16 | 18 | Stricter typing, self-closing tags |
+| **10.0.x** | **17** | **22** | **Control flow syntax (@if/@for), Bootstrap Icons, New SSR** |
+
+**Note:** This table is a reference guide. Always check actual requirements in target version's documentation.
+
+### Dynamic Pattern Detection
+
+The toolkit uses version parameters to:
+- Fetch correct CHANGELOG.md for target version
+- Apply relevant patterns from `data/pattern-migrations.json`
+- Calculate cumulative breaking changes across version gap
+- Recommend appropriate migration tier (1/2/3)
+
+**Example:** Migrating 4.0.0 → 10.0.0 applies patterns from:
+- 4.0 → 9.0, 9.0 → 9.1, 9.1 → 10.0 (PWA-specific)
+- 14 → 15, 15 → 16, 16 → 17 (Angular-specific)
+
 ## Migration Documentation Structure
 
 The migration documentation is organized into the following files:
@@ -15,9 +96,22 @@ The migration documentation is organized into the following files:
 **Pre/Post Migration Checklists and Success Criteria**
 
 - Pre-migration checklist (git remotes, themes, extensions)
+- Version identification (CRITICAL first step)
 - Post-migration verification steps
 - Template-component consistency checks
 - Success criteria and documentation requirements
+- PWA 10.0-specific preparation steps
+
+### 🔟 [migration-pwa10.instructions.md](./migration-pwa10.instructions.md) **[NEW]**
+
+**PWA 10.0-Specific Migration Guide**
+
+- Angular 17 control flow migration workflow
+- Font Awesome → Bootstrap Icons migration
+- Detection vs. migration tool matrix
+- Automated transformation tools
+- Manual migration requirements
+- Troubleshooting PWA 10.0 issues
 
 ### 🔧 [migration-issues.instructions.md](./migration-issues.instructions.md)
 

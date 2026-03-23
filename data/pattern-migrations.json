@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2026-03-04",
+  "version": "1.1.0",
+  "lastUpdated": "2026-03-23",
   "description": "Comprehensive pattern migration database for Intershop PWA versions",
   "migrations": [
     {
@@ -107,6 +107,136 @@
           "example": {
             "before": "<ish-loading></ish-loading>",
             "after": "<ish-loading />"
+          }
+        }
+      ]
+    },
+    {
+      "fromVersion": "9.1",
+      "toVersion": "10.0",
+      "description": "PWA 9.1 → 10.0 Major Release - Angular 17, Bootstrap Icons",
+      "angularVersion": "17",
+      "nodeVersion": "22",
+      "icmVersion": "14.0.1",
+      "patterns": [
+        {
+          "type": "html",
+          "description": "Angular 17: Control flow - *ngIf to @if migration",
+          "searchRegex": "\\*ngIf\\s*=",
+          "files": "**/*.html",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @if/@for/@switch syntax.",
+          "example": {
+            "before": "<div *ngIf=\"show\">Content</div>",
+            "after": "@if (show) { <div>Content</div> }"
+          }
+        },
+        {
+          "type": "html",
+          "description": "Angular 17: Control flow - *ngFor to @for migration",
+          "searchRegex": "\\*ngFor\\s*=",
+          "files": "**/*.html",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @for syntax.",
+          "example": {
+            "before": "<div *ngFor=\"let item of items\">{{item}}</div>",
+            "after": "@for (item of items; track item) { <div>{{item}}</div> }"
+          }
+        },
+        {
+          "type": "html",
+          "description": "Angular 17: Control flow - *ngSwitch to @switch migration",
+          "searchRegex": "\\*ngSwitch\\s*=",
+          "files": "**/*.html",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @switch syntax.",
+          "example": {
+            "before": "<div [ngSwitch]=\"value\">\n  <span *ngSwitchCase=\"'a'\">A</span>\n</div>",
+            "after": "@switch (value) {\n  @case ('a') { <span>A</span> }\n}"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "Icons: Font Awesome replaced with Bootstrap Icons",
+          "searchRegex": "(fa-|fas\\s|far\\s|fab\\s|font-awesome)",
+          "files": "**/*.{scss,html,ts}",
+          "severity": "high",
+          "manual": true,
+          "note": "PWA 10.0 replaces Font Awesome with Bootstrap Icons. Search for 'fa-' icon classes and replace with Bootstrap Icons equivalents.",
+          "example": {
+            "before": "<i class=\"fas fa-search\"></i>",
+            "after": "<i class=\"bi bi-search\"></i>"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Inventory: Separate /inventories REST call",
+          "searchRegex": "product.*inventory|getProduct.*includeInventory",
+          "files": "**/*.{ts,service.ts}",
+          "severity": "medium",
+          "manual": true,
+          "note": "Inventory information now fetched via separate /inventories REST call instead of with products.",
+          "example": {
+            "before": "getProduct(sku, includeInventory: true)",
+            "after": "getProduct(sku) + separate inventoryService.getInventory(sku)"
+          }
+        },
+        {
+          "type": "config",
+          "description": "Logging: NGINX/SSR logging configuration changed",
+          "searchRegex": "logger|log.*format|LOG_FORMAT",
+          "files": "nginx.conf,src/ssr/server.ts,docker/**/*",
+          "severity": "medium",
+          "manual": true,
+          "note": "Logging configuration and default format changed to ECS-compatible format. Review nginx.conf and SSR logging setup.",
+          "example": {
+            "before": "Custom log format",
+            "after": "ECS-compatible JSON logging"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Angular 17: New SSR architecture",
+          "searchRegex": "express-engine|@nguniversal",
+          "files": "**/*.ts,server.ts",
+          "severity": "high",
+          "manual": true,
+          "note": "Angular 17 introduces new SSR architecture. Check for @nguniversal references that may need updating.",
+          "example": {
+            "before": "@nguniversal/express-engine",
+            "after": "@angular/ssr"
+          }
+        },
+        {
+          "type": "config",
+          "description": "Node.js: Upgrade to Node 22 LTS",
+          "searchRegex": "node.*version|NODE_VERSION",
+          "files": ".nvmrc,Dockerfile,package.json,.gitlab-ci.yml",
+          "severity": "low",
+          "manual": true,
+          "note": "PWA 10.0 is developed and tested with Node.js 22.x LTS. Update .nvmrc, Dockerfiles, and CI/CD configs.",
+          "example": {
+            "before": "NODE_VERSION=18",
+            "after": "NODE_VERSION=22"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "Themes: Bootstrap variables cleanup",
+          "searchRegex": "\\$theme-color|\\$bootstrap-",
+          "files": "src/styles/themes/**/*.scss",
+          "severity": "medium",
+          "manual": true,
+          "note": "PWA 10.0 includes Bootstrap variables cleanup. Review custom theme variables for changes.",
+          "example": {
+            "before": "$theme-color-custom: ...",
+            "after": "See b2b/b2c theme for updated variable structure"
           }
         }
       ]

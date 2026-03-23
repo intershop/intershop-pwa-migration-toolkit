@@ -41,13 +41,42 @@ This skill can:
 
 ## Migration Process Overview
 
+**CRITICAL FIRST STEP: Version Identification**
+
+Before any migration work, explicitly identify:
+1. **Source PWA version** (current)
+2. **Target PWA version** (desired)
+3. **Angular versions** (both source and target)
+4. **Node.js requirements** for target
+5. **Version gap** (how many major/minor versions)
+
+**Version detection commands:**
+```bash
+# Current version
+git describe --tags --abbrev=0  # OR grep '"version"' package.json
+
+# Target version (temporarily checkout target branch)
+git show <target-branch>:package.json | grep '"version"'
+
+# Angular versions
+grep '"@angular/core"' package.json  # Current
+git show <target-branch>:package.json | grep '"@angular/core"'  # Target
+```
+
+**All migration scripts require version parameters:**
+```bash
+./scripts/analyze-migration-complexity.sh <source-version> <target-version>
+./scripts/detect-pattern-changes.js <source-version> <target-version>
+```
+
 ### Phase 1: Discovery & Planning
 ```
-1. Interview user about current/target versions
-2. Run complexity analysis (analyze-migration-complexity.sh)
-3. Recommend tier approach (1: simple merge, 2: pattern detection, 3: comprehensive)
-4. Check prerequisites (Angular version, remotes, themes)
-5. Create migration plan with specific scripts/steps
+1. **IDENTIFY VERSIONS** - Source and target (MANDATORY FIRST STEP)
+2. Interview user about customization scope
+3. Run complexity analysis (analyze-migration-complexity.sh with versions)
+4. Recommend tier approach (1: simple merge, 2: pattern detection, 3: comprehensive)
+5. Check prerequisites (Angular version, remotes, themes)
+6. Create migration plan with version-specific patterns
 ```
 
 ### Phase 2: Preparation
@@ -109,6 +138,83 @@ This skill can:
 - B2B customizations or quote management
 
 **Approach:** Full pattern database analysis, systematic migration
+
+## Version-Specific Migration Guidance
+
+### Migrating to PWA 10.0.0 (Latest)
+
+**Key Changes (PWA 9.1 → 10.0):**
+- **Angular 17** upgrade (from Angular 16)
+- **Control flow syntax** migration: `*ngIf` → `@if`, `*ngFor` → `@for`, `*ngSwitch` → `@switch`
+- **Font Awesome → Bootstrap Icons** (breaking icon system change)
+- **New SSR architecture** (Angular 17 SSR)
+- **Node.js 22** LTS required
+- **Logging format** changed to ECS-compatible JSON
+- **Inventory REST calls** now separate from product calls
+
+**Critical Actions:**
+1. **Update Node.js to 22.x** before migration
+2. **Prepare for control flow migration** - All templates need updating
+3. **Audit Font Awesome usage** - Every `fa-*` class needs Bootstrap Icons equivalent
+4. **Review SSR configuration** - Check for `@nguniversal` references
+5. **Update logging setup** - NGINX and SSR logging configs changed
+
+**Pattern Detection:**
+```bash
+# Detect Angular 17 control flow patterns
+./scripts/detect-pattern-changes.js 9.1.0 10.0.0
+
+# Check for Font Awesome usage
+grep -r "fa-\|fas \|far \|fab " src/
+grep -r "font-awesome" src/
+
+# Check for old control flow syntax
+grep -r "\*ngIf=\|\*ngFor=\|\*ngSwitch=" src/
+```
+
+**Recommended Approach:**
+- **Tier 3 migration** recommended for ANY version to 10.0
+- Plan 8-16 hours for control flow syntax migration
+- Manual template review required (control flow not auto-fixable)
+- Consider incremental: migrate to 9.1 first, then 10.0
+
+### Migrating to PWA 9.1.x
+
+**Key Changes (9.0 → 9.1):**
+- Stricter TypeScript typing in environment.model.ts
+- Self-closing tag syntax preferred
+- Standalone components expanded
+
+**Pattern Detection:**
+```bash
+./scripts/detect-pattern-changes.js 9.0.0 9.1.0
+```
+
+### Migrating to PWA 9.0.x
+
+**Key Changes (8.x → 9.0):**
+- Sass module system migration (`darken()` → `color.adjust()`)
+- `@use 'sass:color'` imports required
+- Map functions modernization
+
+**Pattern Detection:**
+```bash
+./scripts/detect-pattern-changes.js 8.0.0 9.0.0
+```
+
+### Major Version Jumps (4.0 → 10.0, etc.)
+
+**Crossing multiple major versions requires cumulative pattern application:**
+
+Example: 4.0 → 10.0 applies patterns from:
+- PWA 4.0 → 9.0, 9.0 → 9.1, 9.1 → 10.0
+- Angular 14 → 15, 15 → 16, 16 → 17
+
+**Recommended Strategy:**
+1. Use comprehensive mode: `./scripts/detect-pattern-changes.js --comprehensive 4.0.0 10.0.0`
+2. Consider intermediate migration: 4.0 → 9.1, then 9.1 → 10.0
+3. Plan 16-24 hours for multi-major version jumps
+4. Expect Tier 3 complexity
 
 ## Common Issue Resolution
 

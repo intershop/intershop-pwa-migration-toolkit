@@ -114,10 +114,109 @@
     {
       "fromVersion": "9.1",
       "toVersion": "10.0",
-      "description": "PWA 9.1 → 10.0 Major Release - Angular 17, Bootstrap Icons",
+      "description": "PWA 9.1 → 10.0 Major Release - Angular 17, Bootstrap Icons, SCSS Cleanup",
+      "releaseDate": "2026-03-13",
       "angularVersion": "17",
-      "nodeVersion": "22",
-      "icmVersion": "14.0.1",
+      "nodeVersion": "22.22.0",
+      "npmVersion": "10.9.4",
+      "icmRequirements": {
+        "minimum": "11.0.0",
+        "recommended": "14.1.0",
+        "notes": "Some features require ICM 11+; Recurring orders with warranties require ICM 14.1.0 + Recurring Order Extension 2.3.0",
+        "features": [
+          {
+            "feature": "Product Inventory Separate Fetch",
+            "icmMinVersion": "11.0.0",
+            "restApi": "/inventories endpoint",
+            "description": "Product inventory data fetched separately for better caching"
+          },
+          {
+            "feature": "SPARQUE API v4",
+            "icmMinVersion": "11.0.0",
+            "description": "SPARQUE services use API version 4 for all REST calls"
+          }
+        ]
+      },
+      "scssChanges": {
+        "variableRenames": [
+          {"old": "$color-corporate", "new": "$bg-color-corporate", "usage": "Corporate color for backgrounds", "severity": "breaking"},
+          {"old": "$color-special-primary", "new": "$color-special-error", "usage": "Error state color", "severity": "breaking"},
+          {"old": "$color-special-secondary", "new": "$color-special-warning", "usage": "Warning state color", "severity": "breaking"},
+          {"old": "$color-special-tertiary", "new": "$color-special-info", "usage": "Info state color", "severity": "breaking"},
+          {"old": "$color-special-quaternary", "new": "$color-special-success", "usage": "Success state color", "severity": "breaking"},
+          {"old": "$color-label-sale", "new": "$color-special-sale", "usage": "Sale label color", "severity": "breaking"},
+          {"old": "$color-label-topseller", "new": "$color-special-topseller", "usage": "Top Seller label color", "severity": "breaking"},
+          {"old": "$color-label-new", "new": "$color-special-new", "usage": "New product label color", "severity": "breaking"},
+          {"old": "$success-color", "new": "$color-special-success", "usage": "Success state color", "severity": "breaking"},
+          {"old": "$error-color", "new": "$color-special-error", "usage": "Error state color", "severity": "breaking"},
+          {"old": "$gray-400", "new": "$gray-500", "usage": "Part of new sorted gray color scale", "severity": "breaking"}
+        ],
+        "variablesRemoved": [
+          {"name": "$input-accent-color", "replacement": "$CORPORATE-DARK", "reasoning": "Consolidated color system"},
+          {"name": "$button-primary-bg", "replacement": "$CORPORATE-PRIMARY", "reasoning": "Simplified button theming"},
+          {"name": "$button-primary-border", "replacement": "$CORPORATE-PRIMARY", "reasoning": "Simplified button theming"},
+          {"name": "$button-default-color", "replacement": "$CORPORATE-PRIMARY", "reasoning": "Simplified button theming"},
+          {"name": "$button-default-bg", "replacement": "$color-inverse", "reasoning": "Simplified button theming"},
+          {"name": "$button-default-border", "replacement": "$CORPORATE-PRIMARY", "reasoning": "Simplified button theming"},
+          {"name": "$button-focus-box-shadow", "replacement": "$CORPORATE-SHADOW", "reasoning": "Consolidated shadow system"},
+          {"name": "$datepicker-border-radius", "replacement": "removed", "reasoning": "Using Bootstrap defaults"},
+          {"name": "$datepicker-today-bg", "replacement": "removed", "reasoning": "Using Bootstrap defaults"},
+          {"name": "$datepicker-today-hover", "replacement": "removed", "reasoning": "Using Bootstrap defaults"},
+          {"name": "$datepicker-active-bg", "replacement": "removed", "reasoning": "Using Bootstrap defaults"},
+          {"name": "$datepicker-active-hover", "replacement": "removed", "reasoning": "Using Bootstrap defaults"}
+        ],
+        "colorFunctionNotation": {
+          "old": "rgba(0, 0, 0, 0.125)",
+          "new": "rgb(0 0 0 / 0.125)",
+          "note": "Stylelint rule color-function-notation changed to 'modern' format"
+        }
+      },
+      "apiChanges": [
+        {
+          "type": "removed",
+          "class": "ApiService",
+          "method": "options()",
+          "replacement": "Use get() method with REST calls of latest REST interface",
+          "severity": "breaking",
+          "searchRegex": "\\.options\\s*\\(",
+          "migration": "Replace apiService.options() calls with apiService.get()"
+        },
+        {
+          "type": "changed",
+          "action": "logoutUserSuccess",
+          "description": "Now API-specific, only dispatch after successful token revocation",
+          "replacement": "Use resetUserData action for non-API logouts (forced logout, session cleanup)",
+          "severity": "breaking",
+          "files": "**/user.effects.ts,**/identity-provider*.ts"
+        },
+        {
+          "type": "changed",
+          "class": "ProductService / ProductFacade",
+          "property": "product.inStock / product.availableStock",
+          "status": "deprecated",
+          "replacement": "Use ShoppingFacade.productInventory$(sku) or ProductContextFacade selectors",
+          "willBeRemovedIn": "11.0.0",
+          "migration": "Replace direct property access with facade methods",
+          "files": "**/*.component.ts"
+        }
+      ],
+      "componentChanges": [
+        {
+          "component": "LanguageSwitchComponent",
+          "change": "Moved from mobile user menu to main header navigation",
+          "removed": ["accordion view", "component input variable for accordion"],
+          "reason": "Better accessibility and UX",
+          "impactedFiles": ["header*.component.html", "mobile-menu*.html"]
+        },
+        {
+          "component": "PaypalComponent",
+          "change": "Complete revision of PayPal integration",
+          "removed": ["payment-paypal-messages.component.ts"],
+          "merged": "All PayPal functionality now in single payment-paypal.component.ts",
+          "moved": "PaypalConfigService to src/app/core/utils/paypal/paypal-config",
+          "severity": "high"
+        }
+      ],
       "patterns": [
         {
           "type": "html",
@@ -127,7 +226,8 @@
           "severity": "critical",
           "autoFixable": false,
           "manual": true,
-          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @if/@for/@switch syntax.",
+          "schematic": "ng generate @angular/core:control-flow",
+          "note": "Use Angular CLI schematic or migrate-control-flow.sh script",
           "example": {
             "before": "<div *ngIf=\"show\">Content</div>",
             "after": "@if (show) { <div>Content</div> }"
@@ -135,16 +235,18 @@
         },
         {
           "type": "html",
-          "description": "Angular 17: Control flow - *ngFor to @for migration",
+          "description": "Angular 17: Control flow - *ngFor to @for migration (track required)",
           "searchRegex": "\\*ngFor\\s*=",
           "files": "**/*.html",
           "severity": "critical",
           "autoFixable": false,
           "manual": true,
-          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @for syntax.",
+          "schematic": "ng generate @angular/core:control-flow",
+          "note": "track expression is mandatory. Use unique identifier or full object for nested loops",
           "example": {
             "before": "<div *ngFor=\"let item of items\">{{item}}</div>",
-            "after": "@for (item of items; track item) { <div>{{item}}</div> }"
+            "after": "@for (item of items; track item.id) { <div>{{item}}</div> }",
+            "complexCase": "@for (item of items; track item) { /* use object when unique id unavailable */ }"
           }
         },
         {
@@ -155,91 +257,185 @@
           "severity": "critical",
           "autoFixable": false,
           "manual": true,
-          "note": "Angular 17 uses new control flow syntax. PWA 10.0 has migrated all templates to @switch syntax.",
+          "schematic": "ng generate @angular/core:control-flow",
           "example": {
-            "before": "<div [ngSwitch]=\"value\">\n  <span *ngSwitchCase=\"'a'\">A</span>\n</div>",
-            "after": "@switch (value) {\n  @case ('a') { <span>A</span> }\n}"
+            "before": "<div [ngSwitch]=\"value\">\n  <span *ngSwitchCase=\"'a'\">A</span>\n  <span *ngSwitchDefault>Other</span>\n</div>",
+            "after": "@switch (value) {\n  @case ('a') { <span>A</span> }\n  @default { <span>Other</span> }\n}"
           }
         },
         {
           "type": "scss",
-          "description": "Icons: Font Awesome replaced with Bootstrap Icons",
-          "searchRegex": "(fa-|fas\\s|far\\s|fab\\s|font-awesome)",
+          "description": "Icons: Font Awesome replaced with Bootstrap Icons (22% bundle size reduction)",
+          "searchRegex": "(fa-|fas\\s|far\\s|fab\\s|font-awesome|<fa-icon)",
           "files": "**/*.{scss,html,ts}",
           "severity": "high",
           "manual": true,
-          "note": "PWA 10.0 replaces Font Awesome with Bootstrap Icons. Search for 'fa-' icon classes and replace with Bootstrap Icons equivalents.",
+          "script": "scripts/migrate-bootstrap-icons.js",
+          "note": "Use migrate-bootstrap-icons.js for detection and auto-replacement of common icons",
+          "removed": "src/app/core/icon.module.ts",
+          "styling": "Icon size determined by font-size (inherited from parent)",
           "example": {
-            "before": "<i class=\"fas fa-search\"></i>",
-            "after": "<i class=\"bi bi-search\"></i>"
-          }
-        },
-        {
-          "type": "typescript",
-          "description": "Inventory: Separate /inventories REST call",
-          "searchRegex": "product.*inventory|getProduct.*includeInventory",
-          "files": "**/*.{ts,service.ts}",
-          "severity": "medium",
-          "manual": true,
-          "note": "Inventory information now fetched via separate /inventories REST call instead of with products.",
-          "example": {
-            "before": "getProduct(sku, includeInventory: true)",
-            "after": "getProduct(sku) + separate inventoryService.getInventory(sku)"
-          }
-        },
-        {
-          "type": "config",
-          "description": "Logging: NGINX/SSR logging configuration changed",
-          "searchRegex": "logger|log.*format|LOG_FORMAT",
-          "files": "nginx.conf,src/ssr/server.ts,docker/**/*",
-          "severity": "medium",
-          "manual": true,
-          "note": "Logging configuration and default format changed to ECS-compatible format. Review nginx.conf and SSR logging setup.",
-          "example": {
-            "before": "Custom log format",
-            "after": "ECS-compatible JSON logging"
-          }
-        },
-        {
-          "type": "typescript",
-          "description": "Angular 17: New SSR architecture",
-          "searchRegex": "express-engine|@nguniversal",
-          "files": "**/*.ts,server.ts",
-          "severity": "high",
-          "manual": true,
-          "note": "Angular 17 introduces new SSR architecture. Check for @nguniversal references that may need updating.",
-          "example": {
-            "before": "@nguniversal/express-engine",
-            "after": "@angular/ssr"
-          }
-        },
-        {
-          "type": "config",
-          "description": "Node.js: Upgrade to Node 22 LTS",
-          "searchRegex": "node.*version|NODE_VERSION",
-          "files": ".nvmrc,Dockerfile,package.json,.gitlab-ci.yml",
-          "severity": "low",
-          "manual": true,
-          "note": "PWA 10.0 is developed and tested with Node.js 22.x LTS. Update .nvmrc, Dockerfiles, and CI/CD configs.",
-          "example": {
-            "before": "NODE_VERSION=18",
-            "after": "NODE_VERSION=22"
-          }
+            "before": "<fa-icon [icon]=\"['fas', 'print']\" />",
+            "after": "<i class=\"bi bi-printer-fill\"></i>"
+          },
+          "commonMappings": [
+            {"fontAwesome": "fa-search", "bootstrapIcons": "bi-search"},
+            {"fontAwesome": "fa-times / fa-close", "bootstrapIcons": "bi-x"},
+            {"fontAwesome": "fa-shopping-cart", "bootstrapIcons": "bi-cart"},
+            {"fontAwesome": "fa-cog / fa-settings", "bootstrapIcons": "bi-gear"},
+            {"fontAwesome": "fa-user", "bootstrapIcons": "bi-person"},
+            {"fontAwesome": "fa-home", "bootstrapIcons": "bi-house"},
+            {"fontAwesome": "fa-print", "bootstrapIcons": "bi-printer-fill"}
+          ]
         },
         {
           "type": "scss",
-          "description": "Themes: Bootstrap variables cleanup",
-          "searchRegex": "\\$theme-color|\\$bootstrap-",
-          "files": "src/styles/themes/**/*.scss",
+          "description": "SCSS: Variable renames - Color system cleanup",
+          "searchRegex": "\\$color-corporate|\\$color-special-primary|\\$success-color|\\$error-color",
+          "files": "src/styles/**/*.scss",
+          "severity": "critical",
+          "manual": true,
+          "script": "scripts/validate-theme-completeness.sh",
+          "note": "Run validate-theme-completeness.sh to detect missing variables, then sync-custom-theme-variables.sh to add them",
+          "documentation": "See scssChanges.variableRenames for complete mapping"
+        },
+        {
+          "type": "typescript",
+          "description": "Inventory: Separate /inventories REST call for better caching",
+          "searchRegex": "product\\.inStock|product\\.availableStock",
+          "files": "**/*.{ts,component.ts}",
           "severity": "medium",
           "manual": true,
-          "note": "PWA 10.0 includes Bootstrap variables cleanup. Review custom theme variables for changes.",
+          "deprecation": "product.inStock and product.availableStock deprecated, will be removed in 11.0",
+          "migration": "Replace with ShoppingFacade.productInventory$(sku) or ProductContextFacade.select('inventory', 'inStock')",
           "example": {
-            "before": "$theme-color-custom: ...",
-            "after": "See b2b/b2c theme for updated variable structure"
+            "before": "if (product.inStock) { ... }",
+            "after": "this.productContext.select('inventory', 'inStock').subscribe(inStock => { ... })"
+          }
+        },
+        {
+          "type": "config",
+          "description": "Logging: SSR and NGINX now use Elastic Common Schema (ECS) JSON logs",
+          "searchRegex": "LOGLEVEL|LOGFORMAT|LOG_ALL|LOGGING",
+          "files": "nginx.conf,src/ssr/**/*.ts,docker-compose.yml",
+          "severity": "medium",
+          "manual": true,
+          "breaking": true,
+          "changes": [
+            "Containers write logs exclusively to stdout",
+            "Logging configured via LOGLEVEL and LOGFORMAT env vars only",
+            "LOGGING (SSR) and LOG_ALL (SSR, NGINX) environment variables removed",
+            "PM2 data included as JSON fields instead of prefixes",
+            "Default format: structured JSON (ECS-compliant)"
+          ],
+          "example": {
+            "before": "LOGGING=true, LOG_ALL=true",
+            "after": "LOGLEVEL=info, LOGFORMAT=json"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Angular 17: New SSR architecture (@angular/ssr replaces @nguniversal)",
+          "searchRegex": "@nguniversal|express-engine",
+          "files": "**/*.ts,server.ts,main.server.ts",
+          "severity": "high",
+          "manual": true,
+          "migration": "Angular upgrade handles most changes, verify custom SSR code",
+          "example": {
+            "before": "import { ngExpressEngine } from '@nguniversal/express-engine';",
+            "after": "import { CommonEngine } from '@angular/ssr';"
+          }
+        },
+        {
+          "type": "config",
+          "description": "Node.js: Upgrade to Node 22.22.0 LTS with npm 10.9.4",
+          "searchRegex": "NODE_VERSION|node.*version|engines.*node",
+          "files": ".nvmrc,Dockerfile,package.json,.gitlab-ci.yml,.github/workflows/*",
+          "severity": "low",
+          "manual": true,
+          "note": "Update all Node.js version references in Docker, CI/CD, and development configs",
+          "example": {
+            "before": "NODE_VERSION=18.16.0\nnpm: '~9.5.1'",
+            "after": "NODE_VERSION=22.22.0\nnpm: '~10.9.4'"
+          }
+        },
+        {
+          "type": "config",
+          "description": "NGINX: Cache clearing enabled by default (opt-in → opt-out)",
+          "searchRegex": "CACHE_CLEARER",
+          "files": "nginx.conf,docker-compose.yml,deployment/**/*",
+          "severity": "low",
+          "manual": true,
+          "breaking": true,
+          "note": "Set CACHE_CLEARER=off to disable if not wanted",
+          "example": {
+            "before": "# CACHE_CLEARER not set (disabled)",
+            "after": "# CACHE_CLEARER=on by default, set to 'off' to disable"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Testing: RouterTestingModule deprecated, use provideRouter()",
+          "searchRegex": "RouterTestingModule",
+          "files": "**/*.spec.ts",
+          "severity": "medium",
+          "autoFixable": true,
+          "note": "Angular 17 migration, applies to all test files",
+          "example": {
+            "before": "imports: [RouterTestingModule]",
+            "after": "providers: [provideRouter(routes)]"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "NgRx: Move concatLatestFrom import to @ngrx/operators",
+          "searchRegex": "concatLatestFrom.*@ngrx/effects",
+          "files": "**/*.effects.ts",
+          "severity": "low",
+          "autoFixable": true,
+          "example": {
+            "before": "import { concatLatestFrom } from '@ngrx/effects';",
+            "after": "import { concatLatestFrom } from '@ngrx/operators';"
           }
         }
-      ]
+      ],
+      "dependencyChanges": [
+        {"package": "@angular/core", "from": "~16.x", "to": "~17.x", "breaking": true, "note": "Major Angular upgrade"},
+        {"package": "bootstrap-icons", "action": "added", "version": "~1.11.x", "note": "Replaces Font Awesome"},
+        {"package": "@fortawesome/angular-fontawesome", "action": "removed", "note": "Replaced by bootstrap-icons"},
+        {"package": "@nguniversal/express-engine", "action": "removed", "note": "Replaced by @angular/ssr"},
+        {"package": "@angular/ssr", "action": "added", "note": "New Angular 17 SSR architecture"},
+        {"package": "node", "from": "18.x", "to": "22.x", "breaking": true, "note": "LTS upgrade"},
+        {"package": "npm", "from": "~9.5.x", "to": "~10.9.x", "breaking": false, "note": "Package manager upgrade"}
+      ],
+      "testingChanges": [
+        {
+          "type": "refactor",
+          "change": "RouterTestingModule deprecated",
+          "action": "Use provideRouter() in test providers",
+          "severity": "low"
+        },
+        {
+          "type": "refactor",
+          "change": "Empty element tags",
+          "action": "Remove closing tags for self-closing elements in templates",
+          "severity": "low"
+        }
+      ],
+      "migrationNotes": [
+        "Run ng generate @angular/core:control-flow for automated control flow migration",
+        "Use scripts/migrate-bootstrap-icons.js for icon detection and migration",
+        "Run scripts/validate-theme-completeness.sh before first build to catch SCSS issues",
+        "Review SSR custom code for @nguniversal references",
+        "Update all Node.js references in infrastructure (Docker, CI/CD)",
+        "Test inventory display as it now uses separate REST calls",
+        "Review logging configuration for ECS format compatibility"
+      ],
+      "officialDocs": {
+        "migrationGuide": "https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/migrations.md#from-910-to-1000",
+        "angularUpdateGuide": "https://angular.dev/update-guide?v=16.0-17.0&l=3",
+        "bootstrapIcons": "https://icons.getbootstrap.com/"
+      }
     },
     {
       "fromVersion": "14.0",

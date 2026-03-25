@@ -104,6 +104,7 @@ Check against known issues:
 2. Query pattern database for breaking changes
 3. Check GitHub issues for known bugs
 4. Analyze CHANGELOG for relevant changes
+5. Review `docs/guides/customization-best-practices.md` for anti-patterns
 
 ## Common Issue Playbooks
 
@@ -197,6 +198,11 @@ git diff --name-only --diff-filter=U
 
 **SCSS conflicts (theme files):**
 ```bash
+# Strategy:
+# 1. Keep NEW variable names from Intershop
+# 2. Keep YOUR custom color values
+# 3. Run sync afterwards: ./scripts/sync-custom-theme-variables.sh
+
 # Keep custom color values
 # Accept new PWA structure/mixins
 # Use compare tool:
@@ -386,6 +392,81 @@ grep -r "providedIn" src/
 - Implement temporary workaround
 
 **Time Saved:** 30-60 minutes by not debugging a known issue
+
+---
+
+### Playbook 8: Customization Anti-Patterns Detected
+
+**Diagnosis:**
+```bash
+# Run pre-commit checks
+./scripts/pre-commit-customization-check.sh
+
+# Review best practices
+cat docs/guides/customization-best-practices.md
+```
+
+**Common Anti-Patterns:**
+
+**1. Core files modified without CUSTOMIZATION markers**
+```
+Warning: Core Intershop files modified without CUSTOMIZATION markers
+  ⚠ src/app/shared/components/product/product-name/product-name.component.ts
+
+Solution: Add markers
+// CUSTOMIZATION: Added B2B-specific display logic
+if (this.isB2BUser()) {
+  return this.customFormat();
+}
+```
+
+**2. Global styles modified**
+```
+Error: Global styles modified
+  ✗ src/styles/global/variables.scss
+
+Solution: Use theme overrides instead
+Create: src/styles/themes/mytheme/custom-overrides.scss
+```
+
+**3. Standard files deleted**
+```
+Warning: Standard files deleted
+  ✗ src/app/core/services/old-feature.service.ts
+
+Solution: Comment out instead of deleting (preserves structure for merges)
+```
+
+**4. Using 'ish-' prefix for custom components**
+```
+Warning: Custom component uses 'ish-' prefix
+  selector: 'ish-my-widget'
+
+Solution: Use 'custom-' or company prefix
+  selector: 'custom-my-widget'
+```
+
+**5. Manual package-lock.json edits**
+```
+Solution:
+1. Only modify package.json
+2. Run: npm install
+3. During migration: Accept Intershop's package-lock.json
+```
+
+**Health Checklist Integration:**
+
+Run 14-item checklist in `docs/guides/customization-best-practices.md`:
+- **Score 12-14** = Excellent (migration-ready)
+- **Score 8-11** = Good (minor improvements needed)
+- **Score 0-7** = Needs improvement (refactor before migration)
+
+**Prevention:**
+- Install pre-commit hook: `cp scripts/pre-commit-customization-check.sh .git/hooks/pre-commit`
+- Review best practices before starting new features
+- Run health checklist monthly
+
+**Time Saved:** 1-2 hours by catching anti-patterns early vs during migration
 
 ---
 
@@ -609,5 +690,5 @@ When to escalate beyond this skill:
 ---
 
 **Last Updated:** March 2026
-**Version:** 1.0
+**Version:** 1.1
 **Maintainer:** Intershop PWA Training Team

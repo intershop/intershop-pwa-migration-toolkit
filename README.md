@@ -16,11 +16,12 @@
 - Node.js 22 LTS support
 - [See full release notes](https://github.com/intershop/intershop-pwa/releases/tag/10.0.0)
 
-## 📦 What's Included (30 Files Total)
+## 📦 What's Included (36 Files Total)
 
-### Migration Instructions (8 files in `.github/instructions/`)
+### Migration Instructions (9 files in `.github/instructions/`)
 - `migration-patterns.instructions.md` - Comprehensive patterns reference (index)
 - `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
+- `migration-approaches.instructions.md` - **NEW:** Three proven migration strategies (cherry-pick/rebase/merge) from official docs
 - `migration-pwa10.instructions.md` - **NEW:** PWA 10.0-specific guide (Angular 17, Bootstrap Icons)
 - `migration-issues.instructions.md` - 13 common issues and solutions (expanded with new issues)
 - `migration-workflow.instructions.md` - Step-by-step workflow patterns
@@ -28,17 +29,19 @@
 - `migration-examples.instructions.md` - Concrete code examples
 - `migration-pattern-detection.instructions.md` - Pattern detection system guide
 
-### Migration Scripts (16 files in `scripts/`)
+### Migration Scripts (22 files in `scripts/`)
 
 #### Core Migration
 - `migrate-custom-branch.sh` - Automated migration (CI/CD ready)
-- `migration-helper.js` - Interactive migration assistant
+- `migration-helper.js` - Interactive migration assistant with **video tutorial detection** ⭐ NEW
 - `analyze-migration-complexity.sh` - Complexity analyzer with tier recommendation
 - `generate-migration-report.sh` - Comprehensive migration documentation generator
+- `pre-commit-customization-check.sh` - **NEW:** Pre-commit hook to catch customization anti-patterns early
 
 #### Detection & Analysis
 - `detect-pattern-changes.js` - Tier 2/3 pattern detection and CHANGELOG analysis
 - `check-github-issues.sh` - **NEW:** Verify if errors are known bugs fixed in GitHub (saves 30-60 min)
+- `check-icm-compatibility.sh` - **NEW:** ICM version compatibility checker with requirements from pattern database
 - `check-template-syntax.sh` - Detect old template syntax
 - `check-standalone-components.sh` - Architecture analysis
 - `check-lint-issues.sh` - Categorize lint errors
@@ -61,15 +64,20 @@
 - `migrate-control-flow.sh` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
 
-### Pattern Database (1 file in `data/`)
-- `pattern-migrations.json` - Comprehensive breaking change patterns across PWA versions
+#### Dependency Management ⭐ NEW
+- `update-dependencies.sh` - **NEW:** Interactive 8-step dependency update workflow (following official guide)
 
-### Migration Skills (3 files in `.github/skills/`) ⭐ NEW
+### Pattern Database (1 file in `data/`)
+- `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
+Documentation Guides (1 file in `docs/guides/`) ⭐ NEW
+- `customization-best-practices.md` - **NEW:** Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
+
+### Migration Skills (3 files in `.github/skills/`)
 - `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
 - `pwa-troubleshooting.SKILL.md` - Specialized debugging and conflict resolution
 - `README.md` - Skills usage guide and architecture
 
-**Total:** 30 files (8 instructions + 18 scripts + 1 database + 3 skills)
+**Total:** 36 files (9 instructions + 22 scripts + 1 database + 1 guide + 3 skills)
 
 **Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
@@ -119,7 +127,77 @@ Copilot: [Invokes pwa-troubleshooting skill for diagnosis]
 See [`.github/skills/README.md`](.github/skills/README.md) for detailed usage guide.
 
 ---
+## 📚 Official Intershop PWA Documentation
 
+**IMPORTANT:** This toolkit complements the official Intershop PWA documentation. Always consult these resources alongside the automation scripts:
+
+### Essential Migration Guides
+
+#### 🔄 [Migration Guide (migrations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/migrations.md)
+**The definitive reference for version-specific breaking changes**
+
+- **Version-by-version migration notes** (10.0→9.1, 9.1→9.0, 9.0→8.0, etc.)
+- **SCSS variable renames** (e.g., `$color-corporate` → `$bg-color-corporate`)
+- **API method changes** (deprecated methods, signature changes)
+- **Dependency updates** (Angular, Node.js, npm version requirements)
+- **Feature changes** (inventory handling, authentication, SSR architecture)
+- **ICM version requirements** for each PWA release
+- **Historical context** going back to PWA 0.16
+
+**Use this for:** Understanding what changed and why in each version.
+
+#### 🎨 [Customization Guide (customizations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/customizations.md)
+**Best practices for maintainable customizations and migration strategies**
+
+- **Three migration approaches:**
+  - **Cherry-pick:** Apply commits one-by-one (best for conflict resolution)
+  - **Rebase:** Linear history, clean Git graph
+  - **Merge:** Fast but all conflicts at once
+- **Theme override system** (when to copy vs. override)
+- **Component customization** strategies
+- **Minimizing merge conflicts** in future migrations
+- **Testing during migration**
+
+**Use this for:** Choosing migration approach, understanding how to customize without breaking updates.
+
+#### 📦 [Updating Dependencies (updating-pwa.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/updating-pwa.md)
+**Structured workflow for dependency management**
+
+- **8-step update process** (Angular, third-party libs, utilities)
+- **Using `ng update` effectively**
+- **Handling `package-lock.json`** correctly
+- **Security vulnerability management**
+- **When to update vs. skip dependencies**
+
+**Use this for:** Managing npm dependencies during and after migration.
+
+### Video Tutorials
+
+#### 🎓 [Intershop Academy](https://public.academy.intershop.com/plus/catalog) (Free Registration Required)
+
+- **[Migrating from PWA 7.0 to 8.0](https://public.academy.intershop.com/plus/catalog/courses/452)**
+- **[Migrating from PWA 8.0 to 9.0](https://public.academy.intershop.com/plus/catalog/courses/454)**
+
+**Use these for:** Visual walkthroughs of complex migrations with commentary.
+
+### How This Toolkit Complements Official Docs
+
+| Official Docs | This Toolkit |
+|---------------|--------------|
+| ✅ Conceptual understanding | ✅ Automation scripts |
+| ✅ Breaking changes explained | ✅ Detection & validation |
+| ✅ Manual procedures | ✅ Automated execution |
+| ✅ Decision guidance | ✅ Proactive error prevention |
+| ✅ Historical context | ✅ Version-agnostic patterns |
+
+**Recommended workflow:**
+1. 📖 Read official migration guide for your target version
+2. 🔍 Run toolkit scripts to detect issues
+3. 🛠️ Use toolkit automation for repetitive tasks
+4. 🎯 Apply manual steps from official docs for complex changes
+5. ✅ Validate with toolkit verification scripts
+
+---
 ## � Platform Requirements
 
 ### Linux / macOS

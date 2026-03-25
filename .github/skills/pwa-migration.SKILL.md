@@ -72,11 +72,13 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 ### Phase 1: Discovery & Planning
 ```
 1. **IDENTIFY VERSIONS** - Source and target (MANDATORY FIRST STEP)
-2. Interview user about customization scope
-3. Run complexity analysis (analyze-migration-complexity.sh with versions)
-4. Recommend tier approach (1: simple merge, 2: pattern detection, 3: comprehensive)
-5. Check prerequisites (Angular version, remotes, themes)
-6. Create migration plan with version-specific patterns
+2. Run interactive migration helper (migration-helper.js) - shows video tutorials automatically
+3. Interview user about customization scope
+4. Review customization best practices (docs/guides/customization-best-practices.md)
+5. Run complexity analysis (analyze-migration-complexity.sh with versions)
+6. Recommend tier approach (1: simple merge, 2: pattern detection, 3: comprehensive)
+7. Check prerequisites (Angular version, remotes, themes)
+8. Create migration plan with version-specific patterns
 ```
 
 ### Phase 2: Preparation
@@ -86,7 +88,8 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 3. Validate theme completeness (validate-theme-completeness.sh)
 4. Check template syntax (check-template-syntax.sh)
 5. Analyze standalone components (check-standalone-components.sh)
-6. Document baseline state
+6. Review existing CUSTOMIZATION markers in core files
+7. Document baseline state
 ```
 
 ### Phase 3: Execution
@@ -97,6 +100,7 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 4. Sync missing theme variables if needed
 5. Fix template syntax issues
 6. Handle TypeScript/module errors
+7. Add CUSTOMIZATION markers to new modifications (// CUSTOMIZATION: reason)
 ```
 
 ### Phase 4: Validation
@@ -105,8 +109,10 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 2. Check GitHub issues for known bugs (check-github-issues.sh)
 3. Run tests and update snapshots (update-snapshots.sh)
 4. Suppress template linting temporarily (fix-template-linting.js)
-5. Generate migration report (generate-migration-report.sh)
-6. Verify all checklist items
+5. Run pre-commit customization checks (pre-commit-customization-check.sh)
+6. Review customization health checklist (14 items in best-practices guide)
+7. Generate migration report (generate-migration-report.sh)
+8. Verify all checklist items
 ```
 
 ## Tier Assessment Logic
@@ -311,9 +317,10 @@ When invoked, this skill should:
 
 ### Core Migration Scripts
 - `migrate-custom-branch.sh` - Automated full migration
-- `migration-helper.js` - Interactive step-by-step guide
+- `migration-helper.js` - Interactive step-by-step guide with video tutorial detection
 - `analyze-migration-complexity.sh` - Tier recommendation
 - `generate-migration-report.sh` - Documentation generation
+- `pre-commit-customization-check.sh` - Catch customization anti-patterns early
 
 ### Detection & Analysis
 - `detect-pattern-changes.js` - Pattern detection (Tier 2/3)
@@ -330,9 +337,15 @@ When invoked, this skill should:
 - `fix-template-syntax.js` - Auto-fix templates
 - `fix-template-linting.js` - Suppress linting issues
 - `update-snapshots.sh` - Jest snapshot manager
+- `update-dependencies.sh` - Interactive 8-step dependency workflow
+
+### PWA 10.0 Specific
+- `migrate-control-flow.sh` - Angular 17 control flow syntax (*ngIf → @if)
+- `migrate-bootstrap-icons.js` - Font Awesome → Bootstrap Icons detection
 
 ### Validation
 - `validate-theme-completeness.sh` - Proactive SCSS check
+- `check-icm-compatibility.sh` - ICM version compatibility verification
 
 ## Example Invocation
 
@@ -373,12 +386,14 @@ Step 2: Run pattern detection...
 This skill **supplements** rather than replaces the existing instruction files:
 
 - **migration-patterns.instructions.md** → Reference for pattern details
+- **migration-approaches.instructions.md** → Cherry-pick/rebase/merge strategies
 - **migration-issues.instructions.md** → Lookup for specific problems
 - **migration-workflow.instructions.md** → Build cycle patterns
 - **migration-git.instructions.md** → Git operation details
 - **migration-examples.instructions.md** → Code examples
 - **migration-checklist.instructions.md** → Validation checklist
 - **migration-pattern-detection.instructions.md** → Detection system guide
+- **docs/guides/customization-best-practices.md** → Writing migration-friendly code
 
 The skill orchestrates these resources, deciding which to reference based on context.
 
@@ -420,6 +435,51 @@ After each migration, this skill should:
 
 ---
 
+## Customization Best Practices Integration
+
+### CUSTOMIZATION Markers
+
+When modifying core Intershop files, always add markers:
+
+**Single-line format:**
+```typescript
+// CUSTOMIZATION: Added B2B-specific discount calculation
+const finalPrice = this.applyB2BDiscount(basePrice);
+```
+
+**Block format:**
+```typescript
+// CUSTOMIZATION START: Custom validation for enterprise users
+if (this.isEnterpriseUser()) {
+  return this.customValidationService.validate(data);
+}
+// CUSTOMIZATION END
+```
+
+### Customization Health Checklist
+
+Refer users to 14-item health checklist in `docs/guides/customization-best-practices.md`:
+- All custom components use 'custom-' prefix
+- CUSTOMIZATION markers on core file modifications
+- No deleted standard files
+- Theme overrides used instead of inline changes
+- No global style modifications
+- Package-lock.json changes match package.json
+- And 8 more items...
+
+**Scoring:** 12-14 = Excellent | 8-11 = Good | 0-7 = Needs Improvement
+
+### Video Tutorials
+
+The `migration-helper.js` automatically shows Intershop Academy video tutorials:
+- PWA 7.0→8.0: Course 452 (45 min)
+- PWA 8.0→9.0: Course 454 (45 min)
+- PWA 9.0→10.0: When available
+
+Encourage users to watch before starting complex migrations.
+
+---
+
 **Last Updated:** March 2026
-**Version:** 1.0
+**Version:** 1.1
 **Maintainer:** Intershop PWA Training Team

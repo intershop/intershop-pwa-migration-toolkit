@@ -6,6 +6,27 @@ applyTo: '**/migration*.{js,sh,ts}'
 
 **NOTE:** This guide has been split into focused, manageable sections for better readability and AI processing.
 
+## 📚 Essential Reading
+
+**Before starting any migration, consult these official Intershop PWA guides:**
+
+- **[Migration Guide (migrations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/migrations.md)** - Version-specific breaking changes, SCSS renames, API changes
+- **[Customization Guide (customizations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/customizations.md)** - Three migration approaches (cherry-pick/rebase/merge), best practices
+- **[Updating Dependencies (updating-pwa.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/updating-pwa.md)** - Dependency management workflow
+- **[Intershop Academy Videos](https://public.academy.intershop.com/plus/catalog)** - Video tutorials for complex migrations (7.0→8.0, 8.0→9.0)
+
+**This toolkit provides:**
+- ✅ Automation scripts for repetitive tasks
+- ✅ Proactive validation and detection
+- ✅ Version-agnostic pattern database
+- ✅ AI-friendly structured instructions
+
+**Official docs provide:**
+- ✅ Conceptual understanding and "why"
+- ✅ Detailed breaking changes per version
+- ✅ Migration strategy guidance
+- ✅ Historical context and evolution
+
 ## Version-Aware Migration Approach
 
 **CRITICAL:** All migrations must track source and target versions explicitly. The migration process, patterns, and breaking changes vary significantly between PWA versions.
@@ -98,6 +119,20 @@ The migration documentation is organized into the following files:
 - Pre-migration checklist (git remotes, themes, extensions)
 - Version identification (CRITICAL first step)
 - Post-migration verification steps
+
+### 🔀 [migration-approaches.instructions.md](./migration-approaches.instructions.md) ⭐ NEW
+
+**Three Proven Migration Strategies (from Official Docs)**
+
+- **Cherry-Pick Approach:** Apply commits one-by-one with context (recommended)
+- **Rebase Approach:** Linear Git history, clean commits
+- **Merge Approach:** Fast but all conflicts at once
+- **Decision matrix:** Which approach to use when
+- **Integration with toolkit scripts**
+
+Based on [Official Customization Guide](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/customizations.md)
+
+### 🔧 [migration-workflow.instructions.md](./migration-workflow.instructions.md)
 - Template-component consistency checks
 - Success criteria and documentation requirements
 - PWA 10.0-specific preparation steps

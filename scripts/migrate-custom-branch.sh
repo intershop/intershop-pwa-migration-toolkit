@@ -20,6 +20,7 @@
 #   --target-tag <tag>          Use a tag instead of branch for upstream (e.g., 9.1.0)
 #   --intershop-remote <name>   Name of Intershop PWA remote (default: auto-detect)
 #   --auto-resolve              Automatically resolve simple conflicts
+#   --skip-nodejs-check         Skip Node.js version validation (not recommended)
 #   --dry-run                   Show what would be done without making changes
 #   --help                      Show this help message
 #
@@ -48,6 +49,7 @@ TARGET_TAG=""
 INTERSHOP_REMOTE=""
 MIGRATION_BRANCH="migration/training-to-9.1"
 AUTO_RESOLVE=false
+SKIP_NODEJS_CHECK=false
 DRY_RUN=false
 
 # Parse arguments
@@ -75,6 +77,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --auto-resolve)
       AUTO_RESOLVE=true
+      shift
+      ;;
+    --skip-nodejs-check)
+      SKIP_NODEJS_CHECK=true
       shift
       ;;
     --dry-run)
@@ -229,6 +235,31 @@ log_info "Auto-resolve conflicts: $AUTO_RESOLVE"
 log_info "Dry Run: $DRY_RUN"
 log_info "============================================"
 echo ""
+
+# Check Node.js version requirements
+if [ "$SKIP_NODEJS_CHECK" = false ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -f "$SCRIPT_DIR/check-nodejs-version.sh" ]; then
+    log_info "Checking Node.js version requirements..."
+    
+    # Extract target version from branch/tag name
+    TARGET_VERSION=$(echo "$TARGET_BRANCH" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "10.0.0")
+    
+    if ! "$SCRIPT_DIR/check-nodejs-version.sh" "$TARGET_VERSION"; then
+      log_error "Node.js version check failed"
+      echo ""
+      log_info "You can:"
+      log_info "  1. Update automatically: $SCRIPT_DIR/check-nodejs-version.sh $TARGET_VERSION --auto-update"
+      log_info "  2. Skip check (not recommended): Re-run with --skip-nodejs-check"
+      exit 1
+    fi
+    echo ""
+  else
+    log_warning "Node.js version checker not found, skipping check"
+  fi
+else
+  log_warning "Node.js version check skipped (--skip-nodejs-check)"
+fi
 
 if [ "$DRY_RUN" = true ]; then
   log_warning "DRY RUN MODE - No changes will be made"

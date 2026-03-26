@@ -42,17 +42,19 @@ Three simple steps:
 - `migration-examples.instructions.md` - Concrete code examples
 - `migration-pattern-detection.instructions.md` - Pattern detection system guide
 
-### Migration Scripts (22 files in `scripts/`)
+### Migration Scripts (25 files in `scripts/`)
 
 #### Core Migration
-- `migrate-custom-branch.sh` - Automated migration (CI/CD ready)
+- `migrate-custom-branch.sh` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
 - `migration-helper.js` - Interactive migration assistant with **video tutorial detection** ⭐ NEW
 - `analyze-migration-complexity.sh` - Complexity analyzer with tier recommendation
+- `recommend-migration-strategy.sh` - **NEW:** Interactive advisor for choosing big bang vs. incremental approach ⭐
 - `generate-migration-report.sh` - Comprehensive migration documentation generator
 - `pre-commit-customization-check.sh` - **NEW:** Pre-commit hook to catch customization anti-patterns early
 
 #### Detection & Analysis
 - `detect-pattern-changes.js` - Tier 2/3 pattern detection and CHANGELOG analysis
+- `check-nodejs-version.sh` - **NEW:** Enforces Node.js/npm version requirements for target PWA version ⭐
 - `check-github-issues.sh` - **NEW:** Verify if errors are known bugs fixed in GitHub (saves 30-60 min)
 - `check-icm-compatibility.sh` - **NEW:** ICM version compatibility checker with requirements from pattern database
 - `check-template-syntax.sh` - Detect old template syntax
@@ -101,7 +103,7 @@ Three simple steps:
 ### Getting Started (1 file) ⭐ NEW
 - `QUICK-START.md` - **NEW:** 3-step setup guide (5 minutes) with .gitignore instructions
 
-**Total:** 40 files (9 instructions + 23 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start)
+**Total:** 43 files (9 instructions + 25 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start + 1 verification)
 
 **Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
@@ -650,12 +652,13 @@ echo "Checking docs/guides..."
 git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
 ```
 
-**All 38 toolkit files are covered:**
+**All 41 toolkit files are covered:**
 - ✅ 9 instruction files (.github/instructions/)
 - ✅ 3 skill files (.github/skills/)
-- ✅ 23 script files (scripts/)
+- ✅ 25 script files (scripts/)
 - ✅ 1 pattern database (data/)
 - ✅ 2 guide files (docs/guides/)
+- ✅ 1 verification script
 
 **Quick verification (automated):**
 
@@ -718,6 +721,12 @@ export TARGET_VERSION="10.0.0"  # ← Your desired version
 
 # === Analyze Migration Complexity ===
 
+# NEW: Get personalized migration strategy recommendation
+./scripts/recommend-migration-strategy.sh $SOURCE_VERSION $TARGET_VERSION --interactive
+# Analyzes: customization depth, version gap, breaking changes
+# Recommends: Big Bang, Hybrid, or Incremental approach
+# Time: 5 minutes (answers 5 questions about your team/project)
+
 # NEW: Analyze complexity with YOUR specific versions
 ./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
 # Output: Recommended tier (1/2/3), estimated time, prerequisites
@@ -738,6 +747,20 @@ cat .github/instructions/migration-checklist.instructions.md
 ./scripts/check-template-syntax.sh
 ./scripts/check-standalone-components.sh
 ./scripts/check-lint-issues.sh
+
+# === Check Node.js/npm Requirements ===
+
+# NEW: Verify Node.js version meets target PWA requirements
+./scripts/check-nodejs-version.sh $TARGET_VERSION
+
+# If version mismatch, update automatically:
+./scripts/check-nodejs-version.sh $TARGET_VERSION --auto-update
+
+# This checks & ensures:
+# - PWA 10.0 requires Node.js 22 + npm 10
+# - PWA 9.x requires Node.js 18 + npm 9
+# - PWA 8.x requires Node.js 16 + npm 8
+# Script will block migration if versions don't match
 
 # === Set Up Git Remotes ===
 

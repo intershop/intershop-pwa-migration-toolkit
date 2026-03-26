@@ -7,12 +7,13 @@
 # NOTE: This file (.gitignore-toolkit-template) is NOT meant to be copied.
 #       Only its CONTENTS should be appended to your .gitignore file.
 #
-# Coverage: 38 toolkit files across 5 directories
+# Coverage: 41 toolkit files across 5 directories
 #   - 9 instruction files (.github/instructions/)
 #   - 3 skill files (.github/skills/)
-#   - 23 script files (scripts/)
+#   - 25 script files (scripts/)
 #   - 1 pattern database (data/)
 #   - 2 guide files (docs/guides/)
+#   - 1 verification script (scripts/)
 
 # PWA Migration Toolkit (temporary helper files)
 # ================================================

@@ -65,6 +65,18 @@ git status
 
 ## ✅ Done! Now Use the Toolkit
 
+**Not sure which approach to take?**
+
+```bash
+# Get personalized recommendation (5 minutes)
+./scripts/recommend-migration-strategy.sh 4.0.0 10.0.0 --interactive
+
+# Analyzes your project and recommends:
+# - Big Bang (direct jump)
+# - Hybrid (strategic stepping stones)
+# - Incremental (version-by-version)
+```
+
 **Start your migration:**
 
 ```bash

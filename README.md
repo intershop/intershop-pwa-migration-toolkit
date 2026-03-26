@@ -453,10 +453,13 @@ cd /path/to/your-custom-pwa
 # Clone toolkit temporarily
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tmp/toolkit
 
-# Copy files
-mkdir -p .github/instructions scripts
+# Copy all toolkit files
+mkdir -p .github/instructions .github/skills scripts data docs/guides
 cp /tmp/toolkit/.github/instructions/* .github/instructions/
+cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
+cp /tmp/toolkit/data/* data/
+cp /tmp/toolkit/docs/guides/* docs/guides/
 chmod +x scripts/*.sh
 
 # Cleanup
@@ -472,10 +475,13 @@ cd C:\path\to\your-custom-pwa
 # Clone toolkit temporarily
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git $env:TEMP\toolkit
 
-# Copy files
-New-Item -ItemType Directory -Force -Path .github\instructions, scripts
+# Copy all toolkit files
+New-Item -ItemType Directory -Force -Path .github\instructions, .github\skills, scripts, data, docs\guides
 Copy-Item -Path "$env:TEMP\toolkit\.github\instructions\*" -Destination .github\instructions\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\.github\skills\*" -Destination .github\skills\ -Recurse
 Copy-Item -Path "$env:TEMP\toolkit\scripts\*" -Destination scripts\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\data\*" -Destination data\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\docs\guides\*" -Destination docs\guides\ -Recurse
 
 # Cleanup
 Remove-Item -Recurse -Force "$env:TEMP\toolkit"
@@ -638,8 +644,16 @@ cat .github/instructions/migration-issues.instructions.md | grep -A 20 "B2B"
 ```bash
 # In your custom PWA (pull latest toolkit)
 git clone git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git /tmp/toolkit
+
+# Copy all toolkit files
+mkdir -p .github/instructions .github/skills scripts data docs/guides
 cp /tmp/toolkit/.github/instructions/* .github/instructions/
+cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
+cp /tmp/toolkit/data/* data/
+cp /tmp/toolkit/docs/guides/* docs/guides/
+chmod +x scripts/*.sh
+
 rm -rf /tmp/toolkit
 ```
 

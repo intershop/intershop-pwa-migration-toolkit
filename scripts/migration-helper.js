@@ -1014,7 +1014,11 @@ ${'='.repeat(61)}${colors.reset}
   log.info(`Migration branch: ${migrationBranch}`);
   log.info(`Review changes: git diff ${targetBranch}`);
   log.info(`Run tests: npm test`);
-  log.info(`Push branch: git push -u gitlab ${migrationBranch}`);
+  log.info(``);
+  log.info(`Next: Choose your workflow:`);
+  log.info(`  - Local testing: npm run start`);
+  log.info(`  - Push to remote: git push -u origin ${migrationBranch}`);
+  log.info(`  - Create patch: git format-patch ${targetBranch}..${migrationBranch}`);
 }
 
 async function checkAngularCLI() {

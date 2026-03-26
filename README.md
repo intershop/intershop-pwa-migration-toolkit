@@ -2,6 +2,19 @@
 
 **Lean toolkit for migrating custom Intershop PWA projects between major versions.**
 
+## 🚀 Quick Start
+
+**First time using this toolkit?** → **[Read QUICK-START.md](QUICK-START.md)** (5 minutes)
+
+Three simple steps:
+1. 📦 Copy toolkit files to your custom PWA project
+2. 🚫 Add patterns to `.gitignore` (keeps toolkit out of your repo)
+3. ✅ Verify with `./scripts/verify-gitignore-coverage.sh`
+
+**Already set up?** Continue below for full documentation.
+
+---
+
 ## 🆕 Recent Updates (March 2026)
 
 - ✅ **PWA 10.0.0 support** - Migration patterns for latest release (Angular 17, Bootstrap Icons, Control Flow)
@@ -69,15 +82,26 @@
 
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
-Documentation Guides (1 file in `docs/guides/`) ⭐ NEW
+
+### Documentation Guides (2 files in `docs/guides/`) ⭐ NEW
 - `customization-best-practices.md` - **NEW:** Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
+- `migration-helper-guide.md` - Complete guide for the interactive migration helper
 
 ### Migration Skills (3 files in `.github/skills/`)
 - `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
 - `pwa-troubleshooting.SKILL.md` - Specialized debugging and conflict resolution
 - `README.md` - Skills usage guide and architecture
 
-**Total:** 36 files (9 instructions + 22 scripts + 1 database + 1 guide + 3 skills)
+### Configuration Templates (1 file)
+- `.gitignore-toolkit-template` - **NEW:** Pre-made .gitignore patterns to keep toolkit files out of your repo
+
+### Verification Tools (1 file) ⭐ NEW
+- `verify-gitignore-coverage.sh` - **NEW:** Test script to verify all toolkit files are properly ignored
+
+### Getting Started (1 file) ⭐ NEW
+- `QUICK-START.md` - **NEW:** 3-step setup guide (5 minutes) with .gitignore instructions
+
+**Total:** 40 files (9 instructions + 23 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start)
 
 **Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
@@ -378,11 +402,16 @@ node scripts/migrate-bootstrap-icons.js --auto-replace
 
 | Pattern | Detection | Auto-Migration | Manual Review |
 |---------|-----------|----------------|---------------|
-| **Control Flow** (`*ngIf` → `@if`) | 100% detected | **95% automated** | 5% complex cases |
+| **Control Flow** (`*ngIf` → `@if`) | 100% detected | **70-95% automated** | Custom/theme templates |
 | **Bootstrap Icons** (common) | 100% detected | **60% automated** | 40% custom icons |
 | **Bootstrap Icons** (custom) | 100% detected | ❌ Manual | 100% manual |
 | **SSR Architecture** | 100% detected | ❌ Manual | 100% manual |
 | **Node.js version** | 100% detected | Trivial (`echo "22" > .nvmrc`) | Config updates |
+
+**Note:** Control flow automation varies based on:
+- ✅ **70-80%** if you have custom theme templates or extensions
+- ✅ **90-95%** if using standard PWA structure only
+- The Angular CLI schematic only processes components registered in `angular.json`
 
 ### Example: PWA 10.0 Migration Workflow
 
@@ -403,8 +432,14 @@ npm install  # Gets Angular 17
 
 # 1. Angular Control Flow (95% automated)
 ./scripts/migrate-control-flow.sh
-# ✅ Transforms 232/243 templates automatically
-# ⚠️  Reports 11 complex cases for manual review
+# ✅ Scans src/ and projects/ directories for old syntax
+# ✅ Transforms standard Angular components automatically
+# ⚠️  Lists unmigrated files requiring manual review
+# ⚠️  Common reasons for unmigrated files:
+#     • Custom theme templates outside component folders
+#     • Components not registered in angular.json
+#     • Complex expressions the schematic can't parse
+#     • Extension templates in non-standard locations
 
 # 2. Bootstrap Icons (60% automated)
 node scripts/migrate-bootstrap-icons.js --auto-replace
@@ -412,8 +447,13 @@ node scripts/migrate-bootstrap-icons.js --auto-replace
 # ⚠️  Reports 35 custom icons needing manual mapping
 
 # 3. Manual review remaining cases
+# The script will list specific files needing manual migration:
+./scripts/migrate-control-flow.sh  # Shows unmigrated files list
+# Then manually fix those files using the conversion patterns:
+#   *ngIf="expr" → @if (expr) { content }
+#   *ngFor="let x of items" → @for (x of items; track x) { content }
+
 cat icons-migration.md  # See unmapped icons
-grep -r "\*ngIf=" src/  # See complex control flow
 
 # === VALIDATION ===
 npm run build
@@ -462,6 +502,40 @@ cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
 chmod +x scripts/*.sh
 
+# IMPORTANT: Add toolkit files to .gitignore to keep them out of your repo
+cat >> .gitignore << 'EOF'
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+EOF
+
+# OR use the pre-made template:
+# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+
+# Verify toolkit files won't be committed
+git status --ignored | grep -E "(scripts|\.github|data/pattern)"
+
 # Cleanup
 rm -rf /tmp/toolkit
 ```
@@ -483,11 +557,137 @@ Copy-Item -Path "$env:TEMP\toolkit\scripts\*" -Destination scripts\ -Recurse
 Copy-Item -Path "$env:TEMP\toolkit\data\*" -Destination data\ -Recurse
 Copy-Item -Path "$env:TEMP\toolkit\docs\guides\*" -Destination docs\guides\ -Recurse
 
+# IMPORTANT: Add toolkit files to .gitignore
+@"
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+"@ | Add-Content .gitignore
+
+# OR use the pre-made template:
+# Get-Content "$env:TEMP\toolkit\.gitignore-toolkit-template" | Add-Content .gitignore
+
 # Cleanup
 Remove-Item -Recurse -Force "$env:TEMP\toolkit"
 
 # Note: Use WSL2 or Git Bash for running .sh scripts
 ```
+
+---
+
+### 📌 Important: Keeping Toolkit Files Out of Your Repository
+
+**Why add toolkit files to .gitignore?**
+
+The migration toolkit files are **temporary helpers** for your migration work. They should NOT be committed to your custom PWA repository because:
+
+- ✅ **Keeps repo clean** - Migration scripts aren't part of your application
+- ✅ **Prevents conflicts** - Toolkit updates won't conflict with your code
+- ✅ **Reduces noise** - Pull requests won't include unrelated toolkit files
+- ✅ **Team clarity** - Clear separation between app code and migration tools
+
+**What if `.github/` already exists in my project?**
+
+No problem! The `.gitignore` patterns use wildcards to only ignore toolkit-specific files:
+
+```bash
+# These patterns ONLY ignore toolkit files:
+.github/instructions/migration-*.instructions.md  # ← Only migration instructions
+.github/skills/pwa-*.SKILL.md                     # ← Only PWA skills
+
+# Your existing .github files are NOT ignored:
+.github/workflows/                                 # ✅ Your CI/CD workflows
+.github/CODEOWNERS                                 # ✅ Your code owners
+.github/instructions/custom-app.instructions.md   # ✅ Your custom instructions
+```
+
+**Verify toolkit files are ignored:**
+
+```bash
+# Check ignored files
+git status --ignored | grep -E "(scripts/migrate|\.github/instructions/migration)"
+
+# Verify your app files are still tracked
+git status
+
+# Comprehensive verification: check each toolkit directory
+echo "Checking .github/instructions..."
+git check-ignore .github/instructions/migration-*.instructions.md
+# Should show: .gitignore:XX:migration-*.instructions.md
+
+echo "Checking .github/skills..."
+git check-ignore .github/skills/pwa-*.SKILL.md
+git check-ignore .github/skills/README.md
+
+echo "Checking scripts..."
+git check-ignore scripts/migrate-*.sh scripts/check-*.sh scripts/migration-helper.js
+
+echo "Checking data..."
+git check-ignore data/pattern-migrations.json
+
+echo "Checking docs/guides..."
+git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
+```
+
+**All 38 toolkit files are covered:**
+- ✅ 9 instruction files (.github/instructions/)
+- ✅ 3 skill files (.github/skills/)
+- ✅ 23 script files (scripts/)
+- ✅ 1 pattern database (data/)
+- ✅ 2 guide files (docs/guides/)
+
+**Quick verification (automated):**
+
+```bash
+# Run the verification script (copies automatically with toolkit)
+chmod +x scripts/verify-gitignore-coverage.sh
+./scripts/verify-gitignore-coverage.sh
+
+# Example output:
+# ✅ Migration instructions: Properly ignored (9 files)
+# ✅ PWA skills: Properly ignored (3 files)
+# ✅ Migration shell scripts: Properly ignored (2 files)
+# ... etc
+```
+
+**What if I already committed toolkit files?**
+
+Remove them from Git tracking (keeps local files):
+
+```bash
+# Remove from Git but keep local files
+git rm --cached .github/instructions/migration-*.instructions.md
+git rm --cached .github/skills/pwa-*.SKILL.md
+git rm --cached scripts/migrate-*.sh
+git rm --cached scripts/check-*.sh
+# ... etc for other patterns
+
+# Commit the removal
+git commit -m "chore: remove migration toolkit files from repository"
+```
+
+---
 
 ### STEP 2: Identify Versions & Evaluate
 
@@ -554,6 +754,66 @@ git checkout -b feature/migration-to-$TARGET_VERSION tags/$TARGET_VERSION
 # git checkout -b feature/migration-to-$TARGET_VERSION intershop-pwa/develop
 ```
 
+---
+
+### 🎯 Understanding Migration Parameters
+
+**IMPORTANT:** The migration script parameters can be confusing. Here's what they actually mean:
+
+#### Parameter Breakdown
+
+```bash
+./scripts/migrate-custom-branch.sh \
+  --source-branch training_4.0.0 \           # ← Your OLD custom branch
+  --target-branch intershop-pwa/10.0.0 \     # ← Upstream PWA version (NOT your final branch!)
+  --migration-branch training_10.0.0         # ← Your NEW custom branch name
+```
+
+**The workflow is:**
+1. ✅ Checkout **upstream PWA** (intershop-pwa/10.0.0) 
+2. ✅ Create **your new branch** (training_10.0.0) from it
+3. ✅ Merge **your old customizations** (training_4.0.0) into it
+
+**Common Confusion:**
+- ❌ `--target-branch` ≠ "your final custom branch"
+- ✅ `--target-branch` = "upstream PWA reference" (tag/branch to base on)
+- ✅ `--migration-branch` = "your final custom branch name"
+
+#### Parameter Naming Guide
+
+| Parameter | Purpose | Example | What It Is |
+|-----------|---------|---------|------------|
+| `--source-branch` | Your old custom work | `training_4.0.0` | Branch with your customizations |
+| `--target-branch` | Upstream PWA version | `intershop-pwa/10.0.0` | The PWA version to migrate TO |
+| `--migration-branch` | Your new custom branch | `training_10.0.0` | Name for your migrated branch |
+
+#### Real-World Example
+
+**Scenario:** Migrate from your custom PWA 4.0 to custom PWA 10.0
+
+<function_calls>bash
+# You have: training_4.0.0 (based on PWA 4.0.0)
+# You want: training_10.0.0 (based on PWA 10.0.0)
+
+# Correct command:
+./scripts/migrate-custom-branch.sh \
+  --source-branch training_4.0.0 \           # Your OLD custom branch
+  --target-branch intershop-pwa/10.0.0 \     # Upstream PWA 10.0.0 tag
+  --migration-branch training_10.0.0         # Your NEW custom branch
+
+# NOT this (common mistake):
+# --source-branch training_4.0.0 \
+# --target-branch training_10.0.0 \          # ← This doesn't exist yet!
+# --migration-branch migration/temp
+```
+
+**Result:** Creates `training_10.0.0` branch with:
+- ✅ Full PWA 10.0.0 codebase as foundation
+- ✅ Your customizations from training_4.0.0 merged in
+- ✅ Conflicts marked for manual resolution
+
+---
+
 ### STEP 3: Execute Migration
 
 ```bash
@@ -615,14 +875,25 @@ npm test
 ## 📋 Common Migration Scenarios
 
 ### Scenario 1: PWA 4.x → PWA 9.x
+
+**Goal:** Migrate `training_4.0.0` → `training_9.1.0` (both are YOUR custom branches)
+
 ```bash
 ./scripts/migrate-custom-branch.sh \
-  --source-branch training_4.0.0 \
-  --target-branch intershop-pwa/9.1.0 \
-  --migration-branch migration/4-to-9
+  --source-branch training_4.0.0 \           # Your old custom branch
+  --target-branch intershop-pwa/9.1.0 \      # Upstream PWA 9.1.0 (reference)
+  --migration-branch training_9.1.0          # Your new custom branch name
 ```
 
+**What happens:**
+1. Creates `training_9.1.0` based on upstream PWA 9.1.0
+2. Merges your customizations from `training_4.0.0`
+3. Marks conflicts for resolution
+
 ### Scenario 2: Custom Theme + Extensions
+
+**Goal:** Complex migration with theme overrides and extensions
+
 ```bash
 # Interactive mode handles complex customizations better
 node scripts/migration-helper.js
@@ -654,6 +925,38 @@ cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
 chmod +x scripts/*.sh
 
+# IMPORTANT: Add toolkit files to .gitignore (if not already added)
+cat >> .gitignore << 'EOF'
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+EOF
+
+# OR use the pre-made template:
+# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+
+# Cleanup
 rm -rf /tmp/toolkit
 ```
 

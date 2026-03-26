@@ -1,22 +1,34 @@
 #!/bin/bash
 
 ##############################################################################
-# Automated Migration Script: Customization Branch -> Feature Branch
+# Automated Migration Script: Customization Branch → Feature Branch
 #
 # This script automates the migration of customizations from an old PWA version
-# to a new PWA version (feature branch).
+# to a new PWA version by:
+#   1. Creating a new branch based on upstream PWA (target)
+#   2. Merging your customizations from old branch (source) into it
+#   3. Reporting conflicts for manual resolution
 #
 # Usage: ./scripts/migrate-custom-branch.sh [OPTIONS]
 #
 # Options:
-#   --source-branch <branch>    Branch with customizations (default: training_4.0.0)
-#   --target-branch <branch>    Branch with new PWA version (default: feature/migration-4.0-to-9.1)
-#   --target-tag <tag>          Use a tag instead of branch (e.g., 9.1.0)
+#   --source-branch <branch>    Your OLD custom branch (default: training_4.0.0)
+#   --target-branch <branch>    Upstream PWA version reference (default: feature/migration-4.0-to-9.1)
+#                               This is the PWA tag/branch to base your new branch on
+#   --migration-branch <branch> Your NEW custom branch name (default: migration/training-to-9.1)
+#                               This is what your final migrated branch will be called
+#   --target-tag <tag>          Use a tag instead of branch for upstream (e.g., 9.1.0)
 #   --intershop-remote <name>   Name of Intershop PWA remote (default: auto-detect)
-#   --migration-branch <branch> Name for the migration branch (default: migration/training-to-9.1)
 #   --auto-resolve              Automatically resolve simple conflicts
 #   --dry-run                   Show what would be done without making changes
 #   --help                      Show this help message
+#
+# Example:
+#   # Migrate training_4.0.0 → training_10.0.0 (based on PWA 10.0.0)
+#   ./scripts/migrate-custom-branch.sh \
+#     --source-branch training_4.0.0 \
+#     --target-branch intershop-pwa/10.0.0 \
+#     --migration-branch training_10.0.0
 #
 ##############################################################################
 
@@ -550,5 +562,8 @@ log_info "Next steps:"
 log_info "  1. Review changes: git diff $TARGET_BRANCH"
 log_info "  2. Review migration report: cat $REPORT_FILE"
 log_info "  3. Run tests: npm test"
-log_info "  4. Push branch: git push -u origin $MIGRATION_BRANCH"
+log_info "  4. Choose workflow:"
+log_info "     - Test locally: npm run start"
+log_info "     - Push to remote: git push -u origin $MIGRATION_BRANCH"
+log_info "     - Create patch: git format-patch $TARGET_BRANCH..$MIGRATION_BRANCH"
 echo ""

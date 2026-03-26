@@ -68,11 +68,14 @@ npm install
 ```
 
 **What it does:**
-1. ✅ Detects all `*ngIf`, `*ngFor`, `*ngSwitch` usage
+1. ✅ Detects all `*ngIf`, `*ngFor`, `*ngSwitch` usage in src/ and projects/
 2. ✅ Creates backup branch automatically
 3. ✅ Runs `ng generate @angular/core:control-flow`
-4. ✅ Transforms templates to `@if`, `@for`, `@switch` syntax
-5. ✅ Reports remaining old syntax (complex cases)
+4. ✅ Transforms registered Angular components to `@if`, `@for`, `@switch` syntax
+5. ✅ Lists unmigrated files requiring manual review (custom themes, extensions)
+6. ✅ Reports reasons why some files weren't migrated
+
+**Coverage:** 70-95% automated (varies based on custom template locations)
 
 **Example transformation:**
 
@@ -379,10 +382,13 @@ git commit -m "feat: migrate to PWA 10.0.0 with Angular 17 control flow and Boot
 
 ### ⚠️ What's Manual
 
-1. **Complex control flow** (5%):
+1. **Complex control flow** (5-30%, varies by project):
+   - Custom theme templates in non-standard locations
+   - Extension components not registered in angular.json
    - Nested directives with multiple pipes
    - Custom structural directives
    - Template references with multiple inputs
+   - **Script will list specific files requiring manual review**
 
 2. **Custom/Brand icons** (40%):
    - Icons not in common mapping
@@ -417,11 +423,31 @@ npm install
 
 **Problem:** Some `*ngIf` remain after migration
 
-**Solution:** These are likely complex cases. Manually review:
+**Solution:** The Angular CLI schematic only processes components registered in `angular.json`. Custom templates may be skipped:
 
 ```bash
-grep -r "\*ngIf=" src/ --include="*.html" -A 2 -B 2
+# Script will list unmigrated files automatically
+./scripts/migrate-control-flow.sh
+
+# Common locations that may need manual migration:
+# - Custom theme templates (e.g., src/styles/themes/custom/*)
+# - Extension components not in standard paths
+# - Shared templates without component decorators
+# - Templates in projects/* subdirectories
+
+# Find remaining occurrences
+find src/ projects/ -name "*.html" -exec grep -l "\*ngIf=\|\*ngFor=" {} \;
+
+# Manually convert using these patterns:
+# *ngIf="condition" → @if (condition) { content }
+# *ngFor="let x of items" → @for (x of items; track x) { content }
 ```
+
+**Why some files weren't migrated:**
+- Custom components not in angular.json project definitions
+- Templates with complex nested expressions
+- Theme-specific template overrides
+- Extension templates in non-standard directories
 
 ### Bootstrap Icons Issues
 

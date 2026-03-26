@@ -1,5 +1,6 @@
 #!/bin/bash
 # Detects empty paired tags that should be self-closing
+# Also checks themed template variants (.b2c.html, .b2b.html, etc.)
 # Usage: ./scripts/check-template-syntax.sh [--fix]
 
 FIX_MODE=false
@@ -10,8 +11,15 @@ fi
 echo "🔍 Checking template syntax for empty paired tags..."
 echo ""
 
-# Find all HTML files
+# Find all HTML files (including themed variants)
 HTML_FILES=$(find src -name "*.html" -type f)
+THEMED_FILES=$(echo "$HTML_FILES" | grep "\.component\.[a-z0-9-]*\.html$" || true)
+THEMED_COUNT=$(echo "$THEMED_FILES" | grep -c ".*" || echo "0")
+
+if [ "$THEMED_COUNT" -gt 0 ]; then
+  echo "📌 Found $THEMED_COUNT themed template(s) (.b2c.html, .b2b.html, etc.)"
+  echo ""
+fi
 
 TOTAL_ISSUES=0
 FILES_WITH_ISSUES=0

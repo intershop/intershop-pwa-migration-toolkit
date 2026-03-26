@@ -77,7 +77,11 @@ Three simple steps:
 
 #### PWA 10.0 Migration Tools
 - `migrate-control-flow.sh` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
+  - ✅ Scans ALL templates including themed variants (.b2c.html, .b2b.html, etc.)
+  - ✅ Reports themed templates separately for easy review
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
+
+> **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
 #### Dependency Management ⭐ NEW
 - `update-dependencies.sh` - **NEW:** Interactive 8-step dependency update workflow (following official guide)

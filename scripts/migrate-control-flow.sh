@@ -5,12 +5,13 @@
 #
 # IMPORTANT: The Angular CLI schematic has limitations:
 #   • Only processes components registered in angular.json
-#   • May skip custom theme templates or components outside standard paths
+#   • May skip custom theme templates (.b2c.html, .b2b.html, etc.) or components outside standard paths
 #   • Complex template expressions might require manual migration
 #   • Extension templates in non-standard locations need manual review
 #
-# This script searches src/ and projects/ directories and reports any unmigrated files.
-# You'll need to manually migrate files that the schematic couldn't process.
+# This script searches src/ and projects/ directories (including ALL .html files such as
+# themed templates) and reports any unmigrated files. You'll need to manually migrate 
+# files that the schematic couldn't process.
 
 set -e
 
@@ -58,6 +59,17 @@ if [ -d "projects" ]; then
 fi
 
 echo -e "${CYAN}Searching in: ${SEARCH_PATHS}${NC}"
+
+# Detect all HTML templates including themed variants (.b2c.html, .b2b.html, etc.)
+ALL_TEMPLATES=$(find $SEARCH_PATHS -name "*.html" -type f 2>/dev/null | wc -l || echo "0")
+THEMED_TEMPLATES=$(find $SEARCH_PATHS -name "*.component.*.html" -type f 2>/dev/null | wc -l || echo "0")
+
+echo -e "${CYAN}Total templates found: ${ALL_TEMPLATES}${NC}"
+if [ "$THEMED_TEMPLATES" -gt 0 ]; then
+    echo -e "${YELLOW}  Including ${THEMED_TEMPLATES} themed templates (.b2c.html, .b2b.html, etc.)${NC}"
+fi
+echo ""
+
 NGIF_COUNT=$(find $SEARCH_PATHS -name "*.html" -type f -exec grep -l "\*ngIf=" {} \; 2>/dev/null | wc -l || echo "0")
 NGFOR_COUNT=$(find $SEARCH_PATHS -name "*.html" -type f -exec grep -l "\*ngFor=" {} \; 2>/dev/null | wc -l || echo "0")
 NGSWITCH_COUNT=$(find $SEARCH_PATHS -name "*.html" -type f -exec grep -l "\*ngSwitch" {} \; 2>/dev/null | wc -l || echo "0")
@@ -146,18 +158,39 @@ if ng generate @angular/core:control-flow; then
         UNMIGRATED_FILES=$(find $SEARCH_PATHS -name "*.html" -type f -exec grep -l "\*ngIf=\|\*ngFor=\|\*ngSwitch" {} \; 2>/dev/null | sort)
         
         if [ -n "$UNMIGRATED_FILES" ]; then
-            echo "$UNMIGRATED_FILES" | while read -r file; do
-                NGIF_IN_FILE=$(grep -c "\*ngIf=" "$file" 2>/dev/null || echo "0")
-                NGFOR_IN_FILE=$(grep -c "\*ngFor=" "$file" 2>/dev/null || echo "0")
-                NGSWITCH_IN_FILE=$(grep -c "\*ngSwitch" "$file" 2>/dev/null || echo "0")
-                TOTAL_IN_FILE=$((NGIF_IN_FILE + NGFOR_IN_FILE + NGSWITCH_IN_FILE))
-                echo -e "  ${CYAN}$file${NC} (${TOTAL_IN_FILE} occurrences)"
-            done
-            echo ""
+            # Separate themed templates from regular templates for better visibility
+            THEMED_UNMIGRATED=$(echo "$UNMIGRATED_FILES" | grep "\.component\.[a-z0-9-]*\.html$" || true)
+            REGULAR_UNMIGRATED=$(echo "$UNMIGRATED_FILES" | grep -v "\.component\.[a-z0-9-]*\.html$" || true)
+            
+            if [ -n "$REGULAR_UNMIGRATED" ]; then
+                echo -e "${CYAN}Regular templates:${NC}"
+                echo "$REGULAR_UNMIGRATED" | while read -r file; do
+                    NGIF_IN_FILE=$(grep -c "\*ngIf=" "$file" 2>/dev/null || echo "0")
+                    NGFOR_IN_FILE=$(grep -c "\*ngFor=" "$file" 2>/dev/null || echo "0")
+                    NGSWITCH_IN_FILE=$(grep -c "\*ngSwitch" "$file" 2>/dev/null || echo "0")
+                    TOTAL_IN_FILE=$((NGIF_IN_FILE + NGFOR_IN_FILE + NGSWITCH_IN_FILE))
+                    echo -e "  ${CYAN}$file${NC} (${TOTAL_IN_FILE} occurrences)"
+                done
+                echo ""
+            fi
+            
+            if [ -n "$THEMED_UNMIGRATED" ]; then
+                echo -e "${YELLOW}⚠️  Themed templates (custom theme variants):${NC}"
+                echo "$THEMED_UNMIGRATED" | while read -r file; do
+                    NGIF_IN_FILE=$(grep -c "\*ngIf=" "$file" 2>/dev/null || echo "0")
+                    NGFOR_IN_FILE=$(grep -c "\*ngFor=" "$file" 2>/dev/null || echo "0")
+                    NGSWITCH_IN_FILE=$(grep -c "\*ngSwitch" "$file" 2>/dev/null || echo "0")
+                    TOTAL_IN_FILE=$((NGIF_IN_FILE + NGFOR_IN_FILE + NGSWITCH_IN_FILE))
+                    echo -e "  ${YELLOW}$file${NC} (${TOTAL_IN_FILE} occurrences)"
+                done
+                echo ""
+            fi
+            
             echo -e "${YELLOW}💡 Reasons for unmigrated files:${NC}"
             echo -e "   • Complex template expressions the schematic couldn't parse"
             echo -e "   • Custom components not registered in angular.json"
-            echo -e "   • Templates in non-standard locations (themes, extensions)"
+            echo -e "   • Custom theme templates (.b2c.html, .b2b.html, etc.)"
+            echo -e "   • Templates in non-standard locations (extensions)"
             echo -e "   • Standalone templates without component decorators"
             echo ""
             echo -e "${CYAN}To migrate manually:${NC}"

@@ -93,7 +93,177 @@ export class CustomProductTileComponent { ... }
 
 ---
 
-## 🏷️ Marking Customizations
+## � Themed Templates and Migration
+
+### Understanding Themed Template Variants
+
+PWA supports theming by allowing custom template variants alongside original templates:
+
+```
+src/app/shell/header/header-navigation/
+  header-navigation.component.html         # Original from GitHub
+  header-navigation.component.b2c.html     # Custom B2C theme variant
+  header-navigation.component.b2b.html     # Custom B2B theme variant
+  header-navigation.component.mytheme.html # Your custom theme variant
+```
+
+**Naming Pattern:**
+- Original: `component-name.component.html`
+- Themed: `component-name.component.<theme-name>.html`
+
+**Common theme suffixes:**
+- `.b2c.html` - Business-to-Consumer customizations
+- `.b2b.html` - Business-to-Business customizations
+- `.mytheme.html` - Your custom theme name
+
+### Migration Considerations for Themed Templates
+
+⚠️ **IMPORTANT:** All migration toolkit scripts check **ALL** `.html` files, including themed templates:
+
+#### Scripts That Process Themed Templates
+
+1. **Control Flow Migration** (`migrate-control-flow.sh`)
+   - Scans ALL `.html` files for `*ngIf`, `*ngFor`, `*ngSwitch`
+   - Reports themed templates separately for visibility
+   - Remember: Themed templates ALSO need migration to `@if`, `@for`, `@switch`
+
+2. **Template Syntax Checker** (`check-template-syntax.sh`)
+   - Detects empty paired tags in ALL templates
+   - Reports count of themed templates found
+
+3. **Template Linting** (`fix-template-linting.js`)
+   - Processes ALL `.html` files
+   - Adds linting suppressions to themed templates as needed
+
+4. **Template Syntax Fixer** (`fix-template-syntax.js`)
+   - Fixes syntax issues in ALL templates
+   - Tracks and reports themed template fixes separately
+
+#### Migration Checklist for Themed Templates
+
+When migrating from PWA 9.x to 10.0+:
+
+```bash
+# 1. Find all your themed templates
+find src -name "*.component.*.html" -type f
+
+# 2. Review what needs migration
+./scripts/check-template-syntax.sh
+
+# 3. Run automated migration
+./scripts/migrate-control-flow.sh
+# Note: Pay attention to the "Themed templates" section in the output
+
+# 4. Manually review themed templates that couldn't be auto-migrated
+# The script will list them separately for easy identification
+```
+
+#### Example: Migrating a Themed Template
+
+**Before (PWA 9.x):**
+```html
+<!-- header-navigation.component.b2c.html -->
+<div class="header-navigation">
+  <nav *ngIf="categories$ | async as categories">
+    <ul>
+      <li *ngFor="let category of categories">
+        <a [routerLink]="category.route">{{ category.name }}</a>
+      </li>
+    </ul>
+  </nav>
+  
+  <!-- CUSTOMIZATION: B2C specific promo banner -->
+  <div *ngIf="showPromo" class="promo-banner">
+    Special Offer!
+  </div>
+</div>
+```
+
+**After (PWA 10.0+):**
+```html
+<!-- header-navigation.component.b2c.html -->
+<div class="header-navigation">
+  @if (categories$ | async; as categories) {
+    <nav>
+      <ul>
+        @for (category of categories; track category.id) {
+          <li>
+            <a [routerLink]="category.route">{{ category.name }}</a>
+          </li>
+        }
+      </ul>
+    </nav>
+  }
+  
+  <!-- CUSTOMIZATION: B2C specific promo banner -->
+  @if (showPromo) {
+    <div class="promo-banner">
+      Special Offer!
+    </div>
+  }
+</div>
+```
+
+#### Best Practices for Themed Templates
+
+✅ **DO:**
+- Add `CUSTOMIZATION` markers in themed templates to identify your changes
+- Document why you created the themed variant
+- Keep themed templates in sync with Angular version syntax
+- Test themed templates after migration
+- Track which PWA version your themed template was last synced from
+
+```html
+<!--
+  CUSTOMIZATION: Custom B2C navigation layout
+  Original: header-navigation.component.html (PWA 10.0.0)
+  Created: 2026-01-15
+  Reason: Simplified navigation for consumer audience
+  
+  Changes from original:
+  - Removed mega-menu structure
+  - Added promo banner section
+  - Custom mobile navigation trigger
+-->
+<div class="header-navigation custom-b2c">
+  <!-- your custom template -->
+</div>
+```
+
+❌ **DON'T:**
+- Assume themed templates are automatically migrated by Angular schematics
+- Forget to check themed templates when running migration scripts
+- Leave old syntax (`*ngIf`, `*ngFor`) in themed templates after migration
+- Mix different Angular syntax versions between original and themed templates
+
+#### Troubleshooting Themed Templates
+
+**Problem:** Migration script reports unmigrated syntax in themed template
+
+```bash
+⚠️  Themed templates (custom theme variants):
+  src/app/shell/header/header-navigation.component.b2c.html (5 occurrences)
+```
+
+**Solution:** Manually migrate the themed template:
+1. Open the themed template
+2. Convert all `*ngIf` → `@if`
+3. Convert all `*ngFor` → `@for` (don't forget `track`)
+4. Convert all `*ngSwitch` → `@switch`
+5. Test the themed template
+6. Run migration script again to verify
+
+**Problem:** Themed template linting errors
+
+```bash
+./scripts/fix-template-linting.js
+```
+
+This will automatically add linting suppressions to themed templates.
+
+---
+
+## �🏷️ Marking Customizations
 
 ### Always Use CUSTOMIZATION Markers
 

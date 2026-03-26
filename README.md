@@ -639,7 +639,7 @@ cat .github/instructions/migration-issues.instructions.md | grep -A 20 "B2B"
 
 ---
 
-## 🔄 Updating Toolkit
+## 🔄 Integrating the Toolkit in your custom project
 
 ```bash
 # In your custom PWA (pull latest toolkit)

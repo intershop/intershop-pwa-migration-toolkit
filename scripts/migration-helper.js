@@ -98,6 +98,117 @@ function getTags() {
 
   return result.output
     .split('\n')
+    .filter(t => t)
+    .sort((a, b) => {
+      // Sort by semantic version
+      const aParts = a.split('.').map(n => parseInt(n) || 0);
+      const bParts = b.split('.').map(n => parseInt(n) || 0);
+      for (let i = 0; i < 3; i++) {
+        if (aParts[i] !== bParts[i]) return aParts[i] - bParts[i];
+      }
+      return 0;
+    });
+}
+
+// Extract version from branch/tag name
+function extractVersion(branchOrTag) {
+  // Try to extract version pattern like X.Y.Z or X.Y
+  const patterns = [
+    /(\d+\.\d+\.\d+)/,     // X.Y.Z
+    /(\d+\.\d+)/,          // X.Y
+    /v?(\d+)\.(\d+)/,      // vX.Y or X.Y
+  ];
+  
+  for (const pattern of patterns) {
+    const match = branchOrTag.match(pattern);
+    if (match) {
+      // Return just the major.minor version for comparison
+      const version = match[1] || `${match[1]}.${match[2]}`;
+      const parts = version.split('.');
+      return {
+        full: version,
+        major: parseInt(parts[0]),
+        minor: parseInt(parts[1]) || 0,
+        shortVersion: `${parts[0]}.${parts[1] || 0}`
+      };
+    }
+  }
+  
+  return null;
+}
+
+// Show video tutorial links if available
+function showVideoTutorials(sourceVersion, targetVersion) {
+  if (!sourceVersion || !targetVersion) return;
+  
+  const source = extractVersion(sourceVersion);
+  const target = extractVersion(targetVersion);
+  
+  if (!source || !target) return;
+  
+  // Define available video tutorials
+  const tutorials = [
+    {
+      sourceMin: 7.0,
+      sourceMax: 7.2,
+      targetMin: 8.0,
+      targetMax: 8.9,
+      title: 'Migrating from PWA 7.0 to 8.0',
+      url: 'https://public.academy.intershop.com/plus/catalog/courses/452',
+      description: 'Visual walkthrough covering Node.js 22 upgrade, Stylelint changes, and key breaking changes'
+    },
+    {
+      sourceMin: 8.0,
+      sourceMax: 8.9,
+      targetMin: 9.0,
+      targetMax: 9.9,
+      title: 'Migrating from PWA 8.0 to 9.0',
+      url: 'https://public.academy.intershop.com/plus/catalog/courses/454',
+      description: 'Bootstrap 5 migration, Sass module system, and major structural changes'
+    }
+  ];
+  
+  // Check if any tutorial matches
+  const sourceMajorMinor = source.major + (source.minor / 10);
+  const targetMajorMinor = target.major + (target.minor / 10);
+  
+  const matchingTutorials = tutorials.filter(t => 
+    sourceMajorMinor >= t.sourceMin && sourceMajorMinor <= t.sourceMax &&
+    targetMajorMinor >= t.targetMin && targetMajorMinor <= t.targetMax
+  );
+  
+  if (matchingTutorials.length > 0) {
+    console.log('\n' + colors.blue + '='.repeat(60));
+    console.log('  📺 Video Tutorial Available!');
+    console.log('='.repeat(60) + colors.reset + '\n');
+    
+    matchingTutorials.forEach(tutorial => {
+      console.log(`${colors.green}${tutorial.title}${colors.reset}`);
+      console.log(`${colors.cyan}${tutorial.url}${colors.reset}\n`);
+      console.log(`${colors.yellow}What it covers:${colors.reset} ${tutorial.description}\n`);
+    });
+    
+    console.log(`${colors.blue}ℹ️  Note:${colors.reset} Free registration required at Intershop Academy`);
+    console.log(`${colors.blue}ℹ️  Tip:${colors.reset} Watch the video before starting for best results`);
+    console.log('');
+  }
+}
+
+// Get list of branches
+function getBranches() {
+  const result = exec('git branch -a', true);
+  if (!result.success) return [];
+
+  return result.output
+    .split('\n')
+    .map(b => b.replace('*', '').trim())
+    .filter(b => b && !b.startsWith('remotes/origin/HEAD'));
+}
+
+// Get list of tags (releases) - old function below (will be replaced above)
+function getTagsOld() {
+  const result = exec('git tag -l', true);
+  if (!result.success) return [];
     .filter(t => t.trim())
     .filter(t => /^\d+\.\d+\.\d+/.test(t)) // Only version tags
     .sort((a, b) => {
@@ -634,6 +745,9 @@ ${colors.green}Tip:${colors.reset} You can safely exit with Ctrl+C and restart a
   console.log(`  2. Merge from: ${colors.green}${targetBranch}${colors.reset}`);
   console.log(`  3. Create new: ${colors.green}${migrationBranch}${colors.reset}\n`);
 
+  // Show video tutorials if available
+  showVideoTutorials(sourceBranch, targetBranch);
+
   // Verify branches exist
   const sourceBranchCheck = exec(`git rev-parse --verify ${sourceBranch}`, true);
   const targetBranchCheck = exec(`git rev-parse --verify ${targetBranch}`, true);
@@ -900,7 +1014,11 @@ ${'='.repeat(61)}${colors.reset}
   log.info(`Migration branch: ${migrationBranch}`);
   log.info(`Review changes: git diff ${targetBranch}`);
   log.info(`Run tests: npm test`);
-  log.info(`Push branch: git push -u gitlab ${migrationBranch}`);
+  log.info(``);
+  log.info(`Next: Choose your workflow:`);
+  log.info(`  - Local testing: npm run start`);
+  log.info(`  - Push to remote: git push -u origin ${migrationBranch}`);
+  log.info(`  - Create patch: git format-patch ${targetBranch}..${migrationBranch}`);
 }
 
 async function checkAngularCLI() {

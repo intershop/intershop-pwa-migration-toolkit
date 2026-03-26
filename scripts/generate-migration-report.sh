@@ -386,10 +386,26 @@ Your migration build is successful! Recommended next steps:
    - [ ] Test B2B features (if applicable)
    - [ ] Verify custom extensions work
 
-3. **Create Pull Request**
+3. **Share Migration (Choose Your Workflow)**
+   
+   **Option A: Keep Local (Testing Only)**
    \`\`\`bash
+   # Continue testing locally without pushing
+   npm run start
+   # When satisfied, merge locally or create patch
+   \`\`\`
+   
+   **Option B: Push to Remote (Team Review)**
+   \`\`\`bash
+   # Push migration branch for team review
    git push origin ${MIGRATION_BRANCH}
-   # Create PR in your Git hosting platform
+   # Then create PR/MR in your Git hosting platform
+   \`\`\`
+   
+   **Option C: Create Patch File (Share Offline)**
+   \`\`\`bash
+   # Create patch for email/file sharing
+   git format-patch ${BASE_BRANCH:-develop}..${MIGRATION_BRANCH} -o patches/
    \`\`\`
 
 4. **Update Documentation**

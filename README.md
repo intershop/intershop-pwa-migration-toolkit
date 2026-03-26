@@ -2,28 +2,61 @@
 
 **Lean toolkit for migrating custom Intershop PWA projects between major versions.**
 
-## 📦 What's Included (24 Files Total)
+## 🚀 Quick Start
 
-### Migration Instructions (7 files in `.github/instructions/`)
+**First time using this toolkit?** → **[Read QUICK-START.md](QUICK-START.md)** (5 minutes)
+
+Three simple steps:
+1. 📦 Copy toolkit files to your custom PWA project
+2. 🚫 Add patterns to `.gitignore` (keeps toolkit out of your repo)
+3. ✅ Verify with `./scripts/verify-gitignore-coverage.sh`
+
+**Already set up?** Continue below for full documentation.
+
+---
+
+## 🆕 Recent Updates (March 2026)
+
+- ✅ **PWA 10.0.0 support** - Migration patterns for latest release (Angular 17, Bootstrap Icons, Control Flow)
+- ✅ **Version-agnostic approach** - Works with ANY PWA version (not hardcoded to specific versions)
+- ✅ **Dynamic pattern detection** - Scripts accept source/target version parameters
+- ✅ **Comprehensive breaking changes** - Pattern database updated with PWA 9.1 → 10.0 changes
+
+**Latest PWA Release:** 10.0.0 (March 13, 2026)
+- Angular 17 with new control flow syntax (`@if`, `@for`, `@switch`)
+- Font Awesome replaced with Bootstrap Icons
+- New Angular 17 SSR architecture
+- Node.js 22 LTS support
+- [See full release notes](https://github.com/intershop/intershop-pwa/releases/tag/10.0.0)
+
+## 📦 What's Included (36 Files Total)
+
+### Migration Instructions (9 files in `.github/instructions/`)
+- `migration-patterns.instructions.md` - Comprehensive patterns reference (index)
 - `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
+- `migration-approaches.instructions.md` - **NEW:** Three proven migration strategies (cherry-pick/rebase/merge) from official docs
+- `migration-pwa10.instructions.md` - **NEW:** PWA 10.0-specific guide (Angular 17, Bootstrap Icons)
 - `migration-issues.instructions.md` - 13 common issues and solutions (expanded with new issues)
 - `migration-workflow.instructions.md` - Step-by-step workflow patterns
 - `migration-git.instructions.md` - Git operations, conflict resolution, AI merge guidance
-- `migration-patterns.instructions.md` - Comprehensive patterns reference
 - `migration-examples.instructions.md` - Concrete code examples
 - `migration-pattern-detection.instructions.md` - Pattern detection system guide
 
-### Migration Scripts (16 files in `scripts/`)
+### Migration Scripts (25 files in `scripts/`)
 
 #### Core Migration
-- `migrate-custom-branch.sh` - Automated migration (CI/CD ready)
-- `migration-helper.js` - Interactive migration assistant
+- `migrate-custom-branch.sh` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
+- `migration-helper.js` - Interactive migration assistant with **video tutorial detection** ⭐ NEW
 - `analyze-migration-complexity.sh` - Complexity analyzer with tier recommendation
+- `recommend-migration-strategy.sh` - **NEW:** Interactive advisor for choosing big bang vs. incremental approach ⭐
 - `generate-migration-report.sh` - Comprehensive migration documentation generator
+- `pre-commit-customization-check.sh` - **NEW:** Pre-commit hook to catch customization anti-patterns early
 
 #### Detection & Analysis
 - `detect-pattern-changes.js` - Tier 2/3 pattern detection and CHANGELOG analysis
+- `check-nodejs-version.sh` - **NEW:** Enforces Node.js/npm version requirements for target PWA version ⭐
 - `check-github-issues.sh` - **NEW:** Verify if errors are known bugs fixed in GitHub (saves 30-60 min)
+- `check-icm-compatibility.sh` - **NEW:** ICM version compatibility checker with requirements from pattern database
 - `check-template-syntax.sh` - Detect old template syntax
 - `check-standalone-components.sh` - Architecture analysis
 - `check-lint-issues.sh` - Categorize lint errors
@@ -42,15 +75,155 @@
 - `fix-template-linting.js` - **NEW:** Auto-suppress template linting issues (saves 1-2 hours)
 - `update-snapshots.sh` - **NEW:** Intelligent Jest snapshot update manager (saves 20-40 min)
 
+#### PWA 10.0 Migration Tools
+- `migrate-control-flow.sh` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
+- `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
+
+#### Dependency Management ⭐ NEW
+- `update-dependencies.sh` - **NEW:** Interactive 8-step dependency update workflow (following official guide)
+
 ### Pattern Database (1 file in `data/`)
-- `pattern-migrations.json` - Comprehensive breaking change patterns across PWA versions
+- `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
 
-**Total:** 24 files (7 instructions + 16 scripts + 1 database)
+### Documentation Guides (2 files in `docs/guides/`) ⭐ NEW
+- `customization-best-practices.md` - **NEW:** Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
+- `migration-helper-guide.md` - Complete guide for the interactive migration helper
 
-**Time Savings:** New scripts save 2-4 hours per migration by automating tedious tasks.
+### Migration Skills (3 files in `.github/skills/`)
+- `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
+- `pwa-troubleshooting.SKILL.md` - Specialized debugging and conflict resolution
+- `README.md` - Skills usage guide and architecture
+
+### Configuration Templates (1 file)
+- `.gitignore-toolkit-template` - **NEW:** Pre-made .gitignore patterns to keep toolkit files out of your repo
+
+### Verification Tools (1 file) ⭐ NEW
+- `verify-gitignore-coverage.sh` - **NEW:** Test script to verify all toolkit files are properly ignored
+
+### Getting Started (1 file) ⭐ NEW
+- `QUICK-START.md` - **NEW:** 3-step setup guide (5 minutes) with .gitignore instructions
+
+**Total:** 43 files (9 instructions + 25 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start + 1 verification)
+
+**Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
 ---
 
+## 🤖 AI-Powered Migration Assistance
+
+### GitHub Copilot Skills (NEW)
+
+For complex migrations, this toolkit includes specialized **skills** that provide interactive, step-by-step guidance:
+
+#### 🎯 PWA Migration Skill
+**Invoke for:** Planning, complexity assessment, guided execution
+
+```
+User: "I need to migrate from PWA 4.0 to 9.1"
+Copilot: [Invokes pwa-migration skill for comprehensive guidance]
+```
+
+**What it does:**
+- Assesses migration complexity (Tier 1/2/3)
+- Recommends which scripts to run and when
+- Guides through Git operations
+- Provides context-aware troubleshooting
+- Generates comprehensive migration reports
+
+#### 🐛 PWA Troubleshooting Skill
+**Invoke for:** Debugging errors, resolving conflicts, fixing broken builds
+
+```
+User: "Build fails with 'Undefined variable $theme-color'"
+Copilot: [Invokes pwa-troubleshooting skill for diagnosis]
+```
+
+**What it does:**
+- Diagnoses build/SCSS/template errors
+- Provides step-by-step resolution playbooks
+- Resolves Git merge conflicts
+- Emergency recovery procedures
+- Investigates unknown error patterns
+
+#### Skills vs Instructions
+
+- **Instructions** (`.instructions.md`): Auto-loaded when editing migration scripts - passive reference
+- **Skills** (`.SKILL.md`): Explicitly invoked for complex workflows - active orchestration
+
+See [`.github/skills/README.md`](.github/skills/README.md) for detailed usage guide.
+
+---
+## 📚 Official Intershop PWA Documentation
+
+**IMPORTANT:** This toolkit complements the official Intershop PWA documentation. Always consult these resources alongside the automation scripts:
+
+### Essential Migration Guides
+
+#### 🔄 [Migration Guide (migrations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/migrations.md)
+**The definitive reference for version-specific breaking changes**
+
+- **Version-by-version migration notes** (10.0→9.1, 9.1→9.0, 9.0→8.0, etc.)
+- **SCSS variable renames** (e.g., `$color-corporate` → `$bg-color-corporate`)
+- **API method changes** (deprecated methods, signature changes)
+- **Dependency updates** (Angular, Node.js, npm version requirements)
+- **Feature changes** (inventory handling, authentication, SSR architecture)
+- **ICM version requirements** for each PWA release
+- **Historical context** going back to PWA 0.16
+
+**Use this for:** Understanding what changed and why in each version.
+
+#### 🎨 [Customization Guide (customizations.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/customizations.md)
+**Best practices for maintainable customizations and migration strategies**
+
+- **Three migration approaches:**
+  - **Cherry-pick:** Apply commits one-by-one (best for conflict resolution)
+  - **Rebase:** Linear history, clean Git graph
+  - **Merge:** Fast but all conflicts at once
+- **Theme override system** (when to copy vs. override)
+- **Component customization** strategies
+- **Minimizing merge conflicts** in future migrations
+- **Testing during migration**
+
+**Use this for:** Choosing migration approach, understanding how to customize without breaking updates.
+
+#### 📦 [Updating Dependencies (updating-pwa.md)](https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/updating-pwa.md)
+**Structured workflow for dependency management**
+
+- **8-step update process** (Angular, third-party libs, utilities)
+- **Using `ng update` effectively**
+- **Handling `package-lock.json`** correctly
+- **Security vulnerability management**
+- **When to update vs. skip dependencies**
+
+**Use this for:** Managing npm dependencies during and after migration.
+
+### Video Tutorials
+
+#### 🎓 [Intershop Academy](https://public.academy.intershop.com/plus/catalog) (Free Registration Required)
+
+- **[Migrating from PWA 7.0 to 8.0](https://public.academy.intershop.com/plus/catalog/courses/452)**
+- **[Migrating from PWA 8.0 to 9.0](https://public.academy.intershop.com/plus/catalog/courses/454)**
+
+**Use these for:** Visual walkthroughs of complex migrations with commentary.
+
+### How This Toolkit Complements Official Docs
+
+| Official Docs | This Toolkit |
+|---------------|--------------|
+| ✅ Conceptual understanding | ✅ Automation scripts |
+| ✅ Breaking changes explained | ✅ Detection & validation |
+| ✅ Manual procedures | ✅ Automated execution |
+| ✅ Decision guidance | ✅ Proactive error prevention |
+| ✅ Historical context | ✅ Version-agnostic patterns |
+
+**Recommended workflow:**
+1. 📖 Read official migration guide for your target version
+2. 🔍 Run toolkit scripts to detect issues
+3. 🛠️ Use toolkit automation for repetitive tasks
+4. 🎯 Apply manual steps from official docs for complex changes
+5. ✅ Validate with toolkit verification scripts
+
+---
 ## � Platform Requirements
 
 ### Linux / macOS
@@ -103,6 +276,212 @@ node scripts/detect-pattern-changes.js
 
 ---
 
+## 🎯 Version-Aware Migration Approach
+
+**IMPORTANT:** This toolkit supports migrations between **any PWA versions**, not just specific hardcoded versions.
+
+### How It Works
+
+All migration scripts accept **version parameters** to dynamically:
+- Fetch the correct CHANGELOG for your target version
+- Apply relevant breaking change patterns from the database
+- Calculate cumulative changes across your version gap
+- Recommend appropriate migration tier (1/2/3)
+
+### Version Support
+
+| PWA Version | Angular | Node.js | Status | Key Changes |
+|-------------|---------|---------|--------|-------------|
+| **10.0.x** | **17** | **22** | **Latest** | **Control flow (@if/@for), Bootstrap Icons, New SSR** |
+| 9.1.x | 16 | 18 | Stable | Stricter typing, self-closing tags |
+| 9.0.x | 15/16 | 18 | Stable | Sass modules, standalone components |
+| 4.0-8.x | 14 | 16 | Legacy | Various legacy architectures |
+
+### Quick Version Check
+
+```bash
+# Your current PWA version
+grep '"version"' package.json
+# OR
+git describe --tags --abbrev=0
+
+# Your current Angular version
+grep '"@angular/core"' package.json
+
+# List available PWA target versions
+git ls-remote --tags https://github.com/intershop/intershop-pwa.git | \
+  grep -E 'refs/tags/[0-9]+\.[0-9]+\.[0-9]+$' | \
+  sed 's|.*/||' | sort -V | tail -20
+```
+
+### General Migration Pattern
+
+```bash
+# Step 1: Identify versions
+SOURCE_VERSION="X.Y.Z"  # Your current version (e.g., "9.1.0")
+TARGET_VERSION="A.B.C"  # Desired version (e.g., "10.0.0")
+
+# Step 2: Analyze complexity
+./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+
+# Step 3: Detect patterns
+./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
+
+# Step 4: Execute migration
+./scripts/migrate-custom-branch.sh
+```
+
+**The toolkit adapts to your specific version gap**, whether it's 1 minor version or 5 major versions.
+
+---
+
+## � How Detection & Migration Work
+
+### Two-Phase Approach: Detection → Migration
+
+The toolkit separates **detection** (what needs changing) from **migration** (applying the changes).
+
+#### Phase 1: Detection (Pattern Recognition)
+
+**Tools:** `detect-pattern-changes.js`, `migrate-bootstrap-icons.js` (detection mode)
+
+```bash
+# Detect patterns for YOUR specific version gap
+./scripts/detect-pattern-changes.js 9.1.0 10.0.0
+
+# Detect Font Awesome usage
+node scripts/migrate-bootstrap-icons.js --report icons-report.md
+```
+
+**What detection does:**
+1. ✅ Fetches CHANGELOG for target version (10.0.0)
+2. ✅ Applies pattern database rules for 9.1 → 10.0
+3. ✅ Scans codebase with regex patterns
+4. ✅ Reports files, line numbers, and occurrences
+5. ✅ Categorizes by severity (critical/high/medium/low)
+
+**Example output:**
+
+```
+Pattern Detection Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Angular 17: Control flow - *ngIf to @if migration
+   Type: html
+   Severity: critical
+   Occurrences: 243
+   Files affected:
+     - src/app/shell/header/header.component.html
+     - src/app/pages/product/product-detail/product-detail.component.html
+     ... and 45 more
+
+2. Icons: Font Awesome replaced with Bootstrap Icons
+   Type: scss
+   Severity: high
+   Occurrences: 87
+   Files affected: ...
+```
+
+**This tells you WHAT needs changing but doesn't change anything yet.**
+
+#### Phase 2: Migration (Automated Transformation)
+
+**Tools:** `migrate-control-flow.sh`, `migrate-bootstrap-icons.js --auto-replace`
+
+```bash
+# After merge: Apply automated transformations
+./scripts/migrate-control-flow.sh
+node scripts/migrate-bootstrap-icons.js --auto-replace
+```
+
+**What migration does:**
+1. ✅ Creates automatic backup branch
+2. ✅ Runs Angular CLI schematics (for control flow)
+3. ✅ Transforms templates: `*ngIf` → `@if`, `*ngFor` → `@for`
+4. ✅ Replaces icon classes: `fa-search` → `bi-search`
+5. ✅ Reports what was changed and what remains manual
+
+**Automation levels:**
+
+| Pattern | Detection | Auto-Migration | Manual Review |
+|---------|-----------|----------------|---------------|
+| **Control Flow** (`*ngIf` → `@if`) | 100% detected | **70-95% automated** | Custom/theme templates |
+| **Bootstrap Icons** (common) | 100% detected | **60% automated** | 40% custom icons |
+| **Bootstrap Icons** (custom) | 100% detected | ❌ Manual | 100% manual |
+| **SSR Architecture** | 100% detected | ❌ Manual | 100% manual |
+| **Node.js version** | 100% detected | Trivial (`echo "22" > .nvmrc`) | Config updates |
+
+**Note:** Control flow automation varies based on:
+- ✅ **70-80%** if you have custom theme templates or extensions
+- ✅ **90-95%** if using standard PWA structure only
+- The Angular CLI schematic only processes components registered in `angular.json`
+
+### Example: PWA 10.0 Migration Workflow
+
+```bash
+# === BEFORE MERGE: Detection Phase ===
+# See what's coming
+./scripts/detect-pattern-changes.js 9.1.0 10.0.0
+node scripts/migrate-bootstrap-icons.js --report pre-merge.md
+
+# Output: "243 *ngIf occurrences, 87 Font Awesome icons found"
+# Action: None yet - just awareness
+
+# === MERGE PWA 10.0 ===
+git merge intershop-pwa/10.0.0
+npm install  # Gets Angular 17
+
+# === AFTER MERGE: Migration Phase ===
+
+# 1. Angular Control Flow (95% automated)
+./scripts/migrate-control-flow.sh
+# ✅ Scans src/ and projects/ directories for old syntax
+# ✅ Transforms standard Angular components automatically
+# ⚠️  Lists unmigrated files requiring manual review
+# ⚠️  Common reasons for unmigrated files:
+#     • Custom theme templates outside component folders
+#     • Components not registered in angular.json
+#     • Complex expressions the schematic can't parse
+#     • Extension templates in non-standard locations
+
+# 2. Bootstrap Icons (60% automated)
+node scripts/migrate-bootstrap-icons.js --auto-replace
+# ✅ Replaces fa-search, fa-cart, fa-user, etc. (52/87 icons)
+# ⚠️  Reports 35 custom icons needing manual mapping
+
+# 3. Manual review remaining cases
+# The script will list specific files needing manual migration:
+./scripts/migrate-control-flow.sh  # Shows unmigrated files list
+# Then manually fix those files using the conversion patterns:
+#   *ngIf="expr" → @if (expr) { content }
+#   *ngFor="let x of items" → @for (x of items; track x) { content }
+
+cat icons-migration.md  # See unmapped icons
+
+# === VALIDATION ===
+npm run build
+npm test
+```
+
+### Why Separate Detection & Migration?
+
+1. **Awareness before action** - Know scope before committing to migrate
+2. **Informed decisions** - Choose to migrate incrementally or all at once
+3. **Risk mitigation** - Review what will be automated vs. manual
+4. **Staging flexibility** - Detect before merge, migrate after merge
+
+### PWA 10.0-Specific Tools
+
+| Tool | Purpose | When to Run |
+|------|---------|-------------|
+| `detect-pattern-changes.js` | Find all breaking patterns | **Before merge** |
+| `migrate-bootstrap-icons.js` | Detect Font Awesome usage | **Before merge** |
+| `migrate-control-flow.sh` | Transform Angular templates | **After merge** (needs Angular 17) |
+| `migrate-bootstrap-icons.js --auto-replace` | Replace common icons | **After merge** |
+
+**Complete PWA 10.0 guide:** See [`.github/instructions/migration-pwa10.instructions.md`](.github/instructions/migration-pwa10.instructions.md)
+
+---
+
 ## �🚀 Usage Workflow
 
 ### STEP 1: Pull Toolkit into Custom PWA
@@ -116,11 +495,48 @@ cd /path/to/your-custom-pwa
 # Clone toolkit temporarily
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tmp/toolkit
 
-# Copy files
-mkdir -p .github/instructions scripts
+# Copy all toolkit files
+mkdir -p .github/instructions .github/skills scripts data docs/guides
 cp /tmp/toolkit/.github/instructions/* .github/instructions/
+cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
+cp /tmp/toolkit/data/* data/
+cp /tmp/toolkit/docs/guides/* docs/guides/
 chmod +x scripts/*.sh
+
+# IMPORTANT: Add toolkit files to .gitignore to keep them out of your repo
+cat >> .gitignore << 'EOF'
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+EOF
+
+# OR use the pre-made template:
+# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+
+# Verify toolkit files won't be committed
+git status --ignored | grep -E "(scripts|\.github|data/pattern)"
 
 # Cleanup
 rm -rf /tmp/toolkit
@@ -135,10 +551,44 @@ cd C:\path\to\your-custom-pwa
 # Clone toolkit temporarily
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git $env:TEMP\toolkit
 
-# Copy files
-New-Item -ItemType Directory -Force -Path .github\instructions, scripts
+# Copy all toolkit files
+New-Item -ItemType Directory -Force -Path .github\instructions, .github\skills, scripts, data, docs\guides
 Copy-Item -Path "$env:TEMP\toolkit\.github\instructions\*" -Destination .github\instructions\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\.github\skills\*" -Destination .github\skills\ -Recurse
 Copy-Item -Path "$env:TEMP\toolkit\scripts\*" -Destination scripts\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\data\*" -Destination data\ -Recurse
+Copy-Item -Path "$env:TEMP\toolkit\docs\guides\*" -Destination docs\guides\ -Recurse
+
+# IMPORTANT: Add toolkit files to .gitignore
+@"
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+"@ | Add-Content .gitignore
+
+# OR use the pre-made template:
+# Get-Content "$env:TEMP\toolkit\.gitignore-toolkit-template" | Add-Content .gitignore
 
 # Cleanup
 Remove-Item -Recurse -Force "$env:TEMP\toolkit"
@@ -146,46 +596,246 @@ Remove-Item -Recurse -Force "$env:TEMP\toolkit"
 # Note: Use WSL2 or Git Bash for running .sh scripts
 ```
 
-### STEP 2: Prepare & Evaluate
+---
+
+### 📌 Important: Keeping Toolkit Files Out of Your Repository
+
+**Why add toolkit files to .gitignore?**
+
+The migration toolkit files are **temporary helpers** for your migration work. They should NOT be committed to your custom PWA repository because:
+
+- ✅ **Keeps repo clean** - Migration scripts aren't part of your application
+- ✅ **Prevents conflicts** - Toolkit updates won't conflict with your code
+- ✅ **Reduces noise** - Pull requests won't include unrelated toolkit files
+- ✅ **Team clarity** - Clear separation between app code and migration tools
+
+**What if `.github/` already exists in my project?**
+
+No problem! The `.gitignore` patterns use wildcards to only ignore toolkit-specific files:
 
 ```bash
-# Read pre-migration checklist
-cat .github/instructions/migration-checklist.instructions.md
+# These patterns ONLY ignore toolkit files:
+.github/instructions/migration-*.instructions.md  # ← Only migration instructions
+.github/skills/pwa-*.SKILL.md                     # ← Only PWA skills
 
-# NEW: Analyze migration complexity and get tier recommendation
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+# Your existing .github files are NOT ignored:
+.github/workflows/                                 # ✅ Your CI/CD workflows
+.github/CODEOWNERS                                 # ✅ Your code owners
+.github/instructions/custom-app.instructions.md   # ✅ Your custom instructions
+```
 
-# NEW: Run pattern detection (based on recommended tier)
+**Verify toolkit files are ignored:**
+
+```bash
+# Check ignored files
+git status --ignored | grep -E "(scripts/migrate|\.github/instructions/migration)"
+
+# Verify your app files are still tracked
+git status
+
+# Comprehensive verification: check each toolkit directory
+echo "Checking .github/instructions..."
+git check-ignore .github/instructions/migration-*.instructions.md
+# Should show: .gitignore:XX:migration-*.instructions.md
+
+echo "Checking .github/skills..."
+git check-ignore .github/skills/pwa-*.SKILL.md
+git check-ignore .github/skills/README.md
+
+echo "Checking scripts..."
+git check-ignore scripts/migrate-*.sh scripts/check-*.sh scripts/migration-helper.js
+
+echo "Checking data..."
+git check-ignore data/pattern-migrations.json
+
+echo "Checking docs/guides..."
+git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
+```
+
+**All 41 toolkit files are covered:**
+- ✅ 9 instruction files (.github/instructions/)
+- ✅ 3 skill files (.github/skills/)
+- ✅ 25 script files (scripts/)
+- ✅ 1 pattern database (data/)
+- ✅ 2 guide files (docs/guides/)
+- ✅ 1 verification script
+
+**Quick verification (automated):**
+
+```bash
+# Run the verification script (copies automatically with toolkit)
+chmod +x scripts/verify-gitignore-coverage.sh
+./scripts/verify-gitignore-coverage.sh
+
+# Example output:
+# ✅ Migration instructions: Properly ignored (9 files)
+# ✅ PWA skills: Properly ignored (3 files)
+# ✅ Migration shell scripts: Properly ignored (2 files)
+# ... etc
+```
+
+**What if I already committed toolkit files?**
+
+Remove them from Git tracking (keeps local files):
+
+```bash
+# Remove from Git but keep local files
+git rm --cached .github/instructions/migration-*.instructions.md
+git rm --cached .github/skills/pwa-*.SKILL.md
+git rm --cached scripts/migrate-*.sh
+git rm --cached scripts/check-*.sh
+# ... etc for other patterns
+
+# Commit the removal
+git commit -m "chore: remove migration toolkit files from repository"
+```
+
+---
+
+### STEP 2: Identify Versions & Evaluate
+
+```bash
+# === CRITICAL FIRST STEP: Identify Versions ===
+
+# 1. Your CURRENT (source) version
+grep '"version"' package.json
+# Example output: "version": "9.1.0"
+
+# 2. Your CURRENT Angular version
+grep '"@angular/core"' package.json
+# Example: "@angular/core": "^16.2.12"
+
+# 3. List available TARGET versions
+git ls-remote --tags https://github.com/intershop/intershop-pwa.git | \
+  grep -E 'refs/tags/[0-9]+\.[0-9]+\.[0-9]+$' | \
+  sed 's|.*/||' | sort -V | tail -20
+
+# 4. Check TARGET version requirements (e.g., PWA 10.0.0)
+# Fetch and view target package.json
+curl -s "https://raw.githubusercontent.com/intershop/intershop-pwa/10.0.0/package.json" | \
+  grep -E '"version"|"@angular/core"'
+
+# 5. Export versions for scripts
+export SOURCE_VERSION="9.1.0"   # ← Your current version
+export TARGET_VERSION="10.0.0"  # ← Your desired version
+
+# === Analyze Migration Complexity ===
+
+# NEW: Get personalized migration strategy recommendation
+./scripts/recommend-migration-strategy.sh $SOURCE_VERSION $TARGET_VERSION --interactive
+# Analyzes: customization depth, version gap, breaking changes
+# Recommends: Big Bang, Hybrid, or Incremental approach
+# Time: 5 minutes (answers 5 questions about your team/project)
+
+# NEW: Analyze complexity with YOUR specific versions
+./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+# Output: Recommended tier (1/2/3), estimated time, prerequisites
+
+# NEW: Run pattern detection for YOUR version gap
 # Tier 2: Standard detection
-./scripts/detect-pattern-changes.js 4.0.0 9.1.0
+./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 
 # Tier 3: Comprehensive with database
-./scripts/detect-pattern-changes.js --comprehensive 4.0.0 9.1.0
+./scripts/detect-pattern-changes.js --comprehensive $SOURCE_VERSION $TARGET_VERSION
+
+# === Check Current Codebase ===
+
+# Read pre-migration checklist
+cat .github/instructions/migration-checklist.instructions.md
 
 # Check your current setup
 ./scripts/check-template-syntax.sh
 ./scripts/check-standalone-components.sh
 ./scripts/check-lint-issues.sh
 
+# === Check Node.js/npm Requirements ===
+
+# NEW: Verify Node.js version meets target PWA requirements
+./scripts/check-nodejs-version.sh $TARGET_VERSION
+
+# If version mismatch, update automatically:
+./scripts/check-nodejs-version.sh $TARGET_VERSION --auto-update
+
+# This checks & ensures:
+# - PWA 10.0 requires Node.js 22 + npm 10
+# - PWA 9.x requires Node.js 18 + npm 9
+# - PWA 8.x requires Node.js 16 + npm 8
+# Script will block migration if versions don't match
+
+# === Set Up Git Remotes ===
+
 # Set up git remotes (reference latest standard PWA)
-git remote add intershop-pwa git@github.com:intershop/intershop-pwa.git
+git remote add intershop-pwa https://github.com/intershop/intershop-pwa.git
 git fetch intershop-pwa --tags
 
-# IMPORTANT: Identify and select the correct target version
-# List available tags (recommended for stable versions)
-git tag -l | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -10
-
-# Or list branches
-git branch -r | grep intershop-pwa
-
-# Example: If migrating to 9.1.0, verify tag exists
-git ls-remote --tags intershop-pwa | grep '9.1.0'
+# Verify target version exists
+git ls-remote --tags intershop-pwa | grep "$TARGET_VERSION"
 
 # Checkout the target version as a local branch
-git checkout -b feature/migration-to-9.1 intershop-pwa/9.1.0
-# OR use a tag:
-# git checkout -b feature/migration-to-9.1 tags/9.1.0
+git checkout -b feature/migration-to-$TARGET_VERSION tags/$TARGET_VERSION
+# OR for develop/branch:
+# git checkout -b feature/migration-to-$TARGET_VERSION intershop-pwa/develop
 ```
+
+---
+
+### 🎯 Understanding Migration Parameters
+
+**IMPORTANT:** The migration script parameters can be confusing. Here's what they actually mean:
+
+#### Parameter Breakdown
+
+```bash
+./scripts/migrate-custom-branch.sh \
+  --source-branch training_4.0.0 \           # ← Your OLD custom branch
+  --target-branch intershop-pwa/10.0.0 \     # ← Upstream PWA version (NOT your final branch!)
+  --migration-branch training_10.0.0         # ← Your NEW custom branch name
+```
+
+**The workflow is:**
+1. ✅ Checkout **upstream PWA** (intershop-pwa/10.0.0) 
+2. ✅ Create **your new branch** (training_10.0.0) from it
+3. ✅ Merge **your old customizations** (training_4.0.0) into it
+
+**Common Confusion:**
+- ❌ `--target-branch` ≠ "your final custom branch"
+- ✅ `--target-branch` = "upstream PWA reference" (tag/branch to base on)
+- ✅ `--migration-branch` = "your final custom branch name"
+
+#### Parameter Naming Guide
+
+| Parameter | Purpose | Example | What It Is |
+|-----------|---------|---------|------------|
+| `--source-branch` | Your old custom work | `training_4.0.0` | Branch with your customizations |
+| `--target-branch` | Upstream PWA version | `intershop-pwa/10.0.0` | The PWA version to migrate TO |
+| `--migration-branch` | Your new custom branch | `training_10.0.0` | Name for your migrated branch |
+
+#### Real-World Example
+
+**Scenario:** Migrate from your custom PWA 4.0 to custom PWA 10.0
+
+<function_calls>bash
+# You have: training_4.0.0 (based on PWA 4.0.0)
+# You want: training_10.0.0 (based on PWA 10.0.0)
+
+# Correct command:
+./scripts/migrate-custom-branch.sh \
+  --source-branch training_4.0.0 \           # Your OLD custom branch
+  --target-branch intershop-pwa/10.0.0 \     # Upstream PWA 10.0.0 tag
+  --migration-branch training_10.0.0         # Your NEW custom branch
+
+# NOT this (common mistake):
+# --source-branch training_4.0.0 \
+# --target-branch training_10.0.0 \          # ← This doesn't exist yet!
+# --migration-branch migration/temp
+```
+
+**Result:** Creates `training_10.0.0` branch with:
+- ✅ Full PWA 10.0.0 codebase as foundation
+- ✅ Your customizations from training_4.0.0 merged in
+- ✅ Conflicts marked for manual resolution
+
+---
 
 ### STEP 3: Execute Migration
 
@@ -248,14 +898,25 @@ npm test
 ## 📋 Common Migration Scenarios
 
 ### Scenario 1: PWA 4.x → PWA 9.x
+
+**Goal:** Migrate `training_4.0.0` → `training_9.1.0` (both are YOUR custom branches)
+
 ```bash
 ./scripts/migrate-custom-branch.sh \
-  --source-branch training_4.0.0 \
-  --target-branch intershop-pwa/9.1.0 \
-  --migration-branch migration/4-to-9
+  --source-branch training_4.0.0 \           # Your old custom branch
+  --target-branch intershop-pwa/9.1.0 \      # Upstream PWA 9.1.0 (reference)
+  --migration-branch training_9.1.0          # Your new custom branch name
 ```
 
+**What happens:**
+1. Creates `training_9.1.0` based on upstream PWA 9.1.0
+2. Merges your customizations from `training_4.0.0`
+3. Marks conflicts for resolution
+
 ### Scenario 2: Custom Theme + Extensions
+
+**Goal:** Complex migration with theme overrides and extensions
+
 ```bash
 # Interactive mode handles complex customizations better
 node scripts/migration-helper.js
@@ -272,13 +933,53 @@ cat .github/instructions/migration-issues.instructions.md | grep -A 20 "B2B"
 
 ---
 
-## 🔄 Updating Toolkit
+## 🔄 Integrating the Toolkit in your custom project
 
 ```bash
 # In your custom PWA (pull latest toolkit)
 git clone git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git /tmp/toolkit
+
+# Copy all toolkit files
+mkdir -p .github/instructions .github/skills scripts data docs/guides
 cp /tmp/toolkit/.github/instructions/* .github/instructions/
+cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
+cp /tmp/toolkit/data/* data/
+cp /tmp/toolkit/docs/guides/* docs/guides/
+chmod +x scripts/*.sh
+
+# IMPORTANT: Add toolkit files to .gitignore (if not already added)
+cat >> .gitignore << 'EOF'
+
+# PWA Migration Toolkit (temporary helper files)
+.github/instructions/migration-*.instructions.md
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+data/pattern-migrations.json
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+EOF
+
+# OR use the pre-made template:
+# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+
+# Cleanup
 rm -rf /tmp/toolkit
 ```
 

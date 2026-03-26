@@ -1,0 +1,64 @@
+# PWA Migration Toolkit - Gitignore Template
+# Copy these patterns to your custom PWA project's .gitignore file
+# to keep toolkit files out of your repository.
+#
+# Usage: cat .gitignore-toolkit-template >> .gitignore
+#
+# NOTE: This file (.gitignore-toolkit-template) is NOT meant to be copied.
+#       Only its CONTENTS should be appended to your .gitignore file.
+#
+# Coverage: 41 toolkit files across 5 directories
+#   - 9 instruction files (.github/instructions/)
+#   - 3 skill files (.github/skills/)
+#   - 25 script files (scripts/)
+#   - 1 pattern database (data/)
+#   - 2 guide files (docs/guides/)
+#   - 1 verification script (scripts/)
+
+# PWA Migration Toolkit (temporary helper files)
+# ================================================
+# These patterns ignore toolkit files while preserving your custom files
+
+# Migration instructions
+.github/instructions/migration-*.instructions.md
+
+# PWA skills
+.github/skills/pwa-*.SKILL.md
+.github/skills/README.md
+
+# Migration scripts
+scripts/migrate-*.sh
+scripts/migrate-*.js
+scripts/check-*.sh
+scripts/analyze-*.sh
+scripts/detect-*.js
+scripts/generate-*.sh
+scripts/merge-*.sh
+scripts/merge-*.js
+scripts/compare-*.js
+scripts/fix-*.js
+scripts/sync-*.sh
+scripts/update-*.sh
+scripts/validate-*.sh
+scripts/pre-commit-*.sh
+scripts/verify-*.sh
+scripts/migration-helper.js
+
+# Pattern database
+data/pattern-migrations.json
+
+# Migration guides
+docs/guides/migration-*.md
+docs/guides/customization-*.md
+
+# Migration reports (optional - comment out if you want to commit these)
+migration-report-*.md
+build-output*.log
+icons-migration.md
+
+# ================================================
+# Verification: After adding these patterns, run:
+#   git status --ignored | grep -E "(scripts|\.github|data)"
+# 
+# All toolkit files should appear as "ignored"
+# Your custom app files should still appear as "untracked" or "modified"

@@ -348,7 +348,205 @@ const imports = [
 - Module imports/exports (app.module.ts, shared.module.ts)
 - Routing configurations
 - Shared components that have both PWA updates and custom modifications
+- **Test files (.spec.ts) where both sides have meaningful changes** - See "Test File Merge Strategy" below
 - Any file where both sides have meaningful changes
+
+## Test File Merge Strategy
+
+### Problem: Test Files with Dual Modifications
+
+When BOTH you and Intershop modify the same test file (e.g., `header-navigation.component.spec.ts`), you face a merge conflict where:
+- Intershop updated the test for new features (e.g., `hideInMenu` filtering)
+- You added custom tests for your business logic
+- The test setup (imports, mocks) may have changed
+
+**Example scenario:**
+```typescript
+// Your version (before migration)
+it('should be created', () => {
+  expect(component).toBeTruthy();
+  expect(element).toMatchInlineSnapshot(`...3 categories...`);
+});
+
+it('should display custom promotional banner', () => {  // Your custom test
+  // ...
+});
+
+// Intershop's version (after migration)
+it('should be created', () => {
+  expect(component).toBeTruthy();
+  expect(element).toMatchInlineSnapshot(`...2 categories, one filtered...`);
+});
+
+it('should filter out categories with hideInMenu set to true', done => {  // New test
+  // ...
+});
+```
+
+### Recommended 3-Step Strategy
+
+**Step 1: Accept Intershop's Test File as Baseline**
+
+```bash
+# During merge conflict
+git checkout --theirs src/app/shell/header/header-navigation/header-navigation.component.spec.ts
+```
+
+**Why?**
+- Gets correct test structure for NEW component behavior
+- Ensures new features are properly tested
+- Provides updated imports and setup for new Angular/PWA version
+- Updated snapshots reflect actual new rendering
+
+**Step 2: Extract Your Custom Tests**
+
+Before accepting their version, save your custom tests:
+
+```bash
+# View your version to copy custom tests
+git show HEAD:src/app/shell/header/header-navigation/header-navigation.component.spec.ts > /tmp/my-custom-tests.txt
+
+# Or use diff to see what you added
+git diff HEAD MERGE_HEAD -- src/app/shell/header/header-navigation/header-navigation.component.spec.ts
+```
+
+**Step 3: Re-Apply Your Custom Tests**
+
+Manually add your custom tests back as additional test cases:
+
+```typescript
+describe('Header Navigation Component', () => {
+  // ... Intershop's standard tests (from Step 1) ...
+  
+  it('should be created', () => {
+    // Intershop's updated test with new behavior
+  });
+
+  it('should filter out categories with hideInMenu set to true', done => {
+    // Intershop's new test for new feature
+  });
+
+  // CUSTOMIZATION START: Custom business logic tests
+  describe('promotional banner', () => {
+    it('should display custom promotional banner when enabled', () => {
+      component.showPromo = true;
+      fixture.detectChanges();
+      expect(element.querySelector('.promo-banner')).toBeTruthy();
+    });
+    
+    it('should hide promotional banner when disabled', () => {
+      component.showPromo = false;
+      fixture.detectChanges();
+      expect(element.querySelector('.promo-banner')).toBeFalsy();
+    });
+  });
+  
+  describe('analytics tracking', () => {
+    it('should track navigation clicks', () => {
+      // Your custom test
+    });
+  });
+  // CUSTOMIZATION END
+});
+```
+
+### Update Custom Tests for New API
+
+If your custom tests use component properties that changed, update them:
+
+```typescript
+// CUSTOMIZATION: Test with new NavigationCategory properties
+it('should handle custom category metadata', () => {
+  const categories = [
+    { uniqueId: 'A', name: 'CAT_A', url: '/cat/A', hideInMenu: false },  // Add new property
+    // ... your test logic ...
+  ] as NavigationCategory[];
+  // ... rest of test ...
+});
+```
+
+### When Your Tests Modified Standard Behavior
+
+If you modified Intershop's standard tests (not just added new ones), you need to decide:
+
+| Your Change | Decision |
+|-------------|----------|
+| **Fixed a bug** | Check if Intershop fixed it too; if yes, use theirs; if not, re-apply your fix |
+| **Adjusted for custom component behavior** | Re-apply adjustment to new test |
+| **Changed assertion expectations** | Verify if still needed; new PWA might have changed behavior |
+| **Updated imports/setup** | Use Intershop's setup (already has new Angular version) |
+
+### Alternative: Manual 3-Way Merge
+
+For heavily customized tests with many interleaved changes:
+
+```bash
+# Use merge tool to see all three versions
+git mergetool src/app/shell/header/header-navigation/header-navigation.component.spec.ts
+```
+
+Shows:
+- **LOCAL** (your version) - your custom tests
+- **REMOTE** (Intershop) - new PWA features
+- **BASE** (common ancestor) - original
+
+Manually combine:
+1. ✅ Take Intershop's imports and `beforeEach` setup (updated)
+2. ✅ Take Intershop's tests for standard functionality
+3. ✅ Re-add your custom tests at the end with CUSTOMIZATION markers
+4. ✅ Update any shared test data for new properties
+
+### Document Test Customizations
+
+Add headers to make future merges easier:
+
+```typescript
+/**
+ * CUSTOMIZATION: Tests for custom navigation features
+ * 
+ * Migration note: When merging Intershop updates:
+ * 1. Accept their baseline tests (correct for new features)
+ * 2. Re-apply custom tests from "CUSTOMIZATION START/END" sections
+ * 3. Update custom test data for new properties (e.g., hideInMenu)
+ * 
+ * Custom tests added:
+ * - Promotional banner display/hide logic
+ * - Analytics tracking on navigation clicks
+ * - Custom category metadata handling
+ */
+describe('Header Navigation Component', () => {
+  // Standard tests (from Intershop) ...
+  
+  // CUSTOMIZATION START: Promotional banner
+  // ...
+  // CUSTOMIZATION END
+});
+```
+
+### Quick Decision Matrix
+
+| Scenario | Action |
+|----------|--------|
+| Standard test changed by Intershop | ✅ Accept theirs (they improved/fixed it) |
+| You only added new custom tests | ✅ Accept theirs + re-add yours |
+| You modified standard test | ⚠️ Review why; re-apply if still needed |
+| Test setup/imports conflict | ✅ Accept theirs (updated for new Angular) |
+| Snapshot mismatch | ✅ Accept theirs, run `npm test -- -u` |
+| Both added different tests | ✅ Accept theirs + add yours |
+
+### After Resolving Test Conflicts
+
+```bash
+# Verify tests pass
+npm test -- --testPathPattern=header-navigation
+
+# Update snapshots if needed
+npm test -- -u --testPathPattern=header-navigation
+
+# Commit with clear message
+git add src/app/shell/header/header-navigation/header-navigation.component.spec.ts
+git commit -m "test: merge header-navigation tests, re-add custom promotional banner tests"
+```
 
 ## Localization File Merge Strategy
 

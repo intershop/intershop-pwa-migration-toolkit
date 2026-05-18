@@ -315,11 +315,12 @@ function generateJsonReport(results, outputPath) {
  * Main execution
  */
 function main() {
+  const { projectDir } = require('./_project-dir');
   console.log('🔄 Enhanced Localization File Merger');
   console.log('=====================================\n');
   
   const locales = ['en_US', 'de_DE', 'fr_FR'];
-  const i18nDir = 'src/assets/i18n';
+  const i18nDir = path.join(projectDir, 'src/assets/i18n');
   const results = [];
   
   // Process each locale

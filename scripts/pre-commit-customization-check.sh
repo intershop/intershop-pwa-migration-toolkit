@@ -20,6 +20,13 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
+# Resolve project directory (supports --project-dir and PWA_PROJECT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/_project-dir.sh" ]]; then
+  source "$SCRIPT_DIR/_project-dir.sh"
+  cd "$PROJECT_DIR"
+fi
+
 echo ""
 echo -e "${BLUE}🔍 Running customization checks...${NC}"
 echo ""

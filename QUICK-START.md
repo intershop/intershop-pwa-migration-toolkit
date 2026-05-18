@@ -1,6 +1,113 @@
 # PWA Migration Toolkit - Quick Start
 
-## 🚀 3-Step Setup (5 minutes)
+## Choose Your Deployment Mode
+
+| Mode | Best For | Separation | Updates |
+|------|----------|-----------|---------|
+| **Multi-Root Workspace** (recommended) | Ongoing use, team setups | Full (two repos) | `git pull` in toolkit |
+| **Copy & Hide** (legacy) | One-off migrations | Via `.gitignore` | Re-clone and re-copy |
+
+---
+
+## Mode A: Multi-Root Workspace (Recommended)
+
+The toolkit stays in its own repository. VS Code opens both projects as workspace roots.
+Copilot instructions and skills apply automatically across both roots.
+
+### Step 1: Clone the Toolkit Alongside Your PWA
+
+```bash
+# Example layout (adapt paths to your setup):
+#   /home/training/developer/pwa/               ← your custom PWA
+#   /home/training/developer/pwa-migration-toolkit/  ← this toolkit
+
+# Clone the toolkit (keep it permanently)
+cd /home/training/developer
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+```
+
+### Step 2: Create the Workspace File
+
+Copy the template and adjust paths:
+
+```bash
+cd pwa-migration-toolkit
+cp pwa-migration.code-workspace.template pwa-migration.code-workspace
+```
+
+Edit `pwa-migration.code-workspace` to match your layout:
+
+```jsonc
+{
+  "folders": [
+    {
+      "name": "Custom PWA",
+      "path": "../pwa/developer-pwa"      // ← adjust to YOUR custom PWA path
+    },
+    {
+      "name": "Migration Toolkit",
+      "path": "."
+    }
+  ],
+  "settings": {
+    // Auto-set PWA_PROJECT_DIR in integrated terminals (all platforms)
+    "terminal.integrated.env.linux": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    },
+    "terminal.integrated.env.osx": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    },
+    "terminal.integrated.env.windows": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    }
+  }
+}
+```
+
+> **Windows users:** Use forward slashes (`../pwa/developer-pwa`) or escaped backslashes.
+> VS Code handles path conversion on all platforms.
+
+### Step 3: Open the Workspace
+
+```bash
+code pwa-migration.code-workspace
+```
+
+Or: File → Open Workspace from File → select `pwa-migration.code-workspace`
+
+### Step 4: Run Scripts Against Your PWA
+
+Scripts automatically detect the PWA project via one of these (checked in order):
+
+1. `--project-dir /path/to/your/pwa` argument
+2. `PWA_PROJECT_DIR` environment variable
+3. Current working directory (if you `cd` into the PWA first)
+
+```bash
+# Option A: Pass the project dir explicitly
+./scripts/analyze-migration-complexity.sh --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
+
+# Option B: Set the env var once (add to your shell profile, or let the workspace file handle it)
+export PWA_PROJECT_DIR="/home/training/developer/pwa/developer-pwa"
+./scripts/validate-theme-completeness.sh
+
+# Option C: cd into the PWA and run from there (legacy behavior, still works)
+cd /home/training/developer/pwa/developer-pwa
+/home/training/developer/thomas/pwa-migration-toolkit/scripts/check-template-syntax.sh
+```
+
+### That's It!
+
+- Toolkit has its own git history — update with `git pull`
+- Custom PWA stays clean — no toolkit files in its repo
+- Copilot uses the `.github/instructions/` from both roots automatically
+- No `.gitignore` tricks needed
+
+---
+
+## Mode B: Copy & Hide (Legacy)
+
+For one-off migrations where you don't need to keep the toolkit updated.
 
 ### Step 1: Copy Toolkit Files to Your Custom PWA
 

@@ -1,7 +1,12 @@
 #!/bin/bash
 # Detects empty paired tags that should be self-closing
 # Also checks themed template variants (.b2c.html, .b2b.html, etc.)
-# Usage: ./scripts/check-template-syntax.sh [--fix]
+# Usage: ./scripts/check-template-syntax.sh [--fix] [--project-dir <path>]
+
+# Resolve project directory (supports --project-dir and PWA_PROJECT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_project-dir.sh"
+cd "$PROJECT_DIR"
 
 FIX_MODE=false
 if [ "$1" = "--fix" ]; then

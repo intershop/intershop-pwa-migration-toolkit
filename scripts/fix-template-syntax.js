@@ -101,7 +101,9 @@ function processDirectory(dir) {
 
 console.log('🔧 Fixing template syntax...\n');
 
-const { totalFixed, filesFixed, themedFilesFixed, totalThemedFixed } = processDirectory('src');
+const { projectDir } = require('./_project-dir');
+const srcDir = path.join(projectDir, 'src');
+const { totalFixed, filesFixed, themedFilesFixed, totalThemedFixed } = processDirectory(srcDir);
 
 if (totalFixed === 0) {
   console.log('✅ No issues found - all templates already use modern syntax!');

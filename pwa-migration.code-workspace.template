@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {
+      "name": "Custom PWA",
+      "path": "../pwa/developer-pwa"
+    },
+    {
+      "name": "Migration Toolkit",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true
+    },
+    "terminal.integrated.env.linux": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    },
+    "terminal.integrated.env.osx": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    },
+    "terminal.integrated.env.windows": {
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
+    }
+  }
+}

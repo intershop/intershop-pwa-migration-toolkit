@@ -220,8 +220,9 @@ See [`.github/skills/README.md`](.github/skills/README.md) for detailed usage gu
 
 #### 🎓 [Intershop Academy](https://public.academy.intershop.com/plus/catalog) (Free Registration Required)
 
-- **[Migrating from PWA 7.0 to 8.0](https://public.academy.intershop.com/plus/catalog/courses/452)**
+- **[Migrating from PWA 9.0 to 10.0](https://public.academy.intershop.com/plus/catalog/courses/482)**
 - **[Migrating from PWA 8.0 to 9.0](https://public.academy.intershop.com/plus/catalog/courses/454)**
+- **[Migrating from PWA 7.0 to 8.0](https://public.academy.intershop.com/plus/catalog/courses/452)**
 
 **Use these for:** Visual walkthroughs of complex migrations with commentary.
 

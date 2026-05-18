@@ -1,29 +1,42 @@
 # Intershop PWA Migration Toolkit
 
-**Lean toolkit for migrating custom Intershop PWA projects between major versions.**
+**Give GitHub Copilot the knowledge to guide you through an Intershop PWA migration.**
 
-## 🚀 Quick Start
+You don't need to read or understand all the files in this toolkit — just open the workspace and ask Copilot to help you migrate. The instructions, scripts, and patterns are here so the AI knows what to do on your behalf.
 
-**First time using this toolkit?** → **[Read QUICK-START.md](QUICK-START.md)** (5 minutes)
+## 🚀 Setup (2 minutes)
 
-**Two deployment modes:**
+```bash
+# 1. Clone this toolkit
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+cd pwa-migration-toolkit
 
-| Mode | Setup | Best For |
-|------|-------|----------|
-| **Multi-Root Workspace** (recommended) | Open `.code-workspace` file | Ongoing use, iterative migrations |
-| **Copy & Hide** (legacy) | Copy files + `.gitignore` | One-off migrations |
+# 2. Run setup — point it at your custom PWA project
+./setup.sh /path/to/your/custom-pwa
 
-**Multi-root workspace** (recommended):
-1. 📦 Clone this toolkit alongside your custom PWA
-2. 📂 Open `pwa-migration.code-workspace` in VS Code
-3. ✅ Run scripts with `--project-dir` or `PWA_PROJECT_DIR`
+# 3. Open the workspace
+code pwa-migration.code-workspace
+```
 
-**Copy & hide** (legacy):
-1. 📦 Copy toolkit files to your custom PWA project
-2. 🚫 Add patterns to `.gitignore` (keeps toolkit out of your repo)
-3. ✅ Verify with `./scripts/verify-gitignore-coverage.sh`
+**That's it.** Now ask Copilot:
 
-**Already set up?** Continue below for full documentation.
+> "Migrate my custom PWA from 10.0 to the latest version"
+
+Copilot will guide you through the entire process — assessing complexity, creating branches, resolving conflicts, and verifying the build.
+
+---
+
+## How It Works
+
+This toolkit doesn't require you to learn 25 scripts. It works like this:
+
+1. **You open VS Code** with both your PWA and this toolkit as workspace roots
+2. **You ask Copilot** what you want to do (migrate, fix errors, resolve conflicts)
+3. **Copilot reads the instruction files** in `.github/instructions/` to understand PWA migration patterns
+4. **Copilot runs scripts** from `scripts/` when automation helps (SCSS sync, template fixes, etc.)
+5. **You review and approve** the changes
+
+The scripts can also be run manually if you prefer — see [QUICK-START.md](QUICK-START.md) for details.
 
 ---
 

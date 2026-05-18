@@ -2,8 +2,17 @@
 
 # Verification script: Check that all toolkit files are properly ignored
 # Run this in your custom PWA project after copying toolkit files and adding .gitignore patterns
+#
+# NOTE: This script is only needed for the "copy & hide" deployment mode.
+# If you use the multi-root workspace approach, toolkit files stay in their own
+# repository and never need to be ignored in the custom PWA.
 
 set -e
+
+# Resolve project directory (supports --project-dir and PWA_PROJECT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_project-dir.sh"
+cd "$PROJECT_DIR"
 
 # Colors
 GREEN='\033[0;32m'

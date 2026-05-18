@@ -9,6 +9,8 @@
  * This is useful during migration when you want to:
  * 1. Get the project building first
  * 2. Address linting issues iteratively after migration
+ * 
+ * Supports all HTML template files including themed variants (.b2c.html, .b2b.html, etc.)
  */
 
 const fs = require('fs');
@@ -81,12 +83,13 @@ class TemplateLintingFixer {
   }
 
   /**
-   * Get all template files
+   * Get all template files (including themed variants like .b2c.html, .b2b.html)
    */
   getTemplateFiles() {
     try {
-      // Find all HTML template files
-      const output = execSync('find src -name "*.component.html" -o -name "*.html"', {
+      // Find all HTML template files including themed variants
+      // Pattern matches: *.html (includes .component.html, .component.b2c.html, etc.)
+      const output = execSync('find src -name "*.html" -type f', {
         encoding: 'utf8'
       });
       return output.trim().split('\n').filter(f => f);

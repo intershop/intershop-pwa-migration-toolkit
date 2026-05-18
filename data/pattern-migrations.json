@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "lastUpdated": "2026-03-23",
+  "lastUpdated": "2026-03-26",
   "description": "Comprehensive pattern migration database for Intershop PWA versions",
   "migrations": [
     {
@@ -344,6 +344,34 @@
           "example": {
             "before": "import { ngExpressEngine } from '@nguniversal/express-engine';",
             "after": "import { CommonEngine } from '@angular/ssr';"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "NavigationCategory: New hideInMenu property for filtering categories",
+          "searchRegex": "NavigationCategory|navigationCategories\\$\\(\\)|header-navigation\\.component",
+          "files": "**/*.{ts,spec.ts,html}",
+          "severity": "medium",
+          "manual": true,
+          "breaking": true,
+          "modelChange": {
+            "model": "NavigationCategory",
+            "newProperty": "hideInMenu: boolean",
+            "defaultValue": false,
+            "description": "Categories with hideInMenu: true are filtered out from navigation display"
+          },
+          "componentImpact": [
+            "HeaderNavigationComponent now filters categories based on hideInMenu",
+            "Test data must include hideInMenu property",
+            "Snapshot tests will show different rendered output (filtered categories)",
+            "Custom themed templates (.b2c.html, .b2b.html) may need filtering logic if customized"
+          ],
+          "migration": "If you want all categories visible (old behavior), either: 1) Ensure backend never sets hideInMenu: true, or 2) Override component to remove filtering logic",
+          "testMigration": "Update test data to include hideInMenu property. Tests that expect all categories to show should set hideInMenu: false",
+          "example": {
+            "before": "// Test data (PWA 9.x)\nconst categories = [\n  { uniqueId: 'A', name: 'CAT_A', url: '/cat/A' },\n  { uniqueId: 'B', name: 'CAT_B', url: '/cat/B' }\n];\n// All categories shown in navigation",
+            "after": "// Test data (PWA 10.0+)\nconst categories = [\n  { uniqueId: 'A', name: 'CAT_A', url: '/cat/A', hideInMenu: false },\n  { uniqueId: 'B', name: 'CAT_B', url: '/cat/B', hideInMenu: true }\n] as NavigationCategory[];\n// Only category A shown; B is filtered out",
+            "customization": "// To restore old behavior (show all)\nthis.categories$ = this.shoppingFacade.navigationCategories$();\n// Don't filter based on hideInMenu"
           }
         },
         {

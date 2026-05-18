@@ -1,6 +1,11 @@
 #!/bin/bash
 # Analyzes component architecture (NgModule vs Standalone)
-# Usage: ./scripts/check-standalone-components.sh
+# Usage: ./scripts/check-standalone-components.sh [--project-dir <path>]
+
+# Resolve project directory (supports --project-dir and PWA_PROJECT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_project-dir.sh"
+cd "$PROJECT_DIR"
 
 echo "🔍 Analyzing component architecture..."
 echo ""

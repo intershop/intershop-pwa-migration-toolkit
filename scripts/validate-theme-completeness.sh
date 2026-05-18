@@ -7,6 +7,11 @@
 
 set -e
 
+# Resolve project directory (supports --project-dir and PWA_PROJECT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_project-dir.sh"
+cd "$PROJECT_DIR"
+
 THEMES_DIR="src/styles/themes"
 REFERENCE_THEME="b2b"
 FIX_MODE=false

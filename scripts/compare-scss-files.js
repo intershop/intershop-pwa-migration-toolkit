@@ -22,10 +22,12 @@ const RESET = '\x1b[0m';
 
 class SCSSComparator {
   constructor(options = {}) {
+    const { projectDir } = require('./_project-dir');
+    this.projectRoot = projectDir;
     this.verbose = options.verbose || false;
     this.autoFix = options.autoFix || false;
     this.dryRun = options.dryRun || false;
-    this.scssDir = options.scssDir || 'src/styles';
+    this.scssDir = options.scssDir || path.join(projectDir, 'src/styles');
     this.comparisons = [];
   }
 

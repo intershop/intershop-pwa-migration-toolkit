@@ -6,7 +6,19 @@
 
 **First time using this toolkit?** → **[Read QUICK-START.md](QUICK-START.md)** (5 minutes)
 
-Three simple steps:
+**Two deployment modes:**
+
+| Mode | Setup | Best For |
+|------|-------|----------|
+| **Multi-Root Workspace** (recommended) | Open `.code-workspace` file | Ongoing use, iterative migrations |
+| **Copy & Hide** (legacy) | Copy files + `.gitignore` | One-off migrations |
+
+**Multi-root workspace** (recommended):
+1. 📦 Clone this toolkit alongside your custom PWA
+2. 📂 Open `pwa-migration.code-workspace` in VS Code
+3. ✅ Run scripts with `--project-dir` or `PWA_PROJECT_DIR`
+
+**Copy & hide** (legacy):
 1. 📦 Copy toolkit files to your custom PWA project
 2. 🚫 Add patterns to `.gitignore` (keeps toolkit out of your repo)
 3. ✅ Verify with `./scripts/verify-gitignore-coverage.sh`
@@ -77,7 +89,11 @@ Three simple steps:
 
 #### PWA 10.0 Migration Tools
 - `migrate-control-flow.sh` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
+  - ✅ Scans ALL templates including themed variants (.b2c.html, .b2b.html, etc.)
+  - ✅ Reports themed templates separately for easy review
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
+
+> **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
 #### Dependency Management ⭐ NEW
 - `update-dependencies.sh` - **NEW:** Interactive 8-step dependency update workflow (following official guide)
@@ -96,6 +112,9 @@ Three simple steps:
 
 ### Configuration Templates (1 file)
 - `.gitignore-toolkit-template` - **NEW:** Pre-made .gitignore patterns to keep toolkit files out of your repo
+
+### Workspace Setup (1 file) ⭐ NEW
+- `pwa-migration.code-workspace.template` - **NEW:** VS Code multi-root workspace template for separated toolkit usage
 
 ### Verification Tools (1 file) ⭐ NEW
 - `verify-gitignore-coverage.sh` - **NEW:** Test script to verify all toolkit files are properly ignored

@@ -77,26 +77,43 @@ function processDirectory(dir) {
 
   let totalFixed = 0;
   let filesFixed = 0;
+  let themedFilesFixed = 0;
+  let totalThemedFixed = 0;
+  
+  // Detect themed templates (e.g., .component.b2c.html, .component.b2b.html)
+  const themedPattern = /\.component\.[a-z0-9-]+\.html$/;
 
   files.forEach(file => {
     const fixed = fixTemplate(file);
     if (fixed > 0) {
       totalFixed += fixed;
       filesFixed++;
+      
+      if (themedPattern.test(file)) {
+        themedFilesFixed++;
+        totalThemedFixed += fixed;
+      }
     }
   });
 
-  return { totalFixed, filesFixed };
+  return { totalFixed, filesFixed, themedFilesFixed, totalThemedFixed };
 }
 
 console.log('🔧 Fixing template syntax...\n');
 
-const { totalFixed, filesFixed } = processDirectory('src');
+const { projectDir } = require('./_project-dir');
+const srcDir = path.join(projectDir, 'src');
+const { totalFixed, filesFixed, themedFilesFixed, totalThemedFixed } = processDirectory(srcDir);
 
 if (totalFixed === 0) {
   console.log('✅ No issues found - all templates already use modern syntax!');
 } else {
   console.log(`\n✅ Fixed ${totalFixed} empty paired tags in ${filesFixed} files`);
+  
+  if (themedFilesFixed > 0) {
+    console.log(`   Including ${totalThemedFixed} fixes in ${themedFilesFixed} themed template(s) (.b2c.html, .b2b.html, etc.)`);
+  }
+  
   console.log('\n⚠️  Please review changes and test your application:');
   console.log('   npm run lint');
   console.log('   npm run build');

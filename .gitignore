@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 .vscode/
 .idea/
+
+# Migration progress state (session-specific, not project code)
+.migration-progress.json

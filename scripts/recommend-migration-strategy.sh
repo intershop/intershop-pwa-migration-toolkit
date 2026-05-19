@@ -38,7 +38,7 @@ NC='\033[0m'
 
 # Default versions
 CURRENT_VERSION="${1:-4.0.0}"
-TARGET_VERSION="${2:-10.0.0}"
+TARGET_VERSION="${2:-11.0.0}"
 INTERACTIVE=true
 QUICK=false
 

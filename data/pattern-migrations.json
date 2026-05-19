@@ -579,6 +579,139 @@
         }
       ]
     }
+  ,
+    {
+      "fromVersion": "10.0",
+      "toVersion": "11.0",
+      "description": "PWA 10.x → 11.0 Major Release - Angular 18, Formly 7, ESLint 9 Flat Config, Jest 30",
+      "releaseDate": "2026-05-06",
+      "angularVersion": "18",
+      "nodeVersion": "22.22.0",
+      "npmVersion": "10.9.4",
+      "icmRequirements": {
+        "minimum": "14.0.1",
+        "recommended": "14.0.1",
+        "notes": "CMS resourceSetId feature requires ICM 12.1.0+; all other features work with ICM 14.0.1+",
+        "features": [
+          {
+            "feature": "CMS View Context Resource Set ID",
+            "icmMinVersion": "12.1.0",
+            "description": "CMS REST calls now include resourceSetId for improved performance caching"
+          }
+        ]
+      },
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Formly 7: templateOptions renamed to props",
+          "searchRegex": "templateOptions\\s*:",
+          "files": "**/*.ts",
+          "severity": "critical",
+          "autoFixable": true,
+          "migration": "Run: ng generate @ngx-formly/schematics:v7-migration",
+          "example": {
+            "before": "{ key: 'email', templateOptions: { label: 'Email', required: true } }",
+            "after": "{ key: 'email', props: { label: 'Email', required: true } }"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Formly 7: expressionProperties renamed to expressions",
+          "searchRegex": "expressionProperties\\s*:",
+          "files": "**/*.ts",
+          "severity": "high",
+          "autoFixable": true,
+          "migration": "Run: ng generate @ngx-formly/schematics:v7-migration",
+          "example": {
+            "before": "{ key: 'field', expressionProperties: { 'templateOptions.required': 'model.condition' } }",
+            "after": "{ key: 'field', expressions: { 'props.required': 'model.condition' } }"
+          }
+        },
+        {
+          "type": "config",
+          "description": "ESLint 9: Legacy .eslintrc.json config format no longer supported",
+          "searchRegex": "\\.eslintrc\\.json",
+          "files": "**/.eslintrc.json",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "migration": "Rewrite .eslintrc.json as eslint.config.mjs (flat config format). Merge e2e/ and schematics/ sub-configs into root config as file-specific overrides.",
+          "example": {
+            "before": "{ \"extends\": [\"eslint:recommended\"], \"rules\": {} }  // .eslintrc.json",
+            "after": "export default [ { rules: {} } ];  // eslint.config.mjs"
+          }
+        },
+        {
+          "type": "config",
+          "description": "ESLint 9: eslint-plugin-rxjs renamed to @smarttools/eslint-plugin-rxjs",
+          "searchRegex": "\"eslint-plugin-rxjs\"",
+          "files": "**/.eslintrc.json,**/eslint.config.{mjs,js,cjs}",
+          "severity": "high",
+          "autoFixable": false,
+          "migration": "npm uninstall eslint-plugin-rxjs && npm install @smarttools/eslint-plugin-rxjs",
+          "example": {
+            "before": "plugins: ['rxjs']  // uses eslint-plugin-rxjs",
+            "after": "plugins: { rxjs: rxjsPlugin }  // uses @smarttools/eslint-plugin-rxjs"
+          }
+        },
+        {
+          "type": "config",
+          "description": "ESLint 9: eslint-plugin-rxjs-angular renamed to eslint-plugin-rxjs-angular-x",
+          "searchRegex": "\"eslint-plugin-rxjs-angular\"",
+          "files": "**/.eslintrc.json,**/eslint.config.{mjs,js,cjs}",
+          "severity": "high",
+          "autoFixable": false,
+          "migration": "npm uninstall eslint-plugin-rxjs-angular && npm install eslint-plugin-rxjs-angular-x"
+        },
+        {
+          "type": "config",
+          "description": "Jest 30: jest.config.js must be migrated to jest.config.ts with createCjsPreset()",
+          "searchRegex": "preset.*jest-preset-angular",
+          "files": "**/jest.config.{js,ts}",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "migration": "Replace jest.config.js with jest.config.ts using createCjsPreset() and set testRunner: 'jest-jasmine2'",
+          "example": {
+            "before": "module.exports = { preset: 'jest-preset-angular', ... };  // jest.config.js",
+            "after": "import { createCjsPreset } from 'jest-preset-angular';\nexport default { ...createCjsPreset(), testRunner: 'jest-jasmine2', ... };  // jest.config.ts"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Angular 18: getCurrencySymbol deprecated (use Intl API instead)",
+          "searchRegex": "getCurrencySymbol",
+          "files": "**/*.ts",
+          "severity": "medium",
+          "autoFixable": false,
+          "manual": true,
+          "migration": "Replace getCurrencySymbol() with native Intl.NumberFormat API",
+          "example": {
+            "before": "import { getCurrencySymbol } from '@angular/common';\nconst symbol = getCurrencySymbol('USD', 'narrow');",
+            "after": "const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }).formatToParts(0).find(p => p.type === 'currency')?.value ?? 'USD';"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "ESLint 9: @typescript-eslint/ban-types renamed to @typescript-eslint/no-restricted-types",
+          "searchRegex": "ban-types",
+          "files": "**/.eslintrc.json,**/eslint.config.{mjs,js}",
+          "severity": "medium",
+          "autoFixable": false,
+          "migration": "Rename rule key in ESLint config"
+        },
+        {
+          "type": "typescript",
+          "description": "JSDOM v26 (Jest 30): window.location mocking no longer works - refactor tests",
+          "searchRegex": "delete.*window.*location|window\\.location\\s*=",
+          "files": "**/*.spec.ts",
+          "severity": "high",
+          "autoFixable": false,
+          "manual": true,
+          "migration": "Refactor tests that mock window.location - use Angular Router spies or configure jsdom URL via testEnvironmentOptions"
+        }
+      ]
+    }
   ],
   "commonPatterns": {
     "scss": [

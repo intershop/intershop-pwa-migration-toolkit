@@ -32,7 +32,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 # Parse arguments
-TARGET_VERSION="${1:-10.0.0}"
+TARGET_VERSION="${1:-11.0.0}"
 AUTO_UPDATE=false
 SKIP_CHECK=false
 

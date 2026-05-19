@@ -243,7 +243,7 @@ if [ "$SKIP_NODEJS_CHECK" = false ]; then
     log_info "Checking Node.js version requirements..."
     
     # Extract target version from branch/tag name
-    TARGET_VERSION=$(echo "$TARGET_BRANCH" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "10.0.0")
+    TARGET_VERSION=$(echo "$TARGET_BRANCH" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "11.0.0")
     
     if ! "$SCRIPT_DIR/check-nodejs-version.sh" "$TARGET_VERSION"; then
       log_error "Node.js version check failed"

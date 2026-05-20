@@ -6,3 +6,6 @@ node_modules/
 
 # Migration progress state (session-specific, not project code)
 .migration-progress.json
+
+# Generated detection reports (session output, not project code)
+pattern-detection-report.json

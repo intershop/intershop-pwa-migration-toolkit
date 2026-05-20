@@ -709,6 +709,20 @@
           "autoFixable": false,
           "manual": true,
           "migration": "Refactor tests that mock window.location - use Angular Router spies or configure jsdom URL via testEnvironmentOptions"
+        },
+        {
+          "type": "html",
+          "description": "PayPal: ish-payment-paypal-messages renamed to ish-payment-paypal in PWA 11.0",
+          "searchRegex": "ish-payment-paypal-messages",
+          "files": "**/*.html",
+          "severity": "critical",
+          "autoFixable": false,
+          "manual": true,
+          "migration": "Replace <ish-payment-paypal-messages [pageType]=\"'...'\" /> with <ish-payment-paypal pageType=\"...\" /> and update the server setting key from 'preferences.PayPalCheckoutPreferences.PayLaterMessaging*' to 'payment.paypal.payLaterPreferences.PayLaterMessaging*'",
+          "example": {
+            "before": "@if ('preferences.PayPalCheckoutPreferences.PayLaterMessagingProductDetailsEnabled' | ishServerSetting) {\n  <ish-payment-paypal-messages [pageType]=\"'product-details'\" />\n}",
+            "after": "@if ('payment.paypal.payLaterPreferences.PayLaterMessagingProductDetailsEnabled' | ishServerSetting) {\n  <ish-payment-paypal pageType=\"product-details\" />\n}"
+          }
         }
       ]
     }

@@ -6,7 +6,7 @@
 #
 # Usage:
 #   ./scripts/check-icm-compatibility.sh
-#   ./scripts/check-icm-compatibility.sh --pwa-version 10.0.0
+#   ./scripts/check-icm-compatibility.sh --pwa-version 11.0.0
 #   ./scripts/check-icm-compatibility.sh --icm-url https://your-icm-server.com
 
 set -e
@@ -188,6 +188,7 @@ echo ""
 
 # Define ICM requirements (fallback if pattern-migrations.json unavailable)
 declare -A ICM_REQUIREMENTS
+ICM_REQUIREMENTS["11.0"]="14.0.1"
 ICM_REQUIREMENTS["10.0"]="11.0.0"
 ICM_REQUIREMENTS["9.1"]="11.0.0"
 ICM_REQUIREMENTS["9.0"]="11.0.0"

@@ -255,7 +255,34 @@ ng lint --fix
 - Stylelint 17 enforces modern CSS color function notation: `rgba(0, 0, 0, 0.5)` → `rgb(0 0 0 / 0.5)`
 - Run `npm run format` on the entire codebase before committing
 
-#### 4D: CMS View Context Resource Set ID (if applicable)
+#### 4D: PayPal Component Rename
+
+The `ish-payment-paypal-messages` component was renamed to `ish-payment-paypal` in PWA 11.0.0.
+The server setting key path also changed.
+
+**Detection:**
+
+```bash
+grep -r "ish-payment-paypal-messages" src/ --include="*.html" -l
+```
+
+**Migration:**
+
+```html
+<!-- BEFORE -->
+@if ('preferences.PayPalCheckoutPreferences.PayLaterMessagingProductDetailsEnabled' | ishServerSetting) {
+  <ish-payment-paypal-messages [pageType]="'product-details'" />
+}
+
+<!-- AFTER -->
+@if ('payment.paypal.payLaterPreferences.PayLaterMessagingProductDetailsEnabled' | ishServerSetting) {
+  <ish-payment-paypal pageType="product-details" />
+}
+```
+
+**Note:** The `pageType` input changed from property binding `[pageType]="'...'"` to attribute binding `pageType="..."` (static string).
+
+#### 4E: CMS View Context Resource Set ID (if applicable)
 
 The CMS View Context REST requests now append a `resourceSetId` for performance.
 The default value `app_sf_base_cm` is defined in `CMSService`.

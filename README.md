@@ -184,6 +184,57 @@ Copilot: [Invokes pwa-troubleshooting skill for diagnosis]
 
 See [`.github/skills/README.md`](.github/skills/README.md) for detailed usage guide.
 
+### Knowledge Base MCP Server (Optional)
+
+For teams that maintain a shared knowledge base, the toolkit supports connecting Copilot to a **Knowledge Base MCP Server**. This gives Copilot access to your team's accumulated migration knowledge — resolved issues, proven workarounds, project-specific patterns, and lessons learned.
+
+#### Installation
+
+Add the MCP server to your VS Code configuration:
+
+**Option A: User-level** (applies to all workspaces) — add to `~/.config/Code/User/mcp.json` (Linux/macOS) or `%APPDATA%\Code\User\mcp.json` (Windows):
+
+```json
+{
+  "servers": {
+    "kb-in-azure": {
+      "url": "https://<YOUR_KB_ENDPOINT>/api/v1/mcp",
+      "type": "http"
+    }
+  }
+}
+```
+
+**Option B: Workspace-level** — already included in the workspace template (`pwa-migration.code-workspace.template`). Update the URL to your KB endpoint.
+
+#### What It Provides
+
+| Tool | Purpose |
+|------|---------|
+| `searchKnowledge` | Semantic search across team knowledge (e.g., "SCSS variable migration issues") |
+| `getKnowledge` | Retrieve a specific knowledge entry by ID |
+| `createKnowledge` | Store new findings (resolved issues, workarounds, patterns) |
+| `replaceKnowledge` | Update existing entries when solutions evolve |
+| `deleteKnowledge` | Remove outdated entries |
+
+#### Usage with Copilot
+
+Once configured, Copilot will automatically search the KB when relevant. You can also ask explicitly:
+
+```
+User: "Search the KB for bootstrap icon migration issues"
+User: "Save this workaround to the knowledge base"
+User: "What does the KB say about SCSS variable renames in PWA 10?"
+```
+
+#### When to Use
+
+- **Before starting a migration** — check if your team already solved similar issues
+- **After resolving a tricky problem** — store the solution for future migrations
+- **During troubleshooting** — search for known workarounds before debugging from scratch
+
+> **Note:** The KB server is optional. The toolkit works fully without it. The KB adds team memory across projects and sessions.
+
 ---
 ## 📚 Official Intershop PWA Documentation
 

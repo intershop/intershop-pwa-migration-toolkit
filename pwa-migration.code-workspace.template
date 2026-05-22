@@ -22,5 +22,11 @@
     "terminal.integrated.env.windows": {
       "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
     }
+  },
+  "mcpServers": {
+    "kb-in-azure": {
+      "url": "https://<YOUR_KB_ENDPOINT>/api/v1/mcp",
+      "type": "http"
+    }
   }
 }

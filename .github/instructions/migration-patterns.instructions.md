@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Index and Overview
@@ -76,13 +76,13 @@ SOURCE_VERSION="X.Y.Z"  # Your current version
 TARGET_VERSION="A.B.C"  # Desired version
 
 # 2. Analyze complexity and get tier recommendation
-./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
 
 # 3. Detect breaking changes between versions
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 
 # 4. Execute migration with version parameters
-./scripts/migrate-custom-branch.sh --from $SOURCE_VERSION --to $TARGET_VERSION
+node scripts/migrate-custom-branch.js --from $SOURCE_VERSION --to $TARGET_VERSION
 ```
 
 ### Major Version Milestones (Reference)
@@ -481,7 +481,7 @@ grep -r "lazy-[extension-name]" src/app/
 **Pattern for Migration Script**:
 
 ```bash
-# Add to migration-helper.js or migrate-custom-branch.sh
+# Add to migration-helper.js or migrate-custom-branch.js
 # After merge, detect removed features:
 
 REMOVED_FEATURES=$(comm -13 \
@@ -581,10 +581,10 @@ npm run build
 **Create Theme Variable Sync Script**:
 
 ```bash
-# scripts/sync-theme-variables.sh
+# scripts/sync-custom-theme-variables.js
 #!/bin/bash
 # Extracts variables from b2b theme and suggests additions for custom themes
-# Usage: ./sync-theme-variables.sh [your-theme-name]
+# Usage: ./sync-custom-theme-variables.js [your-theme-name]
 
 TARGET_THEME=${1}
 if [ -z "$TARGET_THEME" ]; then
@@ -780,7 +780,7 @@ Minimum 11 new SCSS variables required (see Critical Variables above)
 grep -r "<ish-[a-z-]*></ish-[a-z-]*>" src/app --include="*.html" | wc -l
 
 # Auto-fix
-./scripts/check-template-syntax.sh --fix
+node scripts/check-template-syntax.js --fix
 ```
 
 **See**: migration-workflow.instructions.md section "Angular Template Syntax Modernization" for:
@@ -1022,7 +1022,7 @@ const imports = [
 
 **Tooling Enhancements**:
 
-1. Create `sync-theme-variables.sh` script
+1. Create `sync-custom-theme-variables.js` script
 2. Add pre-commit hook to check environment.model.ts consistency
 3. Create migration test suite to verify custom features
 4. Add SCSS variable diff checker to CI/CD pipeline

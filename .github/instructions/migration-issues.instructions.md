@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Common Issues and Solutions
@@ -97,7 +97,7 @@ ng generate component my-component
 
 **Prevention**:
 
-Both migration scripts (`migration-helper.js` and `migrate-custom-branch.sh`) now check for global CLI availability and offer to install it automatically. If you're migrating manually:
+Both migration scripts (`migration-helper.js` and `migrate-custom-branch.js`) now check for global CLI availability and offer to install it automatically. If you're migrating manually:
 
 ```bash
 # After npm install, always verify and install global CLI
@@ -151,7 +151,7 @@ git add .
 git commit -m "chore: update Angular to v16 for PWA 9.1 compatibility"
 
 # 5. NOW start migration
-./scripts/migrate-custom-branch.sh
+node scripts/migrate-custom-branch.js
 ```
 
 **Option B: Post-Migration Update**:
@@ -191,16 +191,16 @@ git show feature/migration-4.0-to-9.1:package.json | grep '\"@angular/core\"' | 
 
 ```bash
 # 1. Validate theme completeness (proactive check)
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # 2. If missing variables found, auto-sync them
-./scripts/sync-custom-theme-variables.sh
+node scripts/sync-custom-theme-variables.js
 
 # 3. Review and adjust auto-added variables for your brand
 # Edit: src/styles/themes/[custom]/variables.scss
 
 # 4. Verify completeness
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # 5. NOW build (should have 0-2 SCSS errors instead of 5-15)
 npm run build
@@ -531,10 +531,10 @@ See migration-workflow.instructions.md section "Angular Template Syntax Moderniz
 
 ```bash
 # Check templates
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 
 # Auto-fix
-./scripts/check-template-syntax.sh --fix
+node scripts/check-template-syntax.js --fix
 
 # Verify
 npm run build
@@ -691,7 +691,7 @@ function legacyIntegration(data: any) {
 
 ### Verification Script
 
-Create `scripts/check-lint-issues.sh`:
+Create `scripts/check-lint-issues.js`:
 
 ```bash
 #!/bin/bash
@@ -768,7 +768,7 @@ grep -r "lazy-[extension-name]" src/app/
 **Pattern for Migration Script**:
 
 ```bash
-# Add to migration-helper.js or migrate-custom-branch.sh
+# Add to migration-helper.js or migrate-custom-branch.js
 # After merge, detect removed features:
 
 REMOVED_FEATURES=$(comm -13 \
@@ -902,12 +902,12 @@ Minimum 11 new SCSS variables required (see Critical Variables above)
 
 ```bash
 # Check if your issue is a known bug already fixed
-./scripts/check-github-issues.sh --version 9.1.0 --search "SCSS variable"
+node scripts/check-github-issues.js --version 9.1.0 --search "SCSS variable"
 
 # Example searches:
-./scripts/check-github-issues.sh --version 9.1.0 --search "template syntax"
-./scripts/check-github-issues.sh --version 9.1.0 --search "docker compose"
-./scripts/check-github-issues.sh --version 9.1.0 --search "environment features"
+node scripts/check-github-issues.js --version 9.1.0 --search "template syntax"
+node scripts/check-github-issues.js --version 9.1.0 --search "docker compose"
+node scripts/check-github-issues.js --version 9.1.0 --search "environment features"
 ```
 
 **The script will**:
@@ -974,7 +974,7 @@ git checkout --theirs docker-compose.yml   # Lose all custom services/env vars
 
 ```bash
 # 1. Use the intelligent merge script
-./scripts/merge-docker-compose.sh
+node scripts/merge-docker-compose.js
 
 # 2. Review the merged result
 cat docker-compose.yml
@@ -1141,13 +1141,13 @@ npm test
 
 ```bash
 # 1. Analyze snapshot failures vs real failures
-./scripts/update-snapshots.sh --dry-run
+node scripts/update-snapshots.js --dry-run
 
 # 2. Interactive mode - review each change
-./scripts/update-snapshots.sh --interactive
+node scripts/update-snapshots.js --interactive
 
 # OR automatic for all (if confident)
-./scripts/update-snapshots.sh --all
+node scripts/update-snapshots.js --all
 
 # 3. Verify tests pass after update
 npm test
@@ -1200,10 +1200,10 @@ npm start  # Manual test the component
 
 ```bash
 # Update only product-related snapshots
-./scripts/update-snapshots.sh --pattern "product.*"
+node scripts/update-snapshots.js --pattern "product.*"
 
 # Update only specific folder
-./scripts/update-snapshots.sh --pattern "shell/.*"
+node scripts/update-snapshots.js --pattern "shell/.*"
 ```
 
 **Time Saved**: 20-40 minutes by systematically handling snapshots instead of ad-hoc `--updateSnapshot`.
@@ -1325,19 +1325,19 @@ node scripts/compare-scss-files.js --dry-run
 
 **Integration with Issue #1** (Theme Variables):
 
-- **Issue #1** (validate-theme-completeness.sh) - Checks variables only
+- **Issue #1** (validate-theme-completeness.js) - Checks variables only
 - **Issue #13** (compare-scss-files.js) - Comprehensive check: variables + mixins + imports + classes
 
 Recommended workflow:
 
 ```bash
 # Step 1: Quick variable check (Issue #1)
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # Step 2: Comprehensive SCSS check (Issue #13)
 node scripts/compare-scss-files.js
 
 # Step 3: Fix what's found
-./scripts/sync-custom-theme-variables.sh  # Variables
+node scripts/sync-custom-theme-variables.js  # Variables
 node scripts/compare-scss-files.js --auto-fix  # Everything else
 ```

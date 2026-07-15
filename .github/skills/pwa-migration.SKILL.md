@@ -22,7 +22,7 @@ description: |
 - 🤔 Decision support (which scripts to run, what order, how to handle conflicts)
 
 **Don't use for:**
-- Running a single script (just run it: `./scripts/migrate-custom-branch.sh`)
+- Running a single script (just run it: `node scripts/migrate-custom-branch.js`)
 - General Angular development questions
 - Non-migration PWA feature development
 - Simple file edits
@@ -65,7 +65,7 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 
 **All migration scripts require version parameters:**
 ```bash
-./scripts/analyze-migration-complexity.sh <source-version> <target-version>
+node scripts/analyze-migration-complexity.js <source-version> <target-version>
 ./scripts/detect-pattern-changes.js <source-version> <target-version>
 ```
 
@@ -75,7 +75,7 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 2. Run interactive migration helper (migration-helper.js) - shows video tutorials automatically
 3. Interview user about customization scope
 4. Review customization best practices (docs/guides/customization-best-practices.md)
-5. Run complexity analysis (analyze-migration-complexity.sh with versions)
+5. Run complexity analysis (analyze-migration-complexity.js with versions)
 6. Recommend tier approach (1: simple merge, 2: pattern detection, 3: comprehensive)
 7. Check prerequisites (Angular version, remotes, themes)
 8. Create migration plan with version-specific patterns
@@ -85,9 +85,9 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 ```
 1. Verify git remotes setup
 2. Run pattern detection (if Tier 2/3)
-3. Validate theme completeness (validate-theme-completeness.sh)
-4. Check template syntax (check-template-syntax.sh)
-5. Analyze standalone components (check-standalone-components.sh)
+3. Validate theme completeness (validate-theme-completeness.js)
+4. Check template syntax (check-template-syntax.js)
+5. Analyze standalone components (check-standalone-components.js)
 6. Review existing CUSTOMIZATION markers in core files
 7. Document baseline state
 ```
@@ -106,12 +106,12 @@ git show <target-branch>:package.json | grep '"@angular/core"'  # Target
 ### Phase 4: Validation
 ```
 1. Run build and collect errors
-2. Check GitHub issues for known bugs (check-github-issues.sh)
-3. Run tests and update snapshots (update-snapshots.sh)
+2. Check GitHub issues for known bugs (check-github-issues.js)
+3. Run tests and update snapshots (update-snapshots.js)
 4. Suppress template linting temporarily (fix-template-linting.js)
-5. Run pre-commit customization checks (pre-commit-customization-check.sh)
+5. Run pre-commit customization checks (pre-commit-customization-check.js)
 6. Review customization health checklist (14 items in best-practices guide)
-7. Generate migration report (generate-migration-report.sh)
+7. Generate migration report (generate-migration-report.js)
 8. Verify all checklist items
 ```
 
@@ -227,18 +227,18 @@ Example: 4.0 → 10.0 applies patterns from:
 ### Issue: SCSS Variables Missing in Custom Theme
 **Detection:** Build fails with "Undefined variable: $variable-name"
 
-**Script:** `./scripts/validate-theme-completeness.sh`
+**Script:** `node scripts/validate-theme-completeness.js`
 
 **Resolution:**
-1. Sync missing variables: `./scripts/sync-custom-theme-variables.sh`
+1. Sync missing variables: `node scripts/sync-custom-theme-variables.js`
 2. Review auto-added variables in `src/styles/themes/custom/style.scss`
 3. Adjust values for your brand
-4. Re-validate: `./scripts/validate-theme-completeness.sh`
+4. Re-validate: `node scripts/validate-theme-completeness.js`
 
 ### Issue: Template Syntax Outdated
 **Detection:** Empty paired tags like `<component></component>`
 
-**Script:** `./scripts/check-template-syntax.sh`
+**Script:** `node scripts/check-template-syntax.js`
 
 **Resolution:**
 1. Auto-fix: `node scripts/fix-template-syntax.js`
@@ -262,7 +262,7 @@ Example: 4.0 → 10.0 applies patterns from:
 ### Issue: Known Bug in Target Version
 **Detection:** Error that seems like integration issue
 
-**Script:** `./scripts/check-github-issues.sh --version 9.1.0 --search "error keywords"`
+**Script:** `node scripts/check-github-issues.js --version 9.1.0 --search "error keywords"`
 
 **Resolution:** If found on GitHub and fixed, wait for next release or apply local patch
 
@@ -316,36 +316,36 @@ When invoked, this skill should:
 ## Script Reference
 
 ### Core Migration Scripts
-- `migrate-custom-branch.sh` - Automated full migration
+- `migrate-custom-branch.js` - Automated full migration
 - `migration-helper.js` - Interactive step-by-step guide with video tutorial detection
-- `analyze-migration-complexity.sh` - Tier recommendation
-- `generate-migration-report.sh` - Documentation generation
-- `pre-commit-customization-check.sh` - Catch customization anti-patterns early
+- `analyze-migration-complexity.js` - Tier recommendation
+- `generate-migration-report.js` - Documentation generation
+- `pre-commit-customization-check.js` - Catch customization anti-patterns early
 
 ### Detection & Analysis
 - `detect-pattern-changes.js` - Pattern detection (Tier 2/3)
-- `check-github-issues.sh` - Known bug verification
-- `check-template-syntax.sh` - Template modernization check
-- `check-standalone-components.sh` - Architecture analysis
-- `check-lint-issues.sh` - Lint error categorization
+- `check-github-issues.js` - Known bug verification
+- `check-template-syntax.js` - Template modernization check
+- `check-standalone-components.js` - Architecture analysis
+- `check-lint-issues.js` - Lint error categorization
 
 ### Merge & Fix Tools
 - `merge-i18n-files.js` - Localization merge
-- `merge-docker-compose.sh` - Docker config merge
-- `sync-custom-theme-variables.sh` - SCSS variable sync
+- `merge-docker-compose.js` - Docker config merge
+- `sync-custom-theme-variables.js` - SCSS variable sync
 - `compare-scss-files.js` - Comprehensive SCSS comparison
 - `fix-template-syntax.js` - Auto-fix templates
 - `fix-template-linting.js` - Suppress linting issues
-- `update-snapshots.sh` - Jest snapshot manager
-- `update-dependencies.sh` - Interactive 8-step dependency workflow
+- `update-snapshots.js` - Jest snapshot manager
+- `update-dependencies.js` - Interactive 8-step dependency workflow
 
 ### PWA 10.0 Specific
-- `migrate-control-flow.sh` - Angular 17 control flow syntax (*ngIf → @if)
+- `migrate-control-flow.js` - Angular 17 control flow syntax (*ngIf → @if)
 - `migrate-bootstrap-icons.js` - Font Awesome → Bootstrap Icons detection
 
 ### Validation
-- `validate-theme-completeness.sh` - Proactive SCSS check
-- `check-icm-compatibility.sh` - ICM version compatibility verification
+- `validate-theme-completeness.js` - Proactive SCSS check
+- `check-icm-compatibility.js` - ICM version compatibility verification
 
 ## Example Invocation
 
@@ -365,7 +365,7 @@ Meanwhile, let me check your git setup...
 
 Based on the version jump (4.0 → 9.1 = 5 major versions), this will likely be 
 a Tier 3 migration. Let me run complexity analysis...
-[runs: ./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0]
+[runs: node scripts/analyze-migration-complexity.js 4.0.0 9.1.0]
 
 Analysis complete. Recommended approach:
 - Tier: 3 (Comprehensive)

@@ -1,0 +1,39 @@
+{
+  "name": "pwa-migration-toolkit",
+  "version": "2.1.0",
+  "description": "Cross-platform toolkit for migrating Intershop PWA customizations between versions",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "setup": "node setup.js",
+    "migrate": "node scripts/migrate-custom-branch.js",
+    "helper": "node scripts/migration-helper.js",
+    "progress": "node scripts/migration-progress.js",
+    "analyze": "node scripts/analyze-migration-complexity.js",
+    "recommend": "node scripts/recommend-migration-strategy.js",
+    "report": "node scripts/generate-migration-report.js",
+    "check:node": "node scripts/check-nodejs-version.js",
+    "check:lint": "node scripts/check-lint-issues.js",
+    "check:template": "node scripts/check-template-syntax.js",
+    "check:standalone": "node scripts/check-standalone-components.js",
+    "check:icm": "node scripts/check-icm-compatibility.js",
+    "check:github": "node scripts/check-github-issues.js",
+    "validate:theme": "node scripts/validate-theme-completeness.js",
+    "sync:theme": "node scripts/sync-custom-theme-variables.js",
+    "migrate:controlflow": "node scripts/migrate-control-flow.js",
+    "migrate:icons": "node scripts/migrate-bootstrap-icons.js",
+    "merge:i18n": "node scripts/merge-i18n-files.js",
+    "merge:docker": "node scripts/merge-docker-compose.js",
+    "update:deps": "node scripts/update-dependencies.js",
+    "update:snapshots": "node scripts/update-snapshots.js",
+    "verify:gitignore": "node scripts/verify-gitignore-coverage.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "js-yaml": "^4.1.0",
+    "simple-git": "^3.27.0",
+    "yargs": "^17.7.2"
+  }
+}

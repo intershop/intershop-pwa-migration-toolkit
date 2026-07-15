@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Git Operations and Strategies
@@ -758,7 +758,7 @@ git add src/assets/i18n/en_US.json
 
 ### Integration with Migration Script
 
-Add to `scripts/migrate-custom-branch.sh` or `scripts/migration-helper.js`:
+Add to `scripts/migrate-custom-branch.js` or `scripts/migration-helper.js`:
 
 ```bash
 # After merge conflicts are resolved

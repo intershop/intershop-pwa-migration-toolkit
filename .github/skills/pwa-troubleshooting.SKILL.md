@@ -75,14 +75,14 @@ For each category, run appropriate diagnostic:
 ```bash
 # Category A: Build Errors
 npm run build 2>&1 | tee build-errors.log
-./scripts/check-lint-issues.sh
+node scripts/check-lint-issues.js
 
 # Category B: SCSS Errors
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 node scripts/compare-scss-files.js
 
 # Category C: Template Errors
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 node scripts/fix-template-linting.js --check
 
 # Category D: Git Conflicts
@@ -90,11 +90,11 @@ git status
 git diff --name-only --diff-filter=U
 
 # Category E: Runtime - Check GitHub first
-./scripts/check-github-issues.sh --version <version> --search "<error keywords>"
+node scripts/check-github-issues.js --version <version> --search "<error keywords>"
 
 # Category F: Test Failures
 npm test -- --listTests | grep <failing-test>
-./scripts/update-snapshots.sh --check
+node scripts/update-snapshots.js --check
 ```
 
 ### 3. Pattern Matching
@@ -113,16 +113,16 @@ Check against known issues:
 **Diagnosis:**
 ```bash
 # Identify missing variables
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 ```
 
 **Root Cause:** Custom theme missing variables added in new PWA version
 
 **Solution Steps:**
-1. Auto-sync variables: `./scripts/sync-custom-theme-variables.sh`
+1. Auto-sync variables: `./scripts/sync-custom-theme-variables.js`
 2. Review synced variables in `src/styles/themes/custom/style.scss`
 3. Adjust default values for your brand colors/spacing
-4. Re-validate: `./scripts/validate-theme-completeness.sh`
+4. Re-validate: `node scripts/validate-theme-completeness.js`
 5. Build: `npm run build`
 
 **Prevention:** Run validation BEFORE first build in future migrations
@@ -193,7 +193,7 @@ git diff --name-only --diff-filter=U
 # Keep custom scripts
 
 # Check script carefully:
-./scripts/merge-docker-compose.sh  # Similar logic applies
+./scripts/merge-docker-compose.js  # Similar logic applies
 ```
 
 **SCSS conflicts (theme files):**
@@ -201,7 +201,7 @@ git diff --name-only --diff-filter=U
 # Strategy:
 # 1. Keep NEW variable names from Intershop
 # 2. Keep YOUR custom color values
-# 3. Run sync afterwards: ./scripts/sync-custom-theme-variables.sh
+# 3. Run sync afterwards: ./scripts/sync-custom-theme-variables.js
 
 # Keep custom color values
 # Accept new PWA structure/mixins
@@ -267,7 +267,7 @@ git merge <target-branch>
 grep -r "selector: 'component-name'" src/
 
 # Check standalone component status
-./scripts/check-standalone-components.sh
+node scripts/check-standalone-components.js
 
 # Check imports
 grep -r "component-name" src/**/*.module.ts
@@ -368,8 +368,8 @@ grep -r "providedIn" src/
 
 **Diagnosis:**
 ```bash
-./scripts/check-github-issues.sh --version 9.1.0 --search "ComponentName"
-./scripts/check-github-issues.sh --version 9.1.0 --search "error message keywords"
+node scripts/check-github-issues.js --version 9.1.0 --search "ComponentName"
+node scripts/check-github-issues.js --version 9.1.0 --search "error message keywords"
 ```
 
 **If Found on GitHub:**
@@ -400,7 +400,7 @@ grep -r "providedIn" src/
 **Diagnosis:**
 ```bash
 # Run pre-commit checks
-./scripts/pre-commit-customization-check.sh
+node scripts/pre-commit-customization-check.js
 
 # Review best practices
 cat docs/guides/customization-best-practices.md
@@ -462,7 +462,7 @@ Run 14-item checklist in `docs/guides/customization-best-practices.md`:
 - **Score 0-7** = Needs improvement (refactor before migration)
 
 **Prevention:**
-- Install pre-commit hook: `cp scripts/pre-commit-customization-check.sh .git/hooks/pre-commit`
+- Install pre-commit hook: `cp scripts/pre-commit-customization-check.js .git/hooks/pre-commit`
 - Review best practices before starting new features
 - Run health checklist monthly
 
@@ -499,7 +499,7 @@ Run 14-item checklist in `docs/guides/customization-best-practices.md`:
 
 ```bash
 # 1. Is it a known issue?
-./scripts/check-github-issues.sh --version <version> --search "<keywords>"
+node scripts/check-github-issues.js --version <version> --search "<keywords>"
 
 # 2. Are dependencies installed?
 npm install
@@ -541,7 +541,7 @@ grep -r "failing-component" src/
 grep -r "$missing-variable" src/styles/
 
 # For templates: check component registrations
-./scripts/check-standalone-components.sh
+node scripts/check-standalone-components.js
 
 # For conflicts: understand both sides
 git show :1:<file>  # common ancestor

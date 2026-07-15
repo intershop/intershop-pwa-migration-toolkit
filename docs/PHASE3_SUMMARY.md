@@ -154,7 +154,7 @@ Scoring: 12-14 Excellent | 8-11 Good | 0-7 Needs Improvement
 - Can be used standalone or integrated with husky
 
 **Files Created:**
-- `scripts/pre-commit-customization-check.sh` (330 lines)
+- `scripts/pre-commit-customization-check.js` (330 lines)
 
 **Check Categories:**
 
@@ -210,7 +210,7 @@ Recommendation:
 
 1. **Git Hooks (Manual):**
 ```bash
-cp scripts/pre-commit-customization-check.sh .git/hooks/pre-commit
+cp scripts/pre-commit-customization-check.js .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
@@ -218,14 +218,14 @@ chmod +x .git/hooks/pre-commit
 ```bash
 # .husky/pre-commit
 #!/bin/sh
-./scripts/pre-commit-customization-check.sh
+node scripts/pre-commit-customization-check.js
 ```
 
 3. **CI/CD Pipeline:**
 ```yaml
 # .github/workflows/pr-checks.yml
 - name: Check Customizations
-  run: ./scripts/pre-commit-customization-check.sh
+  run: node scripts/pre-commit-customization-check.js
 ```
 
 **Exit Codes:**
@@ -297,7 +297,7 @@ git commit --no-verify  # Not recommended
 
 ### New Files (3)
 1. `docs/guides/customization-best-practices.md` (850+ lines)
-2. `scripts/pre-commit-customization-check.sh` (330 lines)
+2. `scripts/pre-commit-customization-check.js` (330 lines)
 3. `docs/PHASE3_SUMMARY.md` (this file)
 
 ### Modified Files (2)
@@ -363,7 +363,7 @@ git commit --no-verify  # Not recommended
 - [Migration Approaches Guide](.github/instructions/migration-approaches.instructions.md)
 - [Pattern Database](data/pattern-migrations.json)
 - [Migration Helper Script](scripts/migration-helper.js)
-- [Pre-commit Check Script](scripts/pre-commit-customization-check.sh)
+- [Pre-commit Check Script](scripts/pre-commit-customization-check.js)
 - [Customization Best Practices](docs/guides/customization-best-practices.md)
 
 ### Official Intershop Docs

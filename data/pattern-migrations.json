@@ -227,7 +227,7 @@
           "autoFixable": false,
           "manual": true,
           "schematic": "ng generate @angular/core:control-flow",
-          "note": "Use Angular CLI schematic or migrate-control-flow.sh script",
+          "note": "Use Angular CLI schematic or migrate-control-flow.js script",
           "example": {
             "before": "<div *ngIf=\"show\">Content</div>",
             "after": "@if (show) { <div>Content</div> }"
@@ -295,8 +295,8 @@
           "files": "src/styles/**/*.scss",
           "severity": "critical",
           "manual": true,
-          "script": "scripts/validate-theme-completeness.sh",
-          "note": "Run validate-theme-completeness.sh to detect missing variables, then sync-custom-theme-variables.sh to add them",
+          "script": "scripts/validate-theme-completeness.js",
+          "note": "Run validate-theme-completeness.js to detect missing variables, then sync-custom-theme-variables.js to add them",
           "documentation": "See scssChanges.variableRenames for complete mapping"
         },
         {
@@ -453,7 +453,7 @@
       "migrationNotes": [
         "Run ng generate @angular/core:control-flow for automated control flow migration",
         "Use scripts/migrate-bootstrap-icons.js for icon detection and migration",
-        "Run scripts/validate-theme-completeness.sh before first build to catch SCSS issues",
+        "Run scripts/validate-theme-completeness.js before first build to catch SCSS issues",
         "Review SSR custom code for @nguniversal references",
         "Update all Node.js references in infrastructure (Docker, CI/CD)",
         "Test inventory display as it now uses separate REST calls",

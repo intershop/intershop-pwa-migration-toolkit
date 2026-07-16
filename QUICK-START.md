@@ -24,6 +24,10 @@ Copilot instructions and skills apply automatically across both roots.
 # Clone the toolkit (keep it permanently)
 cd /home/training/developer
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+
+# Install dependencies (one-time)
+cd pwa-migration-toolkit
+npm install
 ```
 
 ### Step 2: Create the Workspace File

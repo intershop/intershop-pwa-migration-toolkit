@@ -6,15 +6,20 @@ You don't need to read or understand all the files in this toolkit — just open
 
 ## 🚀 Setup (2 minutes)
 
+**Prerequisites:** Node.js >= 18 and npm (check with `node -v`)
+
 ```bash
 # 1. Clone this toolkit
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
 cd pwa-migration-toolkit
 
-# 2. Run setup — point it at your custom PWA project
+# 2. Install dependencies
+npm install
+
+# 3. Run setup — point it at your custom PWA project
 node setup.js /path/to/your/custom-pwa
 
-# 3. Open the workspace
+# 4. Open the workspace
 code pwa-migration.code-workspace
 ```
 
@@ -292,55 +297,35 @@ User: "What does the KB say about SCSS variable renames in PWA 10?"
 5. ✅ Validate with toolkit verification scripts
 
 ---
-## � Platform Requirements
+## 🖥️ Platform Requirements
+
+**All scripts are cross-platform Node.js** — no Bash, WSL, or platform-specific tools required.
+
+| Requirement | Version |
+|-------------|--------|
+| Node.js | >= 18.0.0 |
+| npm | >= 9 |
+| Git | >= 2.25 |
 
 ### Linux / macOS
-All scripts work natively. No additional setup required.
+
+```bash
+cd pwa-migration-toolkit
+npm install
+node setup.js /path/to/your/custom-pwa
+```
 
 ### Windows
 
-**Option A: WSL2 (Recommended)**
-
-Most modern Windows development environments use WSL2 for Node.js, Docker, and Git workflows. All toolkit scripts work perfectly in WSL2:
+Works in **any** terminal (PowerShell, CMD, Git Bash, Windows Terminal):
 
 ```powershell
-# Install WSL2 (Windows 10/11)
-wsl --install Ubuntu
-
-# After installation, open Ubuntu and clone your project
-cd ~
-git clone <your-pwa-repo>
-cd <your-pwa-repo>
-
-# Use all scripts exactly as documented
-node scripts/migrate-custom-branch.js
+cd pwa-migration-toolkit
+npm install
+node setup.js C:\path\to\your\custom-pwa
 ```
 
-**Benefits:** 100% compatibility, native Linux environment, integrates with VS Code
-
-**Option B: Git Bash (Simple Fallback)**
-
-If you prefer not to use WSL2, Git Bash provides good compatibility:
-
-```bash
-# Install Git for Windows (includes Git Bash)
-# Download from: https://git-scm.com/download/win
-
-# Run shell scripts through Git Bash terminal
-node scripts/migrate-custom-branch.js
-node scripts/check-template-syntax.js
-
-# JavaScript scripts work directly via Node.js
-node scripts/migrate-custom-branch.js
-node scripts/detect-pattern-changes.js
-```
-
-**Benefits:** Zero setup if Git is already installed, good compatibility for standard bash scripts
-
-**Compatibility Notes:**
-- ✅ All 6 JavaScript scripts (`.js`) work on all platforms via Node.js
-- ✅ All 11 shell scripts (`.js`) work on Linux/macOS/WSL2 natively
-- ⚠️ Shell scripts work in Git Bash with minor limitations on advanced features
+No WSL or Git Bash required. All 20 scripts are pure Node.js.
 
 ---
 

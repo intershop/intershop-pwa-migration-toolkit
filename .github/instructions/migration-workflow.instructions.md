@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Workflow and Automation
@@ -18,14 +18,14 @@ grep '"@angular/core"' package.json
 
 # 0.5. PROACTIVE: Validate custom themes (NEW - Prevents SCSS build errors)
 # Run BEFORE first build to catch missing variables
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # If validation fails, sync missing variables
-./scripts/sync-custom-theme-variables.sh
+node scripts/sync-custom-theme-variables.js
 
 # Review auto-added variables and adjust for your brand
 # Then verify again
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # 1. First build attempt (expect ~5-10 errors if theme validation done)
 npm run build 2>&1 | tee build-errors-1.log
@@ -78,12 +78,12 @@ npm run build
 
 ### Detection Script
 
-Create `scripts/check-template-syntax.sh`:
+Create `scripts/check-template-syntax.js`:
 
 ```bash
 #!/bin/bash
 # Detects empty paired tags that should be self-closing
-# Usage: ./scripts/check-template-syntax.sh [--fix]
+# Usage: node scripts/check-template-syntax.js [--fix]
 
 FIX_MODE=false
 if [ "$1" = "--fix" ]; then
@@ -132,7 +132,7 @@ fi
 
 if [ "$FIX_MODE" = false ]; then
   echo "💡 To automatically fix these issues, run:"
-  echo "   ./scripts/check-template-syntax.sh --fix"
+  echo "   node scripts/check-template-syntax.js --fix"
   exit 1
 else
   echo "🔧 Fixing issues..."
@@ -239,7 +239,7 @@ if (totalFixed === 0) {
 
 ```bash
 # After resolving merge conflicts and before building
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 
 # If issues found, review output
 # Decide: fix now or after successful build
@@ -252,7 +252,7 @@ if (totalFixed === 0) {
 npm run build  # Ensure base migration works
 
 # Then modernize templates
-./scripts/check-template-syntax.sh --fix
+node scripts/check-template-syntax.js --fix
 
 # Verify fixes
 npm run lint
@@ -381,8 +381,8 @@ echo "Lines changed: $(git diff --shortstat)"
 ```json
 {
   "scripts": {
-    "check:templates": "bash scripts/check-template-syntax.sh",
-    "fix:templates": "bash scripts/check-template-syntax.sh --fix"
+    "check:templates": "node scripts/check-template-syntax.js",
+    "fix:templates": "node scripts/check-template-syntax.js --fix"
   }
 }
 ```
@@ -464,10 +464,10 @@ npm run lint 2>&1 | tee lint-report.log
 ### Create Theme Variable Sync Script
 
 ```bash
-# scripts/sync-theme-variables.sh
+# scripts/sync-custom-theme-variables.js
 #!/bin/bash
 # Extracts variables from b2b theme and suggests additions for custom themes
-# Usage: ./sync-theme-variables.sh [your-theme-name]
+# Usage: ./sync-custom-theme-variables.js [your-theme-name]
 
 TARGET_THEME=${1}
 if [ -z "$TARGET_THEME" ]; then
@@ -548,8 +548,8 @@ done
 
 - **Use migration helper scripts**: Saves ~30-45 minutes overall
 - **Use theme validation scripts** (NEW): Saves ~15-30 minutes build cycles
-  - `validate-theme-completeness.sh` catches all missing variables before first build
-  - `sync-custom-theme-variables.sh` auto-adds missing variables from b2b theme
+  - `validate-theme-completeness.js` catches all missing variables before first build
+  - `sync-custom-theme-variables.js` auto-adds missing variables from b2b theme
 - **Systematic approach**: Reduces debugging time by 40-50%
 - **Well-documented customizations**: Reduces conflict resolution time by 30-40%
 
@@ -557,29 +557,27 @@ done
 
 ### Theme Management (NEW)
 
-- **`validate-theme-completeness.sh`**: Checks custom themes for missing variables BEFORE build
-- **`sync-custom-theme-variables.sh`**: Auto-adds missing variables from b2b theme
+- **`validate-theme-completeness.js`**: Checks custom themes for missing variables BEFORE build
+- **`sync-custom-theme-variables.js`**: Auto-adds missing variables from b2b theme
 
 ### Migration Helpers
 
-- **`migrate-custom-branch.sh`**: Main migration automation script
-- **`analyze-migration-complexity.sh`**: Analyzes project and recommends detection tier
+- **`migrate-custom-branch.js`**: Main migration automation script
+- **`analyze-migration.js`**: Analyzes complexity, recommends tier and migration strategy
 - **`detect-pattern-changes.js`**: Finds breaking pattern changes in CHANGELOG
 - **`merge-i18n-files.js`**: Smart merge of translation files preserving custom keys
 
 ### Quality Checks
 
-- **`check-template-syntax.sh`**: Detects empty paired tags that should be self-closing
-- **`check-standalone-components.sh`**: Identifies standalone component usage patterns
-- **`check-lint-issues.sh`**: Pre-build linting validation
-- **`generate-migration-report.sh`**: Comprehensive post-migration report
+- **`check-template-syntax.js`**: Detects empty paired tags that should be self-closing
+- **`generate-migration-report.js`**: Comprehensive post-migration report
 
 ## Future Improvements
 
 ### Tooling Enhancements
 
-1. ~~Create `sync-theme-variables.sh` script~~ ✅ **DONE** (now available as `sync-custom-theme-variables.sh`)
-2. ~~Add theme validation script~~ ✅ **DONE** (now available as `validate-theme-completeness.sh`)
+1. ~~Create `sync-custom-theme-variables.js` script~~ ✅ **DONE** (now available as `sync-custom-theme-variables.js`)
+2. ~~Add theme validation script~~ ✅ **DONE** (now available as `validate-theme-completeness.js`)
 3. Add pre-commit hook to check environment.model.ts consistency
 4. Create migration test suite to verify custom features
 5. Add SCSS variable diff checker to CI/CD pipeline

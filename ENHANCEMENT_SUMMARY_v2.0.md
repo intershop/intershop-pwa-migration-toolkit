@@ -16,7 +16,7 @@ During PWA migrations, developers encountered repetitive issues that wasted time
 
 ## Enhancements Implemented
 
-### 1. GitHub Issue Checker (`check-github-issues.sh`)
+### 1. GitHub Issue Checker (`check-github-issues.js`)
 
 **Purpose**: Verify if encountered errors are known bugs already fixed in later PWA versions
 
@@ -30,10 +30,10 @@ During PWA migrations, developers encountered repetitive issues that wasted time
 **Usage**:
 ```bash
 # Check if error is a known bug
-./scripts/check-github-issues.sh --version 9.1.0 --search "SCSS variable undefined"
+node scripts/check-github-issues.js --version 9.1.0 --search "SCSS variable undefined"
 
 # Check what's new in target version
-./scripts/check-github-issues.sh --version 9.1.0
+node scripts/check-github-issues.js --version 9.1.0
 ```
 
 **Impact**:
@@ -44,7 +44,7 @@ During PWA migrations, developers encountered repetitive issues that wasted time
 
 ---
 
-### 2. Docker Compose Merge Tool (`merge-docker-compose.sh`)
+### 2. Docker Compose Merge Tool (`merge-docker-compose.js`)
 
 **Purpose**: Intelligently merge `docker-compose.yml` from custom and PWA branches
 
@@ -62,13 +62,13 @@ During PWA migrations, developers encountered repetitive issues that wasted time
 **Usage**:
 ```bash
 # Interactive merge (default)
-./scripts/merge-docker-compose.sh
+node scripts/merge-docker-compose.js
 
 # Automatic merge
-./scripts/merge-docker-compose.sh --auto
+node scripts/merge-docker-compose.js --auto
 
 # Preview without changes
-./scripts/merge-docker-compose.sh --dry-run
+node scripts/merge-docker-compose.js --dry-run
 ```
 
 **What it does**:
@@ -150,7 +150,7 @@ node scripts/fix-template-linting.js --verbose
 
 ---
 
-### 4. Snapshot Update Manager (`update-snapshots.sh`)
+### 4. Snapshot Update Manager (`update-snapshots.js`)
 
 **Purpose**: Intelligently handle Jest snapshot mismatches vs real test failures
 
@@ -170,16 +170,16 @@ node scripts/fix-template-linting.js --verbose
 **Usage**:
 ```bash
 # Interactive mode (recommended)
-./scripts/update-snapshots.sh
+node scripts/update-snapshots.js
 
 # Automatic update all
-./scripts/update-snapshots.sh --all
+node scripts/update-snapshots.js --all
 
 # Update specific components
-./scripts/update-snapshots.sh --pattern "product.*"
+node scripts/update-snapshots.js --pattern "product.*"
 
 # Preview only
-./scripts/update-snapshots.sh --dry-run
+node scripts/update-snapshots.js --dry-run
 ```
 
 **Output**:
@@ -287,12 +287,12 @@ Added 5 new issues (#9-#13):
 
 1. **Issue #9: Unknown Bugs vs Known Fixed Issues**
    - Problem: Debugging issues already fixed in GitHub
-   - Solution: Use `check-github-issues.sh` before debugging
+   - Solution: Use `check-github-issues.js` before debugging
    - Time saved: 30-60 min per issue
 
 2. **Issue #10: docker-compose.yml Merge Conflicts**
    - Problem: Manual YAML merging loses configuration
-   - Solution: Use `merge-docker-compose.sh` for intelligent merge
+   - Solution: Use `merge-docker-compose.js` for intelligent merge
    - Time saved: 15-30 min
 
 3. **Issue #11: Template Linting Issues**
@@ -302,7 +302,7 @@ Added 5 new issues (#9-#13):
 
 4. **Issue #12: Jest Snapshot Mismatches**
    - Problem: Hard to distinguish real failures from expected changes
-   - Solution: Use `update-snapshots.sh` for intelligent handling
+   - Solution: Use `update-snapshots.js` for intelligent handling
    - Time saved: 20-40 min
 
 5. **Issue #13: Incomplete SCSS Property Migration**
@@ -331,33 +331,32 @@ Updated:
 
 ```bash
 # STEP 2: Pre-migration checks
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
-./scripts/check-github-issues.sh --version 9.1.0  # NEW
+node scripts/analyze-migration.js 4.0.0 9.1.0
 
 # STEP 3: Execute migration
-./scripts/migrate-custom-branch.sh ...
+node scripts/migrate-custom-branch.js ...
 
 # STEP 4: Conflict resolution
-./scripts/merge-docker-compose.sh  # NEW (if docker-compose conflict)
+node scripts/merge-docker-compose.js  # NEW (if docker-compose conflict)
 ./scripts/merge-i18n-files.js  # Existing
 
 # STEP 5: Post-migration validation
-./scripts/validate-theme-completeness.sh  # Existing
+node scripts/validate-theme-completeness.js  # Existing
 node scripts/compare-scss-files.js --auto-fix  # NEW (comprehensive)
 node scripts/fix-template-linting.js  # NEW
 
 # STEP 6: Build & test
 npm run build
 npm test
-./scripts/update-snapshots.sh --interactive  # NEW (if snapshots fail)
+node scripts/update-snapshots.js --interactive  # NEW (if snapshots fail)
 
 # STEP 7: Generate report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 ```
 
 ### Complementary Tools
 
-- **Issue #1** (validate-theme-completeness.sh) - Quick variable check
+- **Issue #1** (validate-theme-completeness.js) - Quick variable check
 - **Issue #13** (compare-scss-files.js) - Comprehensive SCSS check
 - Use both for complete SCSS migration
 
@@ -390,10 +389,10 @@ Per migration:
 
 Based on real migration experience (4.0.0 → 9.1.0):
 
-1. ✅ "Check GitHub first to avoid solving already-fixed bugs" → `check-github-issues.sh`
-2. ✅ "docker-compose.yml merge was painful" → `merge-docker-compose.sh`
+1. ✅ "Check GitHub first to avoid solving already-fixed bugs" → `check-github-issues.js`
+2. ✅ "docker-compose.yml merge was painful" → `merge-docker-compose.js`
 3. ✅ "Template linting was noisy during migration" → `fix-template-linting.js`
-4. ✅ "Snapshot updates needed manual intervention" → `update-snapshots.sh`
+4. ✅ "Snapshot updates needed manual intervention" → `update-snapshots.js`
 5. ✅ "SCSS comparison needed more than just variables" → `compare-scss-files.js`
 
 **All feedback addressed with working solutions.**
@@ -414,7 +413,7 @@ Based on real migration experience (4.0.0 → 9.1.0):
 
 ```bash
 # 1. GitHub issue check (new habit)
-./scripts/check-github-issues.sh --version 9.1.0 --search "your error"
+node scripts/check-github-issues.js --version 9.1.0 --search "your error"
 
 # 2. Enhanced SCSS validation
 node scripts/compare-scss-files.js

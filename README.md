@@ -6,15 +6,20 @@ You don't need to read or understand all the files in this toolkit — just open
 
 ## 🚀 Setup (2 minutes)
 
+**Prerequisites:** Node.js >= 18 and npm (check with `node -v`)
+
 ```bash
 # 1. Clone this toolkit
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
 cd pwa-migration-toolkit
 
-# 2. Run setup — point it at your custom PWA project
-./setup.sh /path/to/your/custom-pwa
+# 2. Install dependencies
+npm install
 
-# 3. Open the workspace
+# 3. Run setup — point it at your custom PWA project
+node setup.js /path/to/your/custom-pwa
+
+# 4. Open the workspace
 code pwa-migration.code-workspace
 ```
 
@@ -70,53 +75,43 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 ### Migration Scripts (25 files in `scripts/`)
 
 #### Core Migration
-- `migrate-custom-branch.sh` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
-- `migration-helper.js` - Interactive migration assistant with **video tutorial detection** ⭐ NEW
-- `analyze-migration-complexity.sh` - Complexity analyzer with tier recommendation
-- `recommend-migration-strategy.sh` - **NEW:** Interactive advisor for choosing big bang vs. incremental approach ⭐
-- `generate-migration-report.sh` - Comprehensive migration documentation generator
-- `pre-commit-customization-check.sh` - **NEW:** Pre-commit hook to catch customization anti-patterns early
+- `migrate-custom-branch.js` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
+- `analyze-migration.js` - Complexity analyzer + strategy advisor (Big Bang / Hybrid / Incremental) ⭐
+- `generate-migration-report.js` - Comprehensive migration documentation generator
+- `pre-commit-customization-check.js` - **NEW:** Pre-commit hook to catch customization anti-patterns early
 
 #### Detection & Analysis
 - `detect-pattern-changes.js` - Tier 2/3 pattern detection and CHANGELOG analysis
-- `check-nodejs-version.sh` - **NEW:** Enforces Node.js/npm version requirements for target PWA version ⭐
-- `check-github-issues.sh` - **NEW:** Verify if errors are known bugs fixed in GitHub (saves 30-60 min)
-- `check-icm-compatibility.sh` - **NEW:** ICM version compatibility checker with requirements from pattern database
-- `check-template-syntax.sh` - Detect old template syntax
-- `check-standalone-components.sh` - Architecture analysis
-- `check-lint-issues.sh` - Categorize lint errors
+- `check-nodejs-version.js` - Enforces Node.js/npm version requirements for target PWA version
+- `check-icm-compatibility.js` - ICM version compatibility checker with requirements from pattern database
+- `check-template-syntax.js` - Detect old template syntax
 
 #### Intelligent Merge Tools
 - `merge-i18n-files.js` - Enhanced localization merge with conflict detection
-- `merge-docker-compose.sh` - **NEW:** Smart docker-compose.yml merge (saves 15-30 min)
+- `merge-docker-compose.js` - **NEW:** Smart docker-compose.yml merge (saves 15-30 min)
 
 #### SCSS/Styling
-- `validate-theme-completeness.sh` - Proactive SCSS variable validation (saves 15-30 min)
-- `sync-custom-theme-variables.sh` - Auto-sync missing theme variables from b2b
-- `compare-scss-files.js` - **NEW:** Comprehensive SCSS comparison: variables, mixins, imports (saves 30-60 min)
+- `validate-theme-completeness.js` - Proactive SCSS variable validation (saves 15-30 min)
+- `sync-custom-theme-variables.js` - Auto-sync missing theme variables from b2b
 
 #### Automated Fixes
 - `fix-template-syntax.js` - Auto-fix template syntax
 - `fix-template-linting.js` - **NEW:** Auto-suppress template linting issues (saves 1-2 hours)
-- `update-snapshots.sh` - **NEW:** Intelligent Jest snapshot update manager (saves 20-40 min)
+- `update-snapshots.js` - **NEW:** Intelligent Jest snapshot update manager (saves 20-40 min)
 
 #### PWA 10.0 Migration Tools
-- `migrate-control-flow.sh` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
+- `migrate-control-flow.js` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)
   - ✅ Scans ALL templates including themed variants (.b2c.html, .b2b.html, etc.)
   - ✅ Reports themed templates separately for easy review
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
 
 > **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
-#### Dependency Management ⭐ NEW
-- `update-dependencies.sh` - **NEW:** Interactive 8-step dependency update workflow (following official guide)
-
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
 
-### Documentation Guides (2 files in `docs/guides/`) ⭐ NEW
-- `customization-best-practices.md` - **NEW:** Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
-- `migration-helper-guide.md` - Complete guide for the interactive migration helper
+### Documentation Guides (1 file in `docs/guides/`)
+- `customization-best-practices.md` - Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
 
 ### Migration Skills (3 files in `.github/skills/`)
 - `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
@@ -126,16 +121,10 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 ### Configuration Templates (1 file)
 - `.gitignore-toolkit-template` - **NEW:** Pre-made .gitignore patterns to keep toolkit files out of your repo
 
-### Workspace Setup (1 file) ⭐ NEW
-- `pwa-migration.code-workspace.template` - **NEW:** VS Code multi-root workspace template for separated toolkit usage
+### Workspace Setup (1 file)
+- `pwa-migration.code-workspace.template` - VS Code multi-root workspace template for separated toolkit usage
 
-### Verification Tools (1 file) ⭐ NEW
-- `verify-gitignore-coverage.sh` - **NEW:** Test script to verify all toolkit files are properly ignored
-
-### Getting Started (1 file) ⭐ NEW
-- `QUICK-START.md` - **NEW:** 3-step setup guide (5 minutes) with .gitignore instructions
-
-**Total:** 43 files (9 instructions + 25 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start + 1 verification)
+**Total:** 18 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start
 
 **Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
@@ -308,55 +297,35 @@ User: "What does the KB say about SCSS variable renames in PWA 10?"
 5. ✅ Validate with toolkit verification scripts
 
 ---
-## � Platform Requirements
+## 🖥️ Platform Requirements
+
+**All scripts are cross-platform Node.js** — no Bash, WSL, or platform-specific tools required.
+
+| Requirement | Version |
+|-------------|--------|
+| Node.js | >= 18.0.0 |
+| npm | >= 9 |
+| Git | >= 2.25 |
 
 ### Linux / macOS
-All scripts work natively. No additional setup required.
+
+```bash
+cd pwa-migration-toolkit
+npm install
+node setup.js /path/to/your/custom-pwa
+```
 
 ### Windows
 
-**Option A: WSL2 (Recommended)**
-
-Most modern Windows development environments use WSL2 for Node.js, Docker, and Git workflows. All toolkit scripts work perfectly in WSL2:
+Works in **any** terminal (PowerShell, CMD, Git Bash, Windows Terminal):
 
 ```powershell
-# Install WSL2 (Windows 10/11)
-wsl --install Ubuntu
-
-# After installation, open Ubuntu and clone your project
-cd ~
-git clone <your-pwa-repo>
-cd <your-pwa-repo>
-
-# Use all scripts exactly as documented
-./scripts/migrate-custom-branch.sh
+cd pwa-migration-toolkit
+npm install
+node setup.js C:\path\to\your\custom-pwa
 ```
 
-**Benefits:** 100% compatibility, native Linux environment, integrates with VS Code
-
-**Option B: Git Bash (Simple Fallback)**
-
-If you prefer not to use WSL2, Git Bash provides good compatibility:
-
-```bash
-# Install Git for Windows (includes Git Bash)
-# Download from: https://git-scm.com/download/win
-
-# Run shell scripts through Git Bash terminal
-bash ./scripts/migrate-custom-branch.sh
-bash ./scripts/check-template-syntax.sh
-
-# JavaScript scripts work directly via Node.js
-node scripts/migration-helper.js
-node scripts/detect-pattern-changes.js
-```
-
-**Benefits:** Zero setup if Git is already installed, good compatibility for standard bash scripts
-
-**Compatibility Notes:**
-- ✅ All 6 JavaScript scripts (`.js`) work on all platforms via Node.js
-- ✅ All 11 shell scripts (`.sh`) work on Linux/macOS/WSL2 natively
-- ⚠️ Shell scripts work in Git Bash with minor limitations on advanced features
+No WSL or Git Bash required. All 20 scripts are pure Node.js.
 
 ---
 
@@ -405,14 +374,14 @@ git ls-remote --tags https://github.com/intershop/intershop-pwa.git | \
 SOURCE_VERSION="X.Y.Z"  # Your current version (e.g., "9.1.0")
 TARGET_VERSION="A.B.C"  # Desired version (e.g., "10.0.0")
 
-# Step 2: Analyze complexity
-./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+# Step 2: Analyze complexity & get strategy recommendation
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 
 # Step 3: Detect patterns
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 
 # Step 4: Execute migration
-./scripts/migrate-custom-branch.sh
+node scripts/migrate-custom-branch.js
 ```
 
 **The toolkit adapts to your specific version gap**, whether it's 1 minor version or 5 major versions.
@@ -469,11 +438,11 @@ Pattern Detection Report
 
 #### Phase 2: Migration (Automated Transformation)
 
-**Tools:** `migrate-control-flow.sh`, `migrate-bootstrap-icons.js --auto-replace`
+**Tools:** `migrate-control-flow.js`, `migrate-bootstrap-icons.js --auto-replace`
 
 ```bash
 # After merge: Apply automated transformations
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 node scripts/migrate-bootstrap-icons.js --auto-replace
 ```
 
@@ -517,7 +486,7 @@ npm install  # Gets Angular 17
 # === AFTER MERGE: Migration Phase ===
 
 # 1. Angular Control Flow (95% automated)
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 # ✅ Scans src/ and projects/ directories for old syntax
 # ✅ Transforms standard Angular components automatically
 # ⚠️  Lists unmigrated files requiring manual review
@@ -534,7 +503,7 @@ node scripts/migrate-bootstrap-icons.js --auto-replace
 
 # 3. Manual review remaining cases
 # The script will list specific files needing manual migration:
-./scripts/migrate-control-flow.sh  # Shows unmigrated files list
+node scripts/migrate-control-flow.js  # Shows unmigrated files list
 # Then manually fix those files using the conversion patterns:
 #   *ngIf="expr" → @if (expr) { content }
 #   *ngFor="let x of items" → @for (x of items; track x) { content }
@@ -559,7 +528,7 @@ npm test
 |------|---------|-------------|
 | `detect-pattern-changes.js` | Find all breaking patterns | **Before merge** |
 | `migrate-bootstrap-icons.js` | Detect Font Awesome usage | **Before merge** |
-| `migrate-control-flow.sh` | Transform Angular templates | **After merge** (needs Angular 17) |
+| `migrate-control-flow.js` | Transform Angular templates | **After merge** (needs Angular 17) |
 | `migrate-bootstrap-icons.js --auto-replace` | Replace common icons | **After merge** |
 
 **Complete PWA 10.0 guide:** See [`.github/instructions/migration-pwa10.instructions.md`](.github/instructions/migration-pwa10.instructions.md)
@@ -586,7 +555,7 @@ cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
 cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
-chmod +x scripts/*.sh
+# No chmod needed - use: node scripts/<name>.js
 
 # IMPORTANT: Add toolkit files to .gitignore to keep them out of your repo
 cat >> .gitignore << 'EOF'
@@ -595,22 +564,17 @@ cat >> .gitignore << 'EOF'
 .github/instructions/migration-*.instructions.md
 .github/skills/pwa-*.SKILL.md
 .github/skills/README.md
-scripts/migrate-*.sh
 scripts/migrate-*.js
-scripts/check-*.sh
-scripts/analyze-*.sh
+scripts/check-*.js
+scripts/analyze-*.js
 scripts/detect-*.js
-scripts/generate-*.sh
-scripts/merge-*.sh
+scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
-scripts/sync-*.sh
-scripts/update-*.sh
-scripts/validate-*.sh
-scripts/pre-commit-*.sh
-scripts/verify-*.sh
-scripts/migration-helper.js
+scripts/sync-*.js
+scripts/update-*.js
+scripts/validate-*.js
+scripts/pre-commit-*.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -650,22 +614,17 @@ Copy-Item -Path "$env:TEMP\toolkit\docs\guides\*" -Destination docs\guides\ -Rec
 .github/instructions/migration-*.instructions.md
 .github/skills/pwa-*.SKILL.md
 .github/skills/README.md
-scripts/migrate-*.sh
 scripts/migrate-*.js
-scripts/check-*.sh
-scripts/analyze-*.sh
+scripts/check-*.js
+scripts/analyze-*.js
 scripts/detect-*.js
-scripts/generate-*.sh
-scripts/merge-*.sh
+scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
-scripts/sync-*.sh
-scripts/update-*.sh
-scripts/validate-*.sh
-scripts/pre-commit-*.sh
-scripts/verify-*.sh
-scripts/migration-helper.js
+scripts/sync-*.js
+scripts/update-*.js
+scripts/validate-*.js
+scripts/pre-commit-*.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -677,7 +636,7 @@ docs/guides/customization-*.md
 # Cleanup
 Remove-Item -Recurse -Force "$env:TEMP\toolkit"
 
-# Note: Use WSL2 or Git Bash for running .sh scripts
+# Note: All scripts are cross-platform Node.js - no WSL or Bash required
 ```
 
 ---
@@ -727,7 +686,7 @@ git check-ignore .github/skills/pwa-*.SKILL.md
 git check-ignore .github/skills/README.md
 
 echo "Checking scripts..."
-git check-ignore scripts/migrate-*.sh scripts/check-*.sh scripts/migration-helper.js
+git check-ignore scripts/migrate-*.js scripts/check-*.js scripts/analyze-*.js
 
 echo "Checking data..."
 git check-ignore data/pattern-migrations.json
@@ -742,20 +701,12 @@ git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
 - ✅ 25 script files (scripts/)
 - ✅ 1 pattern database (data/)
 - ✅ 2 guide files (docs/guides/)
-- ✅ 1 verification script
 
-**Quick verification (automated):**
+**Quick verification:**
 
 ```bash
-# Run the verification script (copies automatically with toolkit)
-chmod +x scripts/verify-gitignore-coverage.sh
-./scripts/verify-gitignore-coverage.sh
-
-# Example output:
-# ✅ Migration instructions: Properly ignored (9 files)
-# ✅ PWA skills: Properly ignored (3 files)
-# ✅ Migration shell scripts: Properly ignored (2 files)
-# ... etc
+# Verify toolkit files are ignored
+git status --ignored | grep -E "(scripts|\.github|data/pattern)"
 ```
 
 **What if I already committed toolkit files?**
@@ -766,8 +717,8 @@ Remove them from Git tracking (keeps local files):
 # Remove from Git but keep local files
 git rm --cached .github/instructions/migration-*.instructions.md
 git rm --cached .github/skills/pwa-*.SKILL.md
-git rm --cached scripts/migrate-*.sh
-git rm --cached scripts/check-*.sh
+git rm --cached scripts/migrate-*.js
+git rm --cached scripts/check-*.js
 # ... etc for other patterns
 
 # Commit the removal
@@ -805,15 +756,13 @@ export TARGET_VERSION="10.0.0"  # ← Your desired version
 
 # === Analyze Migration Complexity ===
 
-# NEW: Get personalized migration strategy recommendation
-./scripts/recommend-migration-strategy.sh $SOURCE_VERSION $TARGET_VERSION --interactive
+# Analyze complexity + get personalized strategy recommendation
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 # Analyzes: customization depth, version gap, breaking changes
 # Recommends: Big Bang, Hybrid, or Incremental approach
-# Time: 5 minutes (answers 5 questions about your team/project)
-
-# NEW: Analyze complexity with YOUR specific versions
-./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
 # Output: Recommended tier (1/2/3), estimated time, prerequisites
+# Time: 5 minutes (answers 5 questions about your team/project)
+# Use --quick to skip interactive questions
 
 # NEW: Run pattern detection for YOUR version gap
 # Tier 2: Standard detection
@@ -828,17 +777,15 @@ export TARGET_VERSION="10.0.0"  # ← Your desired version
 cat .github/instructions/migration-checklist.instructions.md
 
 # Check your current setup
-./scripts/check-template-syntax.sh
-./scripts/check-standalone-components.sh
-./scripts/check-lint-issues.sh
+node scripts/check-template-syntax.js
 
 # === Check Node.js/npm Requirements ===
 
 # NEW: Verify Node.js version meets target PWA requirements
-./scripts/check-nodejs-version.sh $TARGET_VERSION
+node scripts/check-nodejs-version.js $TARGET_VERSION
 
 # If version mismatch, update automatically:
-./scripts/check-nodejs-version.sh $TARGET_VERSION --auto-update
+node scripts/check-nodejs-version.js $TARGET_VERSION --auto-update
 
 # This checks & ensures:
 # - PWA 10.0 requires Node.js 22 + npm 10
@@ -870,7 +817,7 @@ git checkout -b feature/migration-to-$TARGET_VERSION tags/$TARGET_VERSION
 #### Parameter Breakdown
 
 ```bash
-./scripts/migrate-custom-branch.sh \
+node scripts/migrate-custom-branch.js \
   --source-branch training_4.0.0 \           # ← Your OLD custom branch
   --target-branch intershop-pwa/10.0.0 \     # ← Upstream PWA version (NOT your final branch!)
   --migration-branch training_10.0.0         # ← Your NEW custom branch name
@@ -903,7 +850,7 @@ git checkout -b feature/migration-to-$TARGET_VERSION tags/$TARGET_VERSION
 # You want: training_10.0.0 (based on PWA 10.0.0)
 
 # Correct command:
-./scripts/migrate-custom-branch.sh \
+node scripts/migrate-custom-branch.js \
   --source-branch training_4.0.0 \           # Your OLD custom branch
   --target-branch intershop-pwa/10.0.0 \     # Upstream PWA 10.0.0 tag
   --migration-branch training_10.0.0         # Your NEW custom branch
@@ -925,39 +872,24 @@ git checkout -b feature/migration-to-$TARGET_VERSION tags/$TARGET_VERSION
 
 ```bash
 # Option A: Automated
-./scripts/migrate-custom-branch.sh \
+node scripts/migrate-custom-branch.js \
   --source-branch your-custom-branch \
   --target-branch intershop-pwa/develop \
   --migration-branch migration/custom-to-latest
-
-# Option B: Interactive (recommended for first migration)
-node scripts/migration-helper.js
 ```
 
 ### STEP 4: Post-Migration Validation & Documentation
 
 ```bash
-# NEW: Check if issues are known bugs already fixed in GitHub (FIRST!)
-# This can save 30-60 minutes debugging known issues
-./scripts/check-github-issues.sh --version 9.1.0 --search "your error keywords"
-
-# NEW: Validate custom theme variables (BEFORE first build)
-# This prevents 15-30 minutes of build-fix-rebuild cycles
-./scripts/validate-theme-completeness.sh
+# Validate custom theme variables (BEFORE first build)
+node scripts/validate-theme-completeness.js
 
 # If missing variables found, sync them
-./scripts/sync-custom-theme-variables.sh
+node scripts/sync-custom-theme-variables.js
 # Review and adjust the auto-added variables for your brand
 
-# NEW: Comprehensive SCSS comparison (variables + mixins + imports)
-# Catches issues beyond just variables
-node scripts/compare-scss-files.js
-# Auto-fix if needed:
-node scripts/compare-scss-files.js --auto-fix
-
 # Check for remaining issues
-./scripts/check-template-syntax.sh
-./scripts/check-lint-issues.sh
+node scripts/check-template-syntax.js
 
 # NEW: Suppress template linting issues temporarily (saves 1-2 hours)
 # Focus on critical issues first, fix linting later
@@ -970,10 +902,10 @@ npm test
 
 # NEW: Smart snapshot update handling (saves 20-40 minutes)
 # If tests fail due to snapshots:
-./scripts/update-snapshots.sh --interactive
+node scripts/update-snapshots.js --interactive
 
 # Generate comprehensive migration report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 # Creates: migration-report-YYYY-MM-DD.md
 ```
 
@@ -986,7 +918,7 @@ npm test
 **Goal:** Migrate `training_4.0.0` → `training_9.1.0` (both are YOUR custom branches)
 
 ```bash
-./scripts/migrate-custom-branch.sh \
+node scripts/migrate-custom-branch.js \
   --source-branch training_4.0.0 \           # Your old custom branch
   --target-branch intershop-pwa/9.1.0 \      # Upstream PWA 9.1.0 (reference)
   --migration-branch training_9.1.0          # Your new custom branch name
@@ -1002,9 +934,10 @@ npm test
 **Goal:** Complex migration with theme overrides and extensions
 
 ```bash
-# Interactive mode handles complex customizations better
-node scripts/migration-helper.js
-# Follow prompts to handle theme conflicts
+# Run analysis first
+node scripts/analyze-migration.js
+# Then migrate with auto-resolve for simple conflicts
+node scripts/migrate-custom-branch.js --auto-resolve
 ```
 
 ### Scenario 3: B2B Customizations
@@ -1012,7 +945,7 @@ node scripts/migration-helper.js
 # Check B2B patterns first
 cat .github/instructions/migration-issues.instructions.md | grep -A 20 "B2B"
 # Then migrate
-./scripts/migrate-custom-branch.sh --auto-resolve
+node scripts/migrate-custom-branch.js --auto-resolve
 ```
 
 ---
@@ -1030,7 +963,7 @@ cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
 cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
-chmod +x scripts/*.sh
+# No chmod needed - use: node scripts/<name>.js
 
 # IMPORTANT: Add toolkit files to .gitignore (if not already added)
 cat >> .gitignore << 'EOF'
@@ -1039,22 +972,17 @@ cat >> .gitignore << 'EOF'
 .github/instructions/migration-*.instructions.md
 .github/skills/pwa-*.SKILL.md
 .github/skills/README.md
-scripts/migrate-*.sh
 scripts/migrate-*.js
-scripts/check-*.sh
-scripts/analyze-*.sh
+scripts/check-*.js
+scripts/analyze-*.js
 scripts/detect-*.js
-scripts/generate-*.sh
-scripts/merge-*.sh
+scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
-scripts/sync-*.sh
-scripts/update-*.sh
-scripts/validate-*.sh
-scripts/pre-commit-*.sh
-scripts/verify-*.sh
-scripts/migration-helper.js
+scripts/sync-*.js
+scripts/update-*.js
+scripts/validate-*.js
+scripts/pre-commit-*.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -1073,9 +1001,6 @@ rm -rf /tmp/toolkit
 
 **Start here:** `.github/instructions/migration-checklist.instructions.md`
 
-**Tool guides:**
-- `docs/guides/migration-helper-guide.md` - Complete guide for the interactive migration helper
-
 **Common issues:** `.github/instructions/migration-issues.instructions.md`
 
 **Git strategies:** `.github/instructions/migration-git.instructions.md`
@@ -1084,18 +1009,19 @@ rm -rf /tmp/toolkit
 
 ## 🎯 What's New in This Version
 
-### New Capabilities (5 Scripts Added)
+### Key Capabilities
 
-1. **GitHub Issue Checker** (`check-github-issues.sh`)
-   - Prevents debugging known bugs already fixed in later versions
-   - Saves: 30-60 minutes per unknown issue
-   - Usage: `./scripts/check-github-issues.sh --version 9.1.0 --search "keywords"`
+1. **Migration Analyzer** (`analyze-migration.js`)
+   - Combines complexity analysis + strategy recommendation
+   - Recommends detection tier (1/2/3) and migration strategy (Big Bang / Hybrid / Incremental)
+   - Interactive team questionnaire for personalized advice
+   - Usage: `node scripts/analyze-migration.js 4.0.0 10.0.0`
 
-2. **Docker Compose Merge Tool** (`merge-docker-compose.sh`)
+2. **Docker Compose Merge Tool** (`merge-docker-compose.js`)
    - Intelligently merges docker-compose.yml from both branches
    - Preserves custom services and environment variables
    - Saves: 15-30 minutes of manual YAML editing
-   - Usage: `./scripts/merge-docker-compose.sh`
+   - Usage: `node scripts/merge-docker-compose.js`
 
 3. **Template Linting Suppressor** (`fix-template-linting.js`)
    - Auto-adds eslint-disable comments for migration-related issues
@@ -1103,17 +1029,11 @@ rm -rf /tmp/toolkit
    - Saves: 1-2 hours during migration
    - Usage: `node scripts/fix-template-linting.js`
 
-4. **Snapshot Update Manager** (`update-snapshots.sh`)
+4. **Snapshot Update Manager** (`update-snapshots.js`)
    - Intelligently handles Jest snapshot mismatches
    - Distinguishes real failures from expected changes
    - Saves: 20-40 minutes of manual snapshot review
-   - Usage: `./scripts/update-snapshots.sh --interactive`
-
-5. **SCSS File Comparator** (`compare-scss-files.js`)
-   - Comprehensive comparison: variables, mixins, imports, classes
-   - Auto-fix mode with backup
-   - Saves: 30-60 minutes of manual diff comparison
-   - Usage: `node scripts/compare-scss-files.js --auto-fix`
+   - Usage: `node scripts/update-snapshots.js --interactive`
 
 ### Enhanced Issues Documentation
 

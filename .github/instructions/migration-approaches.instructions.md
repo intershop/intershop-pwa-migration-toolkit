@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Three Proven Approaches
@@ -499,7 +499,7 @@ npm start
 
 ```bash
 # Analyze complexity (helps choose approach)
-./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 
 # Detect patterns (preview changes)
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
@@ -508,27 +508,24 @@ npm start
 ### During Migration (Any Approach)
 
 ```bash
-# Check for known GitHub issues
-./scripts/check-github-issues.sh
-
 # Validate theme completeness
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
-# Compare SCSS changes
-./scripts/compare-scss-files.js src/styles/themes/b2b src/styles/themes/custom
+# Sync SCSS variables
+node scripts/sync-custom-theme-variables.js
 ```
 
 ### After Migration
 
 ```bash
 # Generate comprehensive report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 
 # Auto-fix template linting
 ./scripts/fix-template-linting.js
 
 # Update snapshots
-./scripts/update-snapshots.sh --review
+node scripts/update-snapshots.js --review
 ```
 
 ---

@@ -296,7 +296,7 @@ The official `updating-pwa.md` provides an **8-step structured workflow** for de
 
 #### Proposed Implementation
 
-**Create: `scripts/update-dependencies.sh`**
+**Create: `scripts/update-dependencies.js`**
 
 ```bash
 #!/bin/bash
@@ -441,7 +441,7 @@ Examples from migrations.md:
 }
 ```
 
-**Create: `scripts/check-icm-compatibility.sh`**
+**Create: `scripts/check-icm-compatibility.js`**
 
 ```bash
 #!/bin/bash
@@ -506,7 +506,7 @@ The `customizations.md` guide provides crucial advice on **HOW to customize** wi
 
 Extract and adapt the best practices from official docs with toolkit-specific examples.
 
-**Add pre-commit check: `.husky/pre-commit-customization-check.sh`**
+**Add pre-commit check: `.husky/pre-commit-customization-check.js`**
 
 ```bash
 #!/bin/bash

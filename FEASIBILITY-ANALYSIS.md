@@ -30,8 +30,7 @@ cp /tmp/toolkit/scripts/* scripts/
 **Status:** ✅ **IMPLEMENTED**
 
 **How:**
-- `scripts/analyze-migration-complexity.sh` - Comprehensive customization analysis
-- `scripts/check-standalone-components.sh` - Architecture analysis
+- `scripts/analyze-migration.js` - Comprehensive customization analysis + strategy recommendation
 
 **Capabilities:**
 - ✅ Detects custom extensions
@@ -41,7 +40,7 @@ cp /tmp/toolkit/scripts/* scripts/
 - ✅ Analyzes code complexity
 
 **Evidence:**
-- [analyze-migration-complexity.sh](scripts/analyze-migration-complexity.sh) lines 59-95
+- [analyze-migration.js](scripts/analyze-migration.js)
 
 **Output Example:**
 ```
@@ -95,7 +94,7 @@ async function fetchChangelog(targetVersion) {
 
 **Solution:**
 ```bash
-# In analyze-migration-complexity.sh (needs enhancement)
+# In analyze-migration.js (auto-detects from branch/package.json)
 detect_current_version() {
   # Check package.json
   local version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4)
@@ -115,7 +114,7 @@ detect_current_version() {
 **Status:** ⚠️ **PARTIALLY IMPLEMENTED**
 
 **What EXISTS:**
-- Version gap calculation in analyze-migration-complexity.sh
+- Version gap calculation in analyze-migration.js
 - Manual CHANGELOG reference in instructions
 
 **What's MISSING:**
@@ -144,7 +143,7 @@ detect_current_version() {
   - Custom themes
 
 **Evidence:**
-- [analyze-migration-complexity.sh](scripts/analyze-migration-complexity.sh) lines 319-442
+- [analyze-migration.js](scripts/analyze-migration.js)
 
 **Output:**
 ```
@@ -180,10 +179,9 @@ detect_current_version() {
 **Status:** ⚠️ **PARTIALLY IMPLEMENTED**
 
 **What EXISTS:**
-- ✅ Automated merge script: `migrate-custom-branch.sh`
+- ✅ Automated merge script: `migrate-custom-branch.js`
 - ✅ Template syntax auto-fix: `fix-template-syntax.js`
 - ✅ Localization merge: `merge-i18n-files.js`
-- ✅ Interactive helper: `migration-helper.js`
 
 **What's MISSING:**
 - ❌ Automated SCSS pattern migration (darken → color.adjust)
@@ -283,12 +281,11 @@ detect_current_version() {
 npm install
 npm run build
 npm test
-./scripts/check-lint-issues.sh
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 ```
 
 **Recommendation:** 
-- ✅ Add verification script: `scripts/verify-migration.sh`
+- ✅ Add verification script: `scripts/verify-migration.js`
 - Could check:
   - All custom components compile
   - No broken imports
@@ -320,7 +317,7 @@ npm test
 **Solution:**
 ```bash
 # Generate migration report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 
 # Would produce: migration-report-2026-03-04.md
 # - Duration
@@ -379,12 +376,12 @@ npm test
    - **Effort:** 1 hour
 
 2. **Verification script** (Requirement #11)
-   - `scripts/verify-migration.sh`
+   - `scripts/verify-migration.js`
    - Check build, imports, features
    - **Effort:** 2 hours
 
 3. **Migration report generator** (Requirement #12)
-   - `scripts/generate-migration-report.sh`
+   - `scripts/generate-migration-report.js`
    - Collect metrics during migration
    - **Effort:** 2 hours
 

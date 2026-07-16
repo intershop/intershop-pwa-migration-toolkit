@@ -18,12 +18,12 @@ Based on your feedback about the migration toolkit gaps, I've extended the toolk
 > "It is worth to check GitHub if these really are bugs unknown by the time the release/tag was created and then having been fixed afterwards (avoiding to solve problems that have been resolved already)"
 
 **Solution Implemented**:
-- ✅ **Script**: `scripts/check-github-issues.sh`
+- ✅ **Script**: `scripts/check-github-issues.js`
 - ✅ **Documentation**: Migration Issue #9 in `migration-issues.instructions.md`
 
 **What it does**:
 ```bash
-./scripts/check-github-issues.sh --version 9.1.0 --search "SCSS variable"
+node scripts/check-github-issues.js --version 9.1.0 --search "SCSS variable"
 ```
 - Queries GitHub API for closed bug issues
 - Shows which version the fix was released in
@@ -38,12 +38,12 @@ Based on your feedback about the migration toolkit gaps, I've extended the toolk
 > "I found it difficult, that the docker-compose.yml was (in my opinion) not a merge of the custom PWA and the one from GitHub."
 
 **Solution Implemented**:
-- ✅ **Script**: `scripts/merge-docker-compose.sh`
+- ✅ **Script**: `scripts/merge-docker-compose.js`
 - ✅ **Documentation**: Migration Issue #10 in `migration-issues.instructions.md`
 
 **What it does**:
 ```bash
-./scripts/merge-docker-compose.sh
+node scripts/merge-docker-compose.js
 ```
 - Intelligently merges docker-compose.yml from both branches
 - Preserves custom services and environment variables
@@ -95,12 +95,12 @@ node scripts/fix-template-linting.js
 > "There was a gap in some specs, where snapshots had to be updated manually."
 
 **Solution Implemented**:
-- ✅ **Script**: `scripts/update-snapshots.sh`
+- ✅ **Script**: `scripts/update-snapshots.js`
 - ✅ **Documentation**: Migration Issue #12 in `migration-issues.instructions.md`
 
 **What it does**:
 ```bash
-./scripts/update-snapshots.sh --interactive
+node scripts/update-snapshots.js --interactive
 ```
 - Analyzes snapshot failures vs real test failures
 - Groups failures by file
@@ -149,7 +149,7 @@ node scripts/compare-scss-files.js --auto-fix
 4. Test with `npm run build`
 
 **Integration with existing tools**:
-- `validate-theme-completeness.sh` - Quick variable check
+- `validate-theme-completeness.js` - Quick variable check
 - `compare-scss-files.js` - **Comprehensive check** (variables + mixins + imports + classes)
 - Use both for complete SCSS migration
 
@@ -168,10 +168,10 @@ node scripts/compare-scss-files.js --auto-fix
 - **13 documented issues** (+5 new issues)
 
 ### New Scripts Added
-1. `check-github-issues.sh` - GitHub bug checker
-2. `merge-docker-compose.sh` - Docker Compose merger
+1. `check-github-issues.js` - GitHub bug checker
+2. `merge-docker-compose.js` - Docker Compose merger
 3. `fix-template-linting.js` - Template linting suppressor
-4. `update-snapshots.sh` - Snapshot update manager
+4. `update-snapshots.js` - Snapshot update manager
 5. `compare-scss-files.js` - SCSS file comparator
 
 ---
@@ -236,7 +236,7 @@ cp -r /home/training/developer/tmp/toolkit/scripts .
 cp -r /home/training/developer/tmp/toolkit/data .
 
 # 3. Make scripts executable
-chmod +x scripts/*.sh
+# Scripts are cross-platform Node.js - no chmod needed
 
 # 4. Start using new capabilities!
 ```
@@ -245,28 +245,28 @@ chmod +x scripts/*.sh
 
 ```bash
 # STEP 1: Pre-migration
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
-./scripts/check-github-issues.sh --version 9.1.0  # NEW!
+node scripts/analyze-migration-complexity.js 4.0.0 9.1.0
+node scripts/check-github-issues.js --version 9.1.0  # NEW!
 
 # STEP 2: Execute migration
-./scripts/migrate-custom-branch.sh ...
+node scripts/migrate-custom-branch.js ...
 
 # STEP 3: Resolve conflicts
-./scripts/merge-docker-compose.sh  # NEW! (if docker-compose conflict)
+node scripts/merge-docker-compose.js  # NEW! (if docker-compose conflict)
 ./scripts/merge-i18n-files.js
 
 # STEP 4: Post-migration validation
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 node scripts/compare-scss-files.js --auto-fix  # NEW! (comprehensive)
 node scripts/fix-template-linting.js  # NEW!
 
 # STEP 5: Build & test
 npm run build
 npm test
-./scripts/update-snapshots.sh --interactive  # NEW! (if snapshots fail)
+node scripts/update-snapshots.js --interactive  # NEW! (if snapshots fail)
 
 # STEP 6: Generate report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 ```
 
 ---
@@ -274,10 +274,10 @@ npm test
 ## 📋 Files Created/Modified
 
 ### New Files Created (5 scripts)
-1. `/home/training/developer/tmp/toolkit/scripts/check-github-issues.sh`
-2. `/home/training/developer/tmp/toolkit/scripts/merge-docker-compose.sh`
+1. `/home/training/developer/tmp/toolkit/scripts/check-github-issues.js`
+2. `/home/training/developer/tmp/toolkit/scripts/merge-docker-compose.js`
 3. `/home/training/developer/tmp/toolkit/scripts/fix-template-linting.js`
-4. `/home/training/developer/tmp/toolkit/scripts/update-snapshots.sh`
+4. `/home/training/developer/tmp/toolkit/scripts/update-snapshots.js`
 5. `/home/training/developer/tmp/toolkit/scripts/compare-scss-files.js`
 
 ### Modified Files (2 documentation files)
@@ -303,7 +303,7 @@ npm test
 ## ✅ Validation
 
 All scripts are:
-- ✅ Executable (`chmod +x` applied to .sh files)
+- ✅ Executable (cross-platform Node.js scripts)
 - ✅ Documented in migration-issues.instructions.md
 - ✅ Listed in README.md
 - ✅ Include help messages (`--help` flag)
@@ -348,7 +348,7 @@ All scripts are:
 
 2. **Test the new scripts** (in a test migration):
    ```bash
-   ./scripts/check-github-issues.sh --version 9.1.0 --search "test"
+   node scripts/check-github-issues.js --version 9.1.0 --search "test"
    node scripts/compare-scss-files.js --dry-run
    node scripts/fix-template-linting.js --help
    ```

@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Common Issues and Solutions
@@ -97,7 +97,7 @@ ng generate component my-component
 
 **Prevention**:
 
-Both migration scripts (`migration-helper.js` and `migrate-custom-branch.sh`) now check for global CLI availability and offer to install it automatically. If you're migrating manually:
+The migration script (`migrate-custom-branch.js`) checks for global CLI availability and offers to install it automatically. If you're migrating manually:
 
 ```bash
 # After npm install, always verify and install global CLI
@@ -151,7 +151,7 @@ git add .
 git commit -m "chore: update Angular to v16 for PWA 9.1 compatibility"
 
 # 5. NOW start migration
-./scripts/migrate-custom-branch.sh
+node scripts/migrate-custom-branch.js
 ```
 
 **Option B: Post-Migration Update**:
@@ -191,16 +191,16 @@ git show feature/migration-4.0-to-9.1:package.json | grep '\"@angular/core\"' | 
 
 ```bash
 # 1. Validate theme completeness (proactive check)
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # 2. If missing variables found, auto-sync them
-./scripts/sync-custom-theme-variables.sh
+node scripts/sync-custom-theme-variables.js
 
 # 3. Review and adjust auto-added variables for your brand
 # Edit: src/styles/themes/[custom]/variables.scss
 
 # 4. Verify completeness
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # 5. NOW build (should have 0-2 SCSS errors instead of 5-15)
 npm run build
@@ -531,10 +531,10 @@ See migration-workflow.instructions.md section "Angular Template Syntax Moderniz
 
 ```bash
 # Check templates
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 
 # Auto-fix
-./scripts/check-template-syntax.sh --fix
+node scripts/check-template-syntax.js --fix
 
 # Verify
 npm run build
@@ -691,10 +691,9 @@ function legacyIntegration(data: any) {
 
 ### Verification Script
 
-Create `scripts/check-lint-issues.sh`:
+Run lint verification:
 
 ```bash
-#!/bin/bash
 echo "📋 Analyzing linting issues..."
 
 npm run lint 2>&1 | tee /tmp/lint-output.log
@@ -768,7 +767,7 @@ grep -r "lazy-[extension-name]" src/app/
 **Pattern for Migration Script**:
 
 ```bash
-# Add to migration-helper.js or migrate-custom-branch.sh
+# Add to migrate-custom-branch.js
 # After merge, detect removed features:
 
 REMOVED_FEATURES=$(comm -13 \
@@ -799,7 +798,7 @@ fi
 **Interactive Migration Helper Pattern**:
 
 ```javascript
-// In migration-helper.js
+// In migrate-custom-branch.js
 async function handleRemovedFeatures(removedFeatures) {
   if (removedFeatures.length === 0) return;
 
@@ -901,13 +900,8 @@ Minimum 11 new SCSS variables required (see Critical Variables above)
 **BEFORE spending time debugging:**
 
 ```bash
-# Check if your issue is a known bug already fixed
-./scripts/check-github-issues.sh --version 9.1.0 --search "SCSS variable"
-
-# Example searches:
-./scripts/check-github-issues.sh --version 9.1.0 --search "template syntax"
-./scripts/check-github-issues.sh --version 9.1.0 --search "docker compose"
-./scripts/check-github-issues.sh --version 9.1.0 --search "environment features"
+# Check GitHub issues page directly:
+# https://github.com/intershop/intershop-pwa/issues?q=<your+error+keywords>
 ```
 
 **The script will**:
@@ -974,7 +968,7 @@ git checkout --theirs docker-compose.yml   # Lose all custom services/env vars
 
 ```bash
 # 1. Use the intelligent merge script
-./scripts/merge-docker-compose.sh
+node scripts/merge-docker-compose.js
 
 # 2. Review the merged result
 cat docker-compose.yml
@@ -1141,13 +1135,13 @@ npm test
 
 ```bash
 # 1. Analyze snapshot failures vs real failures
-./scripts/update-snapshots.sh --dry-run
+node scripts/update-snapshots.js --dry-run
 
 # 2. Interactive mode - review each change
-./scripts/update-snapshots.sh --interactive
+node scripts/update-snapshots.js --interactive
 
 # OR automatic for all (if confident)
-./scripts/update-snapshots.sh --all
+node scripts/update-snapshots.js --all
 
 # 3. Verify tests pass after update
 npm test
@@ -1200,10 +1194,10 @@ npm start  # Manual test the component
 
 ```bash
 # Update only product-related snapshots
-./scripts/update-snapshots.sh --pattern "product.*"
+node scripts/update-snapshots.js --pattern "product.*"
 
 # Update only specific folder
-./scripts/update-snapshots.sh --pattern "shell/.*"
+node scripts/update-snapshots.js --pattern "shell/.*"
 ```
 
 **Time Saved**: 20-40 minutes by systematically handling snapshots instead of ad-hoc `--updateSnapshot`.
@@ -1235,18 +1229,16 @@ npm run build
 **Comprehensive SCSS Comparison**:
 
 ```bash
-# 1. Compare all custom SCSS files to PWA versions
-node scripts/compare-scss-files.js
+# 1. Validate all custom theme SCSS variables against PWA reference
+node scripts/validate-theme-completeness.js
 
 # 2. Review missing properties
 # Shows:
 #   - Missing variables
-#   - Missing mixins
-#   - Missing @use imports
-#   - Missing classes
+#   - Severity levels
 
-# 3. Auto-add missing properties (with backup)
-node scripts/compare-scss-files.js --auto-fix
+# 3. Auto-add missing variables (with backup)
+node scripts/sync-custom-theme-variables.js
 
 # 4. Review changes
 git diff src/styles/
@@ -1258,48 +1250,22 @@ git diff src/styles/
 npm run build
 ```
 
-**What the script detects**:
+**What the scripts detect**:
 
-1. **Missing variables** - New SCSS variables from PWA
-2. **Missing mixins** - New utility mixins
-3. **Missing @use imports** - Sass module system imports
-4. **Missing classes** - New utility classes
-
-**Example Output**:
-
-```
-🎨 SCSS File Comparator
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Comparing: src/styles/themes/training/variables.scss
-
-⚠ Missing 3 variables:
-  • $responsive-breakpoint-xl
-  • $grid-gutter-width-mobile
-  • $z-index-modal-overlay
-
-⚠ Missing 2 mixins:
-  • @mixin responsive-grid
-  • @mixin fluid-spacing
-
-⚠ Missing 1 imports:
-  • @use 'sass:math';
-
-✓ Properties added (dry-run mode)
-```
+1. **Missing variables** - New SCSS variables from PWA reference theme
+2. **Missing @use imports** - Sass module system imports (auto-added by sync)
 
 **Manual Review Checklist**:
 
-After auto-fix, review:
+After auto-sync, review:
 
 ```scss
 // 1. Check added variables make sense for your brand
 $color-brand-secondary: #006f6f; // Adjust if needed
 
-// 2. Verify mixins are complete (script adds TODO comments)
-@mixin responsive-grid($columns) {
-  // TODO: Add mixin body from PWA version
-}
+// 2. Verify new imports are needed
+@use 'sass:color';
+@use 'sass:map';
 
 // 3. Test SCSS compilation
 npm run build
@@ -1308,36 +1274,14 @@ npm run build
 npm start
 ```
 
-**Comparison Workflow**:
+**SCSS Fix Workflow**:
 
 ```bash
-# Compare specific file
-node scripts/compare-scss-files.js src/styles/themes/training/variables.scss
+# Validate themes for missing variables
+node scripts/validate-theme-completeness.js
 
-# Compare all themes
-node scripts/compare-scss-files.js
-
-# Just preview changes
-node scripts/compare-scss-files.js --dry-run
+# Auto-sync missing variables from b2b reference theme
+node scripts/sync-custom-theme-variables.js
 ```
 
 **Time Saved**: 30-60 minutes of manual diff comparison and property copying.
-
-**Integration with Issue #1** (Theme Variables):
-
-- **Issue #1** (validate-theme-completeness.sh) - Checks variables only
-- **Issue #13** (compare-scss-files.js) - Comprehensive check: variables + mixins + imports + classes
-
-Recommended workflow:
-
-```bash
-# Step 1: Quick variable check (Issue #1)
-./scripts/validate-theme-completeness.sh
-
-# Step 2: Comprehensive SCSS check (Issue #13)
-node scripts/compare-scss-files.js
-
-# Step 3: Fix what's found
-./scripts/sync-custom-theme-variables.sh  # Variables
-node scripts/compare-scss-files.js --auto-fix  # Everything else
-```

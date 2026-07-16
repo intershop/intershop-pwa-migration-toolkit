@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Pattern Detection System
@@ -232,7 +232,7 @@ END: Use recommended tier
 
 **Use the complexity analyzer to get automatic recommendation:**
 ```bash
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+node scripts/analyze-migration.js 4.0.0 9.1.0
 
 # Output includes tier recommendation:
 # "Recommended approach: TIER 2 (Pattern Detection Script)"
@@ -250,7 +250,7 @@ END: Use recommended tier
 
 ```bash
 # Run complexity analyzer
-./scripts/analyze-migration-complexity.sh [source] [target]
+node scripts/analyze-migration.js [source] [target]
 ```
 
 Based on output, recommend appropriate tier to user.
@@ -395,7 +395,7 @@ Edit `data/pattern-migrations.json`:
 
 ```bash
 # 1. Analyze complexity
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+node scripts/analyze-migration.js 4.0.0 9.1.0
 # Output: "Recommended: Tier 2"
 
 # 2. Run pattern detection
@@ -567,7 +567,7 @@ The pattern detection system provides three tiers of support:
 Choose based on your migration complexity, follow AI guidance for presenting results, and maintain the pattern database for continuous improvement.
 
 **Next Steps:**
-1. Run complexity analyzer: `./scripts/analyze-migration-complexity.sh`
+1. Run complexity analyzer: `node scripts/analyze-migration.js`
 2. Follow tier recommendation
 3. Execute pattern detection
 4. Review and address findings

@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Pre/Post Checklist & Success Criteria
@@ -55,7 +55,7 @@ Gap: <X> major versions, <Y> minor versions
 export SOURCE_VERSION="X.Y.Z"
 export TARGET_VERSION="A.B.C"
 # Now use in all migration scripts
-./scripts/analyze-migration-complexity.sh $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 ```
 
@@ -135,9 +135,9 @@ export TARGET_VERSION="A.B.C"
 **NEW: Automated complexity analysis with tier recommendation**
 
 ```bash
-# Run migration complexity analyzer
-./scripts/analyze-migration-complexity.sh [source-version] [target-version]
-./scripts/analyze-migration-complexity.sh 4.0.0 9.1.0
+# Run migration analyzer (complexity + strategy recommendation)
+node scripts/analyze-migration.js [source-version] [target-version]
+node scripts/analyze-migration.js 4.0.0 9.1.0
 ```
 
 **Output includes:**
@@ -282,7 +282,7 @@ grep -r "\*ngFor=" src/ --include="*.html" | wc -l
 grep -r "\*ngSwitch" src/ --include="*.html" | wc -l
 
 # After merge, run Angular CLI migration schematic
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 ```
 
 **b) Font Awesome Icons Detection:**
@@ -332,14 +332,14 @@ sed -i 's/FROM node:[0-9]\+/FROM node:22/' Dockerfile*
   
 ```bash
 # Validate custom themes have all required variables
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # If missing variables found, sync them automatically  
-./scripts/sync-custom-theme-variables.sh
+node scripts/sync-custom-theme-variables.js
 
 # Review auto-added variables and adjust for your brand
 # Then verify again
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 ```
 
 **Why This Matters**: PWA 9.1 has 138 SCSS variables in b2b theme. Missing even one causes build failures. Proactive validation prevents 15-30 minutes of incremental build-fix-rebuild cycles.
@@ -501,7 +501,7 @@ ng version
 - Always keep global CLI version matched to project's package.json
 - Install global CLI immediately after successful merge and `npm install`
 
-**Note**: Both migration scripts (`migration-helper.js` and `migrate-custom-branch.sh`) now check for global CLI availability and offer to install it automatically.
+**Note**: The migration script (`migrate-custom-branch.js`) checks for global CLI availability and offers to install it automatically.
 
 ### 2. Template-Component Consistency Check
 
@@ -618,7 +618,7 @@ ng version
 - [ ] Unit tests pass (or failures documented)
 - [ ] Manual smoke test of custom features succeeds
 - [ ] Documentation updated
-- [ ] **Migration report generated** (`./scripts/generate-migration-report.sh`)
+- [ ] **Migration report generated** (`node scripts/generate-migration-report.js`)
 - [ ] Migration branch pushed to project remote (NOT Intershop remote)
 - [ ] Pull request created for review
 
@@ -628,7 +628,7 @@ ng version
 
 ```bash
 # Generate migration report
-./scripts/generate-migration-report.sh
+node scripts/generate-migration-report.js
 
 # Creates: migration-report-YYYY-MM-DD.md
 ```

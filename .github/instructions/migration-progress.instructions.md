@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA Migration - Progress Persistence and Session Recovery
@@ -28,7 +28,7 @@ If `.migration-progress.json` exists in the project root:
 When beginning a fresh migration, initialize progress tracking:
 
 ```bash
-./scripts/migration-progress.sh init <source_version> <target_version>
+node scripts/migration-progress.js init <source_version> <target_version>
 ```
 
 This creates `.migration-progress.json` with all migration steps tracked.
@@ -39,16 +39,16 @@ Update progress after completing each significant step:
 
 ```bash
 # Mark a step as in-progress
-./scripts/migration-progress.sh update <step_id> in-progress
+node scripts/migration-progress.js update <step_id> in-progress
 
 # Mark a step as completed (with optional notes)
-./scripts/migration-progress.sh update <step_id> completed "Fixed 3 TS errors in environment.model.ts"
+node scripts/migration-progress.js update <step_id> completed "Fixed 3 TS errors in environment.model.ts"
 
 # Skip a step that doesn't apply
-./scripts/migration-progress.sh update control-flow-migration skipped "Not applicable - target is PWA 9.1"
+node scripts/migration-progress.js update control-flow-migration skipped "Not applicable - target is PWA 9.1"
 
 # Add a free-form note (useful for context that helps resume later)
-./scripts/migration-progress.sh note "Custom theme uses 4 non-standard variables, synced manually"
+node scripts/migration-progress.js note "Custom theme uses 4 non-standard variables, synced manually"
 ```
 
 ### Available Step IDs
@@ -88,7 +88,7 @@ When a user returns after a VM restart or new Copilot session:
 
 The user can also run:
 ```bash
-./scripts/migration-progress.sh summary
+node scripts/migration-progress.js summary
 ```
 
 This outputs a Copilot-friendly summary they can paste into a new chat window.
@@ -99,10 +99,10 @@ Before ending a session (or if the user mentions stopping):
 
 ```bash
 # Add a note about where things stand
-./scripts/migration-progress.sh note "Stopped mid-step: fixing 2 remaining TS errors in shared.module.ts"
+node scripts/migration-progress.js note "Stopped mid-step: fixing 2 remaining TS errors in shared.module.ts"
 
 # Show the summary for easy resumption
-./scripts/migration-progress.sh summary
+node scripts/migration-progress.js summary
 ```
 
 ## File Location

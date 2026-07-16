@@ -1,5 +1,5 @@
 ---
-applyTo: '**/migration*.{js,sh,ts}'
+applyTo: '**/migration*.{js,ts}'
 ---
 
 # PWA 10.0 Migration - Specific Guide
@@ -64,7 +64,7 @@ npm install
 
 ```bash
 # Run Angular CLI migration schematic
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 ```
 
 **What it does:**
@@ -326,7 +326,7 @@ npm start
 
 | Pattern | Detection Tool | Migration Tool | Automation Level |
 |---------|---------------|----------------|------------------|
-| `*ngIf` → `@if` | `detect-pattern-changes.js` | `migrate-control-flow.sh` | **95% automated** (Angular CLI) |
+| `*ngIf` → `@if` | `detect-pattern-changes.js` | `migrate-control-flow.js` | **95% automated** (Angular CLI) |
 | `fa-*` → `bi-*` | `migrate-bootstrap-icons.js` | `migrate-bootstrap-icons.js --auto-replace` | **60% automated** (common icons) |
 | SSR architecture | `grep @nguniversal` | *(manual)* | **Manual only** |
 | Node.js version | `cat .nvmrc` | `echo "22" > .nvmrc` | **Trivial** |
@@ -347,7 +347,7 @@ npm install
 
 # === MIGRATION PHASE ===
 # Apply automated transformations
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 node scripts/migrate-bootstrap-icons.js --auto-replace
 
 # === VALIDATION PHASE ===
@@ -368,7 +368,7 @@ git commit -m "feat: migrate to PWA 10.0.0 with Angular 17 control flow and Boot
    - `*ngIf` → `@if`
    - `*ngFor` → `@for`
    - `*ngSwitch` → `@switch`
-   - Via: `./scripts/migrate-control-flow.sh`
+   - Via: `node scripts/migrate-control-flow.js`
 
 2. **Common icons** (60%):
    - 60+ Font Awesome → Bootstrap Icons mappings
@@ -418,7 +418,7 @@ grep "@angular/core" package.json  # Should show "^17.x"
 # Clear cache and retry
 rm -rf node_modules package-lock.json
 npm install
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 ```
 
 **Problem:** Some `*ngIf` remain after migration
@@ -427,7 +427,7 @@ npm install
 
 ```bash
 # Script will list unmigrated files automatically
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 
 # Common locations that may need manual migration:
 # - Custom theme templates (e.g., src/styles/themes/custom/*)

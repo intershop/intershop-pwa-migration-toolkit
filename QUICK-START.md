@@ -24,6 +24,10 @@ Copilot instructions and skills apply automatically across both roots.
 # Clone the toolkit (keep it permanently)
 cd /home/training/developer
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+
+# Install dependencies (one-time)
+cd pwa-migration-toolkit
+npm install
 ```
 
 ### Step 2: Create the Workspace File
@@ -85,15 +89,15 @@ Scripts automatically detect the PWA project via one of these (checked in order)
 
 ```bash
 # Option A: Pass the project dir explicitly
-./scripts/analyze-migration-complexity.sh --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
+node scripts/analyze-migration.js --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
 
 # Option B: Set the env var once (add to your shell profile, or let the workspace file handle it)
 export PWA_PROJECT_DIR="/home/training/developer/pwa/developer-pwa"
-./scripts/validate-theme-completeness.sh
+node scripts/validate-theme-completeness.js
 
 # Option C: cd into the PWA and run from there (legacy behavior, still works)
 cd /home/training/developer/pwa/developer-pwa
-/home/training/developer/thomas/pwa-migration-toolkit/scripts/check-template-syntax.sh
+/home/training/developer/thomas/pwa-migration-toolkit/scripts/check-template-syntax.js
 ```
 
 ### That's It!
@@ -125,7 +129,7 @@ cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
 cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
-chmod +x scripts/*.sh
+# Scripts are cross-platform Node.js - no chmod needed
 
 # Copy the gitignore template
 cp /tmp/toolkit/.gitignore-toolkit-template .
@@ -157,11 +161,7 @@ rm .gitignore-toolkit-template
 ```bash
 # Check that toolkit files are ignored
 git status --ignored | grep "scripts/migrate"
-# Should show: scripts/migrate-*.sh (ignored)
-
-# Run the verification script
-./scripts/verify-gitignore-coverage.sh
-# Should show: ✅ Success! All toolkit files are properly ignored.
+# Should show: scripts/migrate-*.js (ignored)
 
 # Verify your app files are still tracked
 git status
@@ -176,22 +176,19 @@ git status
 
 ```bash
 # Get personalized recommendation (5 minutes)
-./scripts/recommend-migration-strategy.sh 4.0.0 10.0.0 --interactive
+node scripts/analyze-migration.js 4.0.0 10.0.0
 
 # Analyzes your project and recommends:
 # - Big Bang (direct jump)
 # - Hybrid (strategic stepping stones)
 # - Incremental (version-by-version)
+# Use --quick to skip interactive questions
 ```
 
 **Start your migration:**
 
 ```bash
-# Interactive mode (recommended)
-node scripts/migration-helper.js
-
-# Or automated
-./scripts/migrate-custom-branch.sh \
+node scripts/migrate-custom-branch.js \
   --source-branch training_9.1.0 \
   --target-branch intershop-pwa/10.0.0 \
   --migration-branch training_10.0.0
@@ -210,11 +207,10 @@ Remove them from Git (keeps local files):
 git rm --cached .github/instructions/migration-*.instructions.md
 git rm --cached .github/skills/pwa-*.SKILL.md
 git rm --cached .github/skills/README.md
-git rm --cached scripts/migrate-*.sh
-git rm --cached scripts/check-*.sh
-git rm --cached scripts/analyze-*.sh
-git rm --cached scripts/generate-*.sh
-git rm --cached scripts/migration-helper.js
+git rm --cached scripts/migrate-*.js
+git rm --cached scripts/check-*.js
+git rm --cached scripts/analyze-*.js
+git rm --cached scripts/generate-*.js
 git rm --cached data/pattern-migrations.json
 git rm --cached docs/guides/migration-*.md
 git rm --cached docs/guides/customization-*.md
@@ -233,7 +229,7 @@ git commit -m "chore: remove migration toolkit files from repository"
 ```
 .github/instructions/migration-*.instructions.md  ← Ignored ❌
 .github/skills/pwa-*.SKILL.md                     ← Ignored ❌
-scripts/migrate-*.sh                               ← Ignored ❌
+scripts/migrate-*.js                               ← Ignored ❌
 data/pattern-migrations.json                       ← Ignored ❌
 ```
 
@@ -241,7 +237,7 @@ data/pattern-migrations.json                       ← Ignored ❌
 ```
 .github/workflows/ci.yml                           ← Tracked ✅
 .github/CODEOWNERS                                 ← Tracked ✅
-scripts/deploy.sh                                  ← Tracked ✅
+scripts/deploy.js                                  ← Tracked ✅
 src/app/                                           ← Tracked ✅
 ```
 
@@ -263,7 +259,7 @@ cp /tmp/toolkit/.github/skills/* .github/skills/
 cp /tmp/toolkit/scripts/* scripts/
 cp /tmp/toolkit/data/* data/
 cp /tmp/toolkit/docs/guides/* docs/guides/
-chmod +x scripts/*.sh
+# Scripts are cross-platform Node.js - no chmod needed
 
 # Cleanup
 rm -rf /tmp/toolkit

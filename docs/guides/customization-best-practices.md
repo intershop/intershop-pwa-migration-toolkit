@@ -122,12 +122,12 @@ src/app/shell/header/header-navigation/
 
 #### Scripts That Process Themed Templates
 
-1. **Control Flow Migration** (`migrate-control-flow.sh`)
+1. **Control Flow Migration** (`migrate-control-flow.js`)
    - Scans ALL `.html` files for `*ngIf`, `*ngFor`, `*ngSwitch`
    - Reports themed templates separately for visibility
    - Remember: Themed templates ALSO need migration to `@if`, `@for`, `@switch`
 
-2. **Template Syntax Checker** (`check-template-syntax.sh`)
+2. **Template Syntax Checker** (`check-template-syntax.js`)
    - Detects empty paired tags in ALL templates
    - Reports count of themed templates found
 
@@ -148,10 +148,10 @@ When migrating from PWA 9.x to 10.0+:
 find src -name "*.component.*.html" -type f
 
 # 2. Review what needs migration
-./scripts/check-template-syntax.sh
+node scripts/check-template-syntax.js
 
 # 3. Run automated migration
-./scripts/migrate-control-flow.sh
+node scripts/migrate-control-flow.js
 # Note: Pay attention to the "Themed templates" section in the output
 
 # 4. Manually review themed templates that couldn't be auto-migrated
@@ -584,7 +584,7 @@ cp product-tile.component.ts custom-product-tile.component.ts
 
 ```bash
 # 1. Document what you've customized
-./scripts/analyze-migration-complexity.sh
+node scripts/analyze-migration.js
 
 # 2. Create branch from current state
 git checkout -b pre-migration-snapshot

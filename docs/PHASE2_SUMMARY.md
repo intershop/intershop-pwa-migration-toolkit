@@ -88,7 +88,7 @@ Phase 2 focused on incorporating detailed technical information from the officia
 
 ### 2. ICM Compatibility Check Script ✅ (3 hours)
 
-**File:** `scripts/check-icm-compatibility.sh`
+**File:** `scripts/check-icm-compatibility.js`
 
 **Features:**
 
@@ -116,7 +116,7 @@ Phase 2 focused on incorporating detailed technical information from the officia
 
 5. **Comprehensive Checks**
    ```bash
-   ./scripts/check-icm-compatibility.sh
+   node scripts/check-icm-compatibility.js
    # Output:
    # ✅ ICM Version: 14.1.0
    # ✅ Minimum Required: 11.0.0
@@ -131,16 +131,16 @@ Phase 2 focused on incorporating detailed technical information from the officia
 
 ```bash
 # Auto-detect everything
-./scripts/check-icm-compatibility.sh
+node scripts/check-icm-compatibility.js
 
 # Specify PWA version
-./scripts/check-icm-compatibility.sh --pwa-version 10.0.0
+node scripts/check-icm-compatibility.js --pwa-version 10.0.0
 
 # Specify ICM URL
-./scripts/check-icm-compatibility.sh --icm-url https://my-icm.com
+node scripts/check-icm-compatibility.js --icm-url https://my-icm.com
 
 # In CI/CD
-if ! ./scripts/check-icm-compatibility.sh; then
+if ! node scripts/check-icm-compatibility.js; then
   echo "ICM compatibility check failed"
   exit 1
 fi
@@ -156,7 +156,7 @@ fi
 
 ### 3. Dependency Update Workflow Script ✅ (3 hours)
 
-**File:** `scripts/update-dependencies.sh`
+**File:** `scripts/update-dependencies.js`
 
 **Features:**
 
@@ -179,7 +179,7 @@ fi
 
 3. **Auto Mode for CI/CD**
    ```bash
-   ./scripts/update-dependencies.sh --auto
+   node scripts/update-dependencies.js --auto
    ```
    - No prompts, accepts all defaults
    - Suitable for automated environments
@@ -207,10 +207,10 @@ fi
 
 ```bash
 # Interactive mode (recommended)
-./scripts/update-dependencies.sh
+node scripts/update-dependencies.js
 
 # Auto mode (CI/CD)
-./scripts/update-dependencies.sh --auto
+node scripts/update-dependencies.js --auto
 ```
 
 **Output Example:**
@@ -272,9 +272,9 @@ jq -r '.migrations[] |
 Can be integrated into existing migration scripts:
 
 ```bash
-# In migrate-custom-branch.sh (future enhancement)
+# In migrate-custom-branch.js (future enhancement)
 echo "Checking ICM compatibility..."
-./scripts/check-icm-compatibility.sh || {
+node scripts/check-icm-compatibility.js || {
   echo "WARNING: ICM may not be compatible"
   read -p "Continue anyway? (y/N): " continue
   [[ ! "$continue" =~ ^[Yy]$ ]] && exit 1
@@ -287,10 +287,10 @@ Recommended workflow:
 
 ```bash
 # 1. Update dependencies first
-./scripts/update-dependencies.sh
+node scripts/update-dependencies.js
 
 # 2. Then migrate PWA
-./scripts/migrate-custom-branch.sh
+node scripts/migrate-custom-branch.js
 ```
 
 ---
@@ -316,8 +316,8 @@ Recommended workflow:
 4. **New Files Created**
    - `.github/instructions/migration-approaches.instructions.md` (635 lines)
    - `docs/MISSING_ELEMENTS_ANALYSIS.md` (423 lines)
-   - `scripts/check-icm-compatibility.sh` (300 lines)
-   - `scripts/update-dependencies.sh` (400 lines)
+   - `scripts/check-icm-compatibility.js` (300 lines)
+   - `scripts/update-dependencies.js` (400 lines)
    - This summary document
 
 ---
@@ -406,8 +406,8 @@ Remaining items from original analysis:
 
 ### Scripts Tested
 
-✅ `check-icm-compatibility.sh` - Auto-detection works  
-✅ `update-dependencies.sh` - Interactive mode flows correctly  
+✅ `check-icm-compatibility.js` - Auto-detection works  
+✅ `update-dependencies.js` - Interactive mode flows correctly  
 ✅ `pattern-migrations.json` - Valid JSON, parseable with jq  
 
 ### Documentation Tested

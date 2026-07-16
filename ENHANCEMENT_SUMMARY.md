@@ -8,7 +8,7 @@
 
 ### 1. New Automation Scripts
 
-**`scripts/validate-theme-completeness.sh`**
+**`scripts/validate-theme-completeness.js`**
 - **Purpose**: Proactively validates custom themes BEFORE first build
 - **Features**:
   - Compares custom theme variables against b2b reference theme
@@ -16,10 +16,10 @@
   - Reports missing variables with category grouping
   - Validates all 138 b2b variables
   - Color-coded output for easy scanning
-- **Usage**: `./scripts/validate-theme-completeness.sh`
+- **Usage**: `node scripts/validate-theme-completeness.js`
 - **Time saved**: 15-30 minutes of build-error-fix cycles
 
-**`scripts/sync-custom-theme-variables.sh`**
+**`scripts/sync-custom-theme-variables.js`**
 - **Purpose**: Automatically adds missing variables from b2b theme to custom themes
 - **Features**:
   - Preserves existing custom variable values
@@ -28,8 +28,8 @@
   - Adds Sass module imports if missing
   - Supports single theme or all themes
 - **Usage**: 
-  - Sync all custom themes: `./scripts/sync-custom-theme-variables.sh`
-  - Sync specific theme: `./scripts/sync-custom-theme-variables.sh training`
+  - Sync all custom themes: `node scripts/sync-custom-theme-variables.js`
+  - Sync specific theme: `node scripts/sync-custom-theme-variables.js training`
 - **Safety**: Creates .backup files before modifications
 
 ### 2. Documentation Enhancements
@@ -61,7 +61,7 @@
   - Reduced total expected errors: "5-10 if theme validation done" (was "10-20")
   - Added "Time Savings" note to expected error categories
   - Moved "Future Improvements" items to "Available Automation Scripts"
-  - Marked sync-theme-variables.sh as ✅ DONE (was future enhancement)
+  - Marked sync-custom-theme-variables.js as ✅ DONE (was future enhancement)
   - Created new "Available Automation Scripts" section documenting all 11 scripts
 
 **`migration-git.instructions.md`**
@@ -77,8 +77,8 @@
 - **Updated**: Package inventory and usage workflow
 - **Changes**:
   - Updated count: 17 files → 19 files (11 scripts total, was 9)
-  - Added validate-theme-completeness.sh to script list
-  - Added sync-custom-theme-variables.sh to script list
+  - Added validate-theme-completeness.js to script list
+  - Added sync-custom-theme-variables.js to script list
   - Added time savings note: "(saves 15-30 min)" for theme scripts
   - Updated STEP 4 in usage workflow to include theme validation as first post-migration step
   - Positioned theme validation BEFORE npm install and npm run build
@@ -104,7 +104,7 @@
 
 ### New Workflow (With Toolkit Enhancements)
 1. Merged PWA 9.1.0 into custom 4.0.0 branch
-2. Ran `./scripts/validate-theme-completeness.sh` ← **NEW STEP**
+2. Ran `node scripts/validate-theme-completeness.js` ← **NEW STEP**
 3. Saw: "❌ Missing 11 variables in training theme:"
    - $CORPORATE-LIGHT
    - $CORPORATE-DARK
@@ -113,9 +113,9 @@
    - $table-bg
    - $swatch-image-border-radius
    - ... (and 5 more)
-4. Ran `./scripts/sync-custom-theme-variables.sh`
+4. Ran `node scripts/sync-custom-theme-variables.js`
 5. Reviewed auto-added variables, adjusted colors for brand
-6. Ran `./scripts/validate-theme-completeness.sh`
+6. Ran `node scripts/validate-theme-completeness.js`
 7. Saw: "✅ All custom themes are complete!"
 8. Ran `npm run build`
 9. Build succeeded (or maybe 1-2 minor SCSS errors, not 11)
@@ -129,8 +129,8 @@
 **Tested Against**: Training project (PWA 4.0.0 → 9.1.0 completed migration)
 
 **Test Results**:
-- ✅ `validate-theme-completeness.sh` detected 6 remaining missing variables in training theme
-- ✅ `sync-custom-theme-variables.sh` successfully added all 6 variables with b2b defaults
+- ✅ `validate-theme-completeness.js` detected 6 remaining missing variables in training theme
+- ✅ `sync-custom-theme-variables.js` successfully added all 6 variables with b2b defaults
 - ✅ Re-validation showed "All variables present" (139/138, includes custom extras)
 - ✅ Scripts handle multiple custom themes correctly (training + theme_placeholder)
 - ✅ Scripts skip incomplete themes gracefully (theme_placeholder has no variables.scss)
@@ -160,8 +160,8 @@
 
 ## Files Modified in Toolkit
 
-1. ✅ **NEW**: `scripts/validate-theme-completeness.sh` (179 lines)
-2. ✅ **NEW**: `scripts/sync-custom-theme-variables.sh` (240 lines)
+1. ✅ **NEW**: `scripts/validate-theme-completeness.js` (179 lines)
+2. ✅ **NEW**: `scripts/sync-custom-theme-variables.js` (240 lines)
 3. ✅ **ENHANCED**: `.github/instructions/migration-issues.instructions.md`
    - Issue #1 expanded with proactive approach, error symptoms, category table
 4. ✅ **ENHANCED**: `.github/instructions/migration-checklist.instructions.md`

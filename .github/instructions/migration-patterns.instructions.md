@@ -76,7 +76,7 @@ SOURCE_VERSION="X.Y.Z"  # Your current version
 TARGET_VERSION="A.B.C"  # Desired version
 
 # 2. Analyze complexity and get tier recommendation
-node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 
 # 3. Detect breaking changes between versions
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
@@ -481,7 +481,7 @@ grep -r "lazy-[extension-name]" src/app/
 **Pattern for Migration Script**:
 
 ```bash
-# Add to migration-helper.js or migrate-custom-branch.js
+# Add to migrate-custom-branch.js
 # After merge, detect removed features:
 
 REMOVED_FEATURES=$(comm -13 \
@@ -512,7 +512,7 @@ fi
 **Interactive Migration Helper Pattern**:
 
 ```javascript
-// In migration-helper.js
+// In migrate-custom-branch.js
 async function handleRemovedFeatures(removedFeatures) {
   if (removedFeatures.length === 0) return;
 

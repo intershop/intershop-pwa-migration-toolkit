@@ -499,7 +499,7 @@ npm start
 
 ```bash
 # Analyze complexity (helps choose approach)
-node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 
 # Detect patterns (preview changes)
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
@@ -508,14 +508,11 @@ node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
 ### During Migration (Any Approach)
 
 ```bash
-# Check for known GitHub issues
-node scripts/check-github-issues.js
-
 # Validate theme completeness
 node scripts/validate-theme-completeness.js
 
-# Compare SCSS changes
-./scripts/compare-scss-files.js src/styles/themes/b2b src/styles/themes/custom
+# Sync SCSS variables
+node scripts/sync-custom-theme-variables.js
 ```
 
 ### After Migration

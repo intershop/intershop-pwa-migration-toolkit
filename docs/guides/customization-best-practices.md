@@ -584,7 +584,7 @@ cp product-tile.component.ts custom-product-tile.component.ts
 
 ```bash
 # 1. Document what you've customized
-node scripts/analyze-migration-complexity.js
+node scripts/analyze-migration.js
 
 # 2. Create branch from current state
 git checkout -b pre-migration-snapshot

@@ -331,8 +331,7 @@ Updated:
 
 ```bash
 # STEP 2: Pre-migration checks
-node scripts/analyze-migration-complexity.js 4.0.0 9.1.0
-node scripts/check-github-issues.js --version 9.1.0  # NEW
+node scripts/analyze-migration.js 4.0.0 9.1.0
 
 # STEP 3: Execute migration
 node scripts/migrate-custom-branch.js ...

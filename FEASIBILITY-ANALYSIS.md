@@ -30,8 +30,7 @@ cp /tmp/toolkit/scripts/* scripts/
 **Status:** ✅ **IMPLEMENTED**
 
 **How:**
-- `scripts/analyze-migration-complexity.js` - Comprehensive customization analysis
-- `scripts/check-standalone-components.js` - Architecture analysis
+- `scripts/analyze-migration.js` - Comprehensive customization analysis + strategy recommendation
 
 **Capabilities:**
 - ✅ Detects custom extensions
@@ -41,7 +40,7 @@ cp /tmp/toolkit/scripts/* scripts/
 - ✅ Analyzes code complexity
 
 **Evidence:**
-- [analyze-migration-complexity.js](scripts/analyze-migration-complexity.js) lines 59-95
+- [analyze-migration.js](scripts/analyze-migration.js)
 
 **Output Example:**
 ```
@@ -95,7 +94,7 @@ async function fetchChangelog(targetVersion) {
 
 **Solution:**
 ```bash
-# In analyze-migration-complexity.js (needs enhancement)
+# In analyze-migration.js (auto-detects from branch/package.json)
 detect_current_version() {
   # Check package.json
   local version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4)
@@ -115,7 +114,7 @@ detect_current_version() {
 **Status:** ⚠️ **PARTIALLY IMPLEMENTED**
 
 **What EXISTS:**
-- Version gap calculation in analyze-migration-complexity.js
+- Version gap calculation in analyze-migration.js
 - Manual CHANGELOG reference in instructions
 
 **What's MISSING:**
@@ -144,7 +143,7 @@ detect_current_version() {
   - Custom themes
 
 **Evidence:**
-- [analyze-migration-complexity.js](scripts/analyze-migration-complexity.js) lines 319-442
+- [analyze-migration.js](scripts/analyze-migration.js)
 
 **Output:**
 ```
@@ -183,7 +182,6 @@ detect_current_version() {
 - ✅ Automated merge script: `migrate-custom-branch.js`
 - ✅ Template syntax auto-fix: `fix-template-syntax.js`
 - ✅ Localization merge: `merge-i18n-files.js`
-- ✅ Interactive helper: `migration-helper.js`
 
 **What's MISSING:**
 - ❌ Automated SCSS pattern migration (darken → color.adjust)
@@ -283,7 +281,6 @@ detect_current_version() {
 npm install
 npm run build
 npm test
-node scripts/check-lint-issues.js
 node scripts/check-template-syntax.js
 ```
 

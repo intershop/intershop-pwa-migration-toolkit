@@ -71,20 +71,15 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 
 #### Core Migration
 - `migrate-custom-branch.js` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
-- `migration-helper.js` - Interactive migration assistant with **video tutorial detection** ⭐ NEW
-- `analyze-migration-complexity.js` - Complexity analyzer with tier recommendation
-- `recommend-migration-strategy.js` - **NEW:** Interactive advisor for choosing big bang vs. incremental approach ⭐
+- `analyze-migration.js` - Complexity analyzer + strategy advisor (Big Bang / Hybrid / Incremental) ⭐
 - `generate-migration-report.js` - Comprehensive migration documentation generator
 - `pre-commit-customization-check.js` - **NEW:** Pre-commit hook to catch customization anti-patterns early
 
 #### Detection & Analysis
 - `detect-pattern-changes.js` - Tier 2/3 pattern detection and CHANGELOG analysis
-- `check-nodejs-version.js` - **NEW:** Enforces Node.js/npm version requirements for target PWA version ⭐
-- `check-github-issues.js` - **NEW:** Verify if errors are known bugs fixed in GitHub (saves 30-60 min)
-- `check-icm-compatibility.js` - **NEW:** ICM version compatibility checker with requirements from pattern database
+- `check-nodejs-version.js` - Enforces Node.js/npm version requirements for target PWA version
+- `check-icm-compatibility.js` - ICM version compatibility checker with requirements from pattern database
 - `check-template-syntax.js` - Detect old template syntax
-- `check-standalone-components.js` - Architecture analysis
-- `check-lint-issues.js` - Categorize lint errors
 
 #### Intelligent Merge Tools
 - `merge-i18n-files.js` - Enhanced localization merge with conflict detection
@@ -93,7 +88,6 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 #### SCSS/Styling
 - `validate-theme-completeness.js` - Proactive SCSS variable validation (saves 15-30 min)
 - `sync-custom-theme-variables.js` - Auto-sync missing theme variables from b2b
-- `compare-scss-files.js` - **NEW:** Comprehensive SCSS comparison: variables, mixins, imports (saves 30-60 min)
 
 #### Automated Fixes
 - `fix-template-syntax.js` - Auto-fix template syntax
@@ -108,15 +102,11 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 
 > **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
-#### Dependency Management ⭐ NEW
-- `update-dependencies.js` - **NEW:** Interactive 8-step dependency update workflow (following official guide)
-
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
 
-### Documentation Guides (2 files in `docs/guides/`) ⭐ NEW
-- `customization-best-practices.md` - **NEW:** Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
-- `migration-helper-guide.md` - Complete guide for the interactive migration helper
+### Documentation Guides (1 file in `docs/guides/`)
+- `customization-best-practices.md` - Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
 
 ### Migration Skills (3 files in `.github/skills/`)
 - `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
@@ -126,16 +116,10 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 ### Configuration Templates (1 file)
 - `.gitignore-toolkit-template` - **NEW:** Pre-made .gitignore patterns to keep toolkit files out of your repo
 
-### Workspace Setup (1 file) ⭐ NEW
-- `pwa-migration.code-workspace.template` - **NEW:** VS Code multi-root workspace template for separated toolkit usage
+### Workspace Setup (1 file)
+- `pwa-migration.code-workspace.template` - VS Code multi-root workspace template for separated toolkit usage
 
-### Verification Tools (1 file) ⭐ NEW
-- `verify-gitignore-coverage.js` - **NEW:** Test script to verify all toolkit files are properly ignored
-
-### Getting Started (1 file) ⭐ NEW
-- `QUICK-START.md` - **NEW:** 3-step setup guide (5 minutes) with .gitignore instructions
-
-**Total:** 43 files (9 instructions + 25 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start + 1 verification)
+**Total:** 18 scripts + 1 database + 2 guides + 3 skills + 1 template + 1 quick-start
 
 **Time Savings:** Scripts save 2-4 hours per migration, with PWA 10.0 tools saving additional 4-8 hours on control flow migration.
 
@@ -347,7 +331,7 @@ node scripts/migrate-custom-branch.js
 node scripts/check-template-syntax.js
 
 # JavaScript scripts work directly via Node.js
-node scripts/migration-helper.js
+node scripts/migrate-custom-branch.js
 node scripts/detect-pattern-changes.js
 ```
 
@@ -405,8 +389,8 @@ git ls-remote --tags https://github.com/intershop/intershop-pwa.git | \
 SOURCE_VERSION="X.Y.Z"  # Your current version (e.g., "9.1.0")
 TARGET_VERSION="A.B.C"  # Desired version (e.g., "10.0.0")
 
-# Step 2: Analyze complexity
-node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
+# Step 2: Analyze complexity & get strategy recommendation
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 
 # Step 3: Detect patterns
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
@@ -601,14 +585,11 @@ scripts/analyze-*.js
 scripts/detect-*.js
 scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
 scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
-scripts/verify-*.js
-scripts/migration-helper.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -654,14 +635,11 @@ scripts/analyze-*.js
 scripts/detect-*.js
 scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
 scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
-scripts/verify-*.js
-scripts/migration-helper.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -723,7 +701,7 @@ git check-ignore .github/skills/pwa-*.SKILL.md
 git check-ignore .github/skills/README.md
 
 echo "Checking scripts..."
-git check-ignore scripts/migrate-*.js scripts/check-*.js scripts/migration-helper.js
+git check-ignore scripts/migrate-*.js scripts/check-*.js scripts/analyze-*.js
 
 echo "Checking data..."
 git check-ignore data/pattern-migrations.json
@@ -738,20 +716,12 @@ git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
 - ✅ 25 script files (scripts/)
 - ✅ 1 pattern database (data/)
 - ✅ 2 guide files (docs/guides/)
-- ✅ 1 verification script
 
-**Quick verification (automated):**
+**Quick verification:**
 
 ```bash
-# Run the verification script (copies automatically with toolkit)
-chmod +x scripts/verify-gitignore-coverage.js
-node scripts/verify-gitignore-coverage.js
-
-# Example output:
-# ✅ Migration instructions: Properly ignored (9 files)
-# ✅ PWA skills: Properly ignored (3 files)
-# ✅ Migration shell scripts: Properly ignored (2 files)
-# ... etc
+# Verify toolkit files are ignored
+git status --ignored | grep -E "(scripts|\.github|data/pattern)"
 ```
 
 **What if I already committed toolkit files?**
@@ -801,15 +771,13 @@ export TARGET_VERSION="10.0.0"  # ← Your desired version
 
 # === Analyze Migration Complexity ===
 
-# NEW: Get personalized migration strategy recommendation
-node scripts/recommend-migration-strategy.js $SOURCE_VERSION $TARGET_VERSION --interactive
+# Analyze complexity + get personalized strategy recommendation
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 # Analyzes: customization depth, version gap, breaking changes
 # Recommends: Big Bang, Hybrid, or Incremental approach
-# Time: 5 minutes (answers 5 questions about your team/project)
-
-# NEW: Analyze complexity with YOUR specific versions
-node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
 # Output: Recommended tier (1/2/3), estimated time, prerequisites
+# Time: 5 minutes (answers 5 questions about your team/project)
+# Use --quick to skip interactive questions
 
 # NEW: Run pattern detection for YOUR version gap
 # Tier 2: Standard detection
@@ -825,8 +793,6 @@ cat .github/instructions/migration-checklist.instructions.md
 
 # Check your current setup
 node scripts/check-template-syntax.js
-node scripts/check-standalone-components.js
-node scripts/check-lint-issues.js
 
 # === Check Node.js/npm Requirements ===
 
@@ -925,35 +891,20 @@ node scripts/migrate-custom-branch.js \
   --source-branch your-custom-branch \
   --target-branch intershop-pwa/develop \
   --migration-branch migration/custom-to-latest
-
-# Option B: Interactive (recommended for first migration)
-node scripts/migration-helper.js
 ```
 
 ### STEP 4: Post-Migration Validation & Documentation
 
 ```bash
-# NEW: Check if issues are known bugs already fixed in GitHub (FIRST!)
-# This can save 30-60 minutes debugging known issues
-node scripts/check-github-issues.js --version 9.1.0 --search "your error keywords"
-
-# NEW: Validate custom theme variables (BEFORE first build)
-# This prevents 15-30 minutes of build-fix-rebuild cycles
+# Validate custom theme variables (BEFORE first build)
 node scripts/validate-theme-completeness.js
 
 # If missing variables found, sync them
 node scripts/sync-custom-theme-variables.js
 # Review and adjust the auto-added variables for your brand
 
-# NEW: Comprehensive SCSS comparison (variables + mixins + imports)
-# Catches issues beyond just variables
-node scripts/compare-scss-files.js
-# Auto-fix if needed:
-node scripts/compare-scss-files.js --auto-fix
-
 # Check for remaining issues
 node scripts/check-template-syntax.js
-node scripts/check-lint-issues.js
 
 # NEW: Suppress template linting issues temporarily (saves 1-2 hours)
 # Focus on critical issues first, fix linting later
@@ -998,9 +949,10 @@ node scripts/migrate-custom-branch.js \
 **Goal:** Complex migration with theme overrides and extensions
 
 ```bash
-# Interactive mode handles complex customizations better
-node scripts/migration-helper.js
-# Follow prompts to handle theme conflicts
+# Run analysis first
+node scripts/analyze-migration.js
+# Then migrate with auto-resolve for simple conflicts
+node scripts/migrate-custom-branch.js --auto-resolve
 ```
 
 ### Scenario 3: B2B Customizations
@@ -1041,14 +993,11 @@ scripts/analyze-*.js
 scripts/detect-*.js
 scripts/generate-*.js
 scripts/merge-*.js
-scripts/compare-*.js
 scripts/fix-*.js
 scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
-scripts/verify-*.js
-scripts/migration-helper.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
@@ -1067,9 +1016,6 @@ rm -rf /tmp/toolkit
 
 **Start here:** `.github/instructions/migration-checklist.instructions.md`
 
-**Tool guides:**
-- `docs/guides/migration-helper-guide.md` - Complete guide for the interactive migration helper
-
 **Common issues:** `.github/instructions/migration-issues.instructions.md`
 
 **Git strategies:** `.github/instructions/migration-git.instructions.md`
@@ -1078,12 +1024,13 @@ rm -rf /tmp/toolkit
 
 ## 🎯 What's New in This Version
 
-### New Capabilities (5 Scripts Added)
+### Key Capabilities
 
-1. **GitHub Issue Checker** (`check-github-issues.js`)
-   - Prevents debugging known bugs already fixed in later versions
-   - Saves: 30-60 minutes per unknown issue
-   - Usage: `node scripts/check-github-issues.js --version 9.1.0 --search "keywords"`
+1. **Migration Analyzer** (`analyze-migration.js`)
+   - Combines complexity analysis + strategy recommendation
+   - Recommends detection tier (1/2/3) and migration strategy (Big Bang / Hybrid / Incremental)
+   - Interactive team questionnaire for personalized advice
+   - Usage: `node scripts/analyze-migration.js 4.0.0 10.0.0`
 
 2. **Docker Compose Merge Tool** (`merge-docker-compose.js`)
    - Intelligently merges docker-compose.yml from both branches
@@ -1102,12 +1049,6 @@ rm -rf /tmp/toolkit
    - Distinguishes real failures from expected changes
    - Saves: 20-40 minutes of manual snapshot review
    - Usage: `node scripts/update-snapshots.js --interactive`
-
-5. **SCSS File Comparator** (`compare-scss-files.js`)
-   - Comprehensive comparison: variables, mixins, imports, classes
-   - Auto-fix mode with backup
-   - Saves: 30-60 minutes of manual diff comparison
-   - Usage: `node scripts/compare-scss-files.js --auto-fix`
 
 ### Enhanced Issues Documentation
 

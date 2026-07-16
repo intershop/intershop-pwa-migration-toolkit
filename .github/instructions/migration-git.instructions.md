@@ -758,7 +758,7 @@ git add src/assets/i18n/en_US.json
 
 ### Integration with Migration Script
 
-Add to `scripts/migrate-custom-branch.js` or `scripts/migration-helper.js`:
+Add to `scripts/migrate-custom-branch.js`:
 
 ```bash
 # After merge conflicts are resolved

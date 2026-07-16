@@ -26,6 +26,85 @@ const fs = require('fs');
 const path = require('path');
 const { log, exec, execSilent, chalk, askYesNo } = require('./_utils');
 
+// Video tutorials for specific version ranges
+const VIDEO_TUTORIALS = [
+  { sourceMin: 7, sourceMax: 7, targetMin: 8, targetMax: 8, title: 'Migrating from PWA 7.0 to 8.0', url: 'https://public.academy.intershop.com/plus/catalog/courses/452' },
+  { sourceMin: 8, sourceMax: 8, targetMin: 9, targetMax: 9, title: 'Migrating from PWA 8.0 to 9.0', url: 'https://public.academy.intershop.com/plus/catalog/courses/454' },
+];
+
+function showVideoTutorials(sourceBranch, targetBranch) {
+  const srcMatch = sourceBranch.match(/(\d+)\.\d+/);
+  const tgtMatch = targetBranch.match(/(\d+)\.\d+/);
+  if (!srcMatch || !tgtMatch) return;
+  const srcMajor = parseInt(srcMatch[1]);
+  const tgtMajor = parseInt(tgtMatch[1]);
+  const matches = VIDEO_TUTORIALS.filter(t => srcMajor >= t.sourceMin && srcMajor <= t.sourceMax && tgtMajor >= t.targetMin && tgtMajor <= t.targetMax);
+  if (matches.length > 0) {
+    console.log();
+    log.info('Video Tutorial(s) available:');
+    matches.forEach(t => { console.log(`  ${t.title}`); console.log(`  ${chalk.cyan(t.url)}`); });
+    console.log();
+  }
+}
+
+// Smart conflict resolution: merge imports from both sides
+function autoResolveImports(file, content) {
+  const lines = content.split('\n');
+  const resolved = [];
+  let inConflict = false;
+  let conflictType = null;
+  let oursImports = [];
+  let theirsImports = [];
+
+  for (const line of lines) {
+    if (line.startsWith('<<<<<<<')) {
+      inConflict = true; conflictType = 'ours'; oursImports = []; theirsImports = [];
+    } else if (line.startsWith('=======')) {
+      conflictType = 'theirs';
+    } else if (line.startsWith('>>>>>>>')) {
+      resolved.push(...[...new Set([...oursImports, ...theirsImports])].sort());
+      inConflict = false;
+    } else if (inConflict) {
+      if (line.trim().startsWith('import ')) {
+        (conflictType === 'ours' ? oursImports : theirsImports).push(line);
+      }
+    } else {
+      resolved.push(line);
+    }
+  }
+  if (!inConflict) { fs.writeFileSync(file, resolved.join('\n')); return true; }
+  return false;
+}
+
+// Smart conflict resolution: merge SCSS sections from both sides
+function autoResolveStyles(file, content) {
+  const lines = content.split('\n');
+  const resolved = [];
+  let inConflict = false;
+  let conflictType = null;
+  let oursStyles = [];
+  let theirsStyles = [];
+
+  for (const line of lines) {
+    if (line.startsWith('<<<<<<<')) {
+      inConflict = true; conflictType = 'ours'; oursStyles = []; theirsStyles = [];
+    } else if (line.startsWith('=======')) {
+      conflictType = 'theirs';
+    } else if (line.startsWith('>>>>>>>')) {
+      resolved.push('  /* === Merged upstream styles === */');
+      resolved.push(...theirsStyles);
+      if (oursStyles.length > 0) { resolved.push(''); resolved.push('  /* === Custom styles === */'); resolved.push(...oursStyles); }
+      inConflict = false;
+    } else if (inConflict) {
+      (conflictType === 'ours' ? oursStyles : theirsStyles).push(line);
+    } else {
+      resolved.push(line);
+    }
+  }
+  if (!inConflict) { fs.writeFileSync(file, resolved.join('\n')); return true; }
+  return false;
+}
+
 // Parse arguments
 const args = process.argv.slice(2);
 let sourceBranch = 'training_4.0.0';
@@ -162,6 +241,7 @@ log.info(`Migration Branch: ${migrationBranch}`);
 log.info(`Auto-resolve conflicts: ${autoResolve}`);
 log.info(`Dry Run: ${dryRun}`);
 log.info('============================================');
+showVideoTutorials(sourceBranch, targetTag || targetBranch);
 console.log();
 
 // Check Node.js version
@@ -240,19 +320,42 @@ if (!dryRun) {
       console.log();
 
       if (autoResolve) {
-        log.info('Attempting automatic conflict resolution...');
+        log.info('Attempting smart conflict resolution...');
         let resolved = 0, failed = 0;
         for (const file of files) {
           log.info(`Processing: ${file}`);
-          const res = exec(`git checkout --ours "${file}"`, { silent: true });
-          if (res.success) {
-            exec(`git add "${file}"`, { silent: true });
-            resolved++;
-            log.success("  ✓ Resolved using 'ours' strategy");
-          } else {
-            failed++;
-            log.warning('  ✗ Could not auto-resolve');
+          const content = fs.readFileSync(file, 'utf-8');
+
+          // Strategy 1: Smart import merging for .ts files
+          if (file.endsWith('.ts') && content.includes('import ')) {
+            if (autoResolveImports(file, content)) {
+              exec(`git add "${file}"`, { silent: true });
+              resolved++;
+              log.success('  ✓ Resolved (merged imports)');
+              continue;
+            }
           }
+
+          // Strategy 2: Smart SCSS merging
+          if (file.endsWith('.scss') || file.endsWith('.css')) {
+            if (autoResolveStyles(file, content)) {
+              exec(`git add "${file}"`, { silent: true });
+              resolved++;
+              log.success('  ✓ Resolved (merged styles)');
+              continue;
+            }
+          }
+
+          // Strategy 3: Test files — prefer ours (customizations)
+          if (file.endsWith('.spec.ts')) {
+            const res = exec(`git checkout --ours "${file}"`, { silent: true });
+            if (res.success) { exec(`git add "${file}"`, { silent: true }); resolved++; log.success('  ✓ Resolved (kept ours — test file)'); continue; }
+          }
+
+          // Strategy 4: Fallback — keep ours
+          const res = exec(`git checkout --ours "${file}"`, { silent: true });
+          if (res.success) { exec(`git add "${file}"`, { silent: true }); resolved++; log.success("  ✓ Resolved (kept ours — fallback)"); }
+          else { failed++; log.warning('  ✗ Could not auto-resolve'); }
         }
         log.info(`Auto-resolution summary: ${resolved} resolved, ${failed} need manual review`);
 

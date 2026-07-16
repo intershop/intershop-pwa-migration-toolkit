@@ -55,7 +55,7 @@ Gap: <X> major versions, <Y> minor versions
 export SOURCE_VERSION="X.Y.Z"
 export TARGET_VERSION="A.B.C"
 # Now use in all migration scripts
-node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
+node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 ```
 
@@ -135,9 +135,9 @@ node scripts/analyze-migration-complexity.js $SOURCE_VERSION $TARGET_VERSION
 **NEW: Automated complexity analysis with tier recommendation**
 
 ```bash
-# Run migration complexity analyzer
-node scripts/analyze-migration-complexity.js [source-version] [target-version]
-node scripts/analyze-migration-complexity.js 4.0.0 9.1.0
+# Run migration analyzer (complexity + strategy recommendation)
+node scripts/analyze-migration.js [source-version] [target-version]
+node scripts/analyze-migration.js 4.0.0 9.1.0
 ```
 
 **Output includes:**
@@ -501,7 +501,7 @@ ng version
 - Always keep global CLI version matched to project's package.json
 - Install global CLI immediately after successful merge and `npm install`
 
-**Note**: Both migration scripts (`migration-helper.js` and `migrate-custom-branch.js`) now check for global CLI availability and offer to install it automatically.
+**Note**: The migration script (`migrate-custom-branch.js`) checks for global CLI availability and offers to install it automatically.
 
 ### 2. Template-Component Consistency Check
 

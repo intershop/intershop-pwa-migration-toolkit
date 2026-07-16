@@ -75,11 +75,9 @@ For each category, run appropriate diagnostic:
 ```bash
 # Category A: Build Errors
 npm run build 2>&1 | tee build-errors.log
-node scripts/check-lint-issues.js
 
 # Category B: SCSS Errors
 node scripts/validate-theme-completeness.js
-node scripts/compare-scss-files.js
 
 # Category C: Template Errors
 node scripts/check-template-syntax.js
@@ -89,8 +87,8 @@ node scripts/fix-template-linting.js --check
 git status
 git diff --name-only --diff-filter=U
 
-# Category E: Runtime - Check GitHub first
-node scripts/check-github-issues.js --version <version> --search "<error keywords>"
+# Category E: Runtime - Check GitHub issues page directly
+# Visit: https://github.com/intershop/intershop-pwa/issues
 
 # Category F: Test Failures
 npm test -- --listTests | grep <failing-test>
@@ -206,7 +204,7 @@ git diff --name-only --diff-filter=U
 # Keep custom color values
 # Accept new PWA structure/mixins
 # Use compare tool:
-node scripts/compare-scss-files.js
+node scripts/sync-custom-theme-variables.js
 ```
 
 **Template conflicts:**
@@ -267,7 +265,7 @@ git merge <target-branch>
 grep -r "selector: 'component-name'" src/
 
 # Check standalone component status
-node scripts/check-standalone-components.js
+grep -r "standalone: true" src/ | grep -i "component-name"
 
 # Check imports
 grep -r "component-name" src/**/*.module.ts
@@ -368,8 +366,8 @@ grep -r "providedIn" src/
 
 **Diagnosis:**
 ```bash
-node scripts/check-github-issues.js --version 9.1.0 --search "ComponentName"
-node scripts/check-github-issues.js --version 9.1.0 --search "error message keywords"
+# Check GitHub issues page directly:
+# https://github.com/intershop/intershop-pwa/issues?q=<keywords>
 ```
 
 **If Found on GitHub:**
@@ -499,7 +497,7 @@ Run 14-item checklist in `docs/guides/customization-best-practices.md`:
 
 ```bash
 # 1. Is it a known issue?
-node scripts/check-github-issues.js --version <version> --search "<keywords>"
+# Check: https://github.com/intershop/intershop-pwa/issues
 
 # 2. Are dependencies installed?
 npm install
@@ -541,7 +539,7 @@ grep -r "failing-component" src/
 grep -r "$missing-variable" src/styles/
 
 # For templates: check component registrations
-node scripts/check-standalone-components.js
+grep -r "standalone: true" src/app/ | head -20
 
 # For conflicts: understand both sides
 git show :1:<file>  # common ancestor

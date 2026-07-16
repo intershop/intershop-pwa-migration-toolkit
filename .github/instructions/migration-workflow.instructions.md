@@ -563,15 +563,13 @@ done
 ### Migration Helpers
 
 - **`migrate-custom-branch.js`**: Main migration automation script
-- **`analyze-migration-complexity.js`**: Analyzes project and recommends detection tier
+- **`analyze-migration.js`**: Analyzes complexity, recommends tier and migration strategy
 - **`detect-pattern-changes.js`**: Finds breaking pattern changes in CHANGELOG
 - **`merge-i18n-files.js`**: Smart merge of translation files preserving custom keys
 
 ### Quality Checks
 
 - **`check-template-syntax.js`**: Detects empty paired tags that should be self-closing
-- **`check-standalone-components.js`**: Identifies standalone component usage patterns
-- **`check-lint-issues.js`**: Pre-build linting validation
 - **`generate-migration-report.js`**: Comprehensive post-migration report
 
 ## Future Improvements

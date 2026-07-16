@@ -85,7 +85,7 @@ Scripts automatically detect the PWA project via one of these (checked in order)
 
 ```bash
 # Option A: Pass the project dir explicitly
-node scripts/analyze-migration-complexity.js --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
+node scripts/analyze-migration.js --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
 
 # Option B: Set the env var once (add to your shell profile, or let the workspace file handle it)
 export PWA_PROJECT_DIR="/home/training/developer/pwa/developer-pwa"
@@ -159,10 +159,6 @@ rm .gitignore-toolkit-template
 git status --ignored | grep "scripts/migrate"
 # Should show: scripts/migrate-*.js (ignored)
 
-# Run the verification script
-node scripts/verify-gitignore-coverage.js
-# Should show: ✅ Success! All toolkit files are properly ignored.
-
 # Verify your app files are still tracked
 git status
 # Should NOT show any toolkit files, only your app changes
@@ -176,21 +172,18 @@ git status
 
 ```bash
 # Get personalized recommendation (5 minutes)
-node scripts/recommend-migration-strategy.js 4.0.0 10.0.0 --interactive
+node scripts/analyze-migration.js 4.0.0 10.0.0
 
 # Analyzes your project and recommends:
 # - Big Bang (direct jump)
 # - Hybrid (strategic stepping stones)
 # - Incremental (version-by-version)
+# Use --quick to skip interactive questions
 ```
 
 **Start your migration:**
 
 ```bash
-# Interactive mode (recommended)
-node scripts/migration-helper.js
-
-# Or automated
 node scripts/migrate-custom-branch.js \
   --source-branch training_9.1.0 \
   --target-branch intershop-pwa/10.0.0 \
@@ -214,7 +207,6 @@ git rm --cached scripts/migrate-*.js
 git rm --cached scripts/check-*.js
 git rm --cached scripts/analyze-*.js
 git rm --cached scripts/generate-*.js
-git rm --cached scripts/migration-helper.js
 git rm --cached data/pattern-migrations.json
 git rm --cached docs/guides/migration-*.md
 git rm --cached docs/guides/customization-*.md

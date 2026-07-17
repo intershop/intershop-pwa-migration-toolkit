@@ -48,35 +48,72 @@ function showVideoTutorials(sourceBranch, targetBranch) {
 }
 
 // Smart conflict resolution: merge imports from both sides
+// Only auto-resolves conflict blocks that contain EXCLUSIVELY import statements.
+// Mixed blocks (imports + code) are left with conflict markers for manual review.
 function autoResolveImports(file, content) {
   const lines = content.split('\n');
   const resolved = [];
   let inConflict = false;
   let conflictType = null;
-  let oursImports = [];
-  let theirsImports = [];
+  let oursLines = [];
+  let theirsLines = [];
+  let conflictStartMarker = '';
+  let conflictEndMarker = '';
+  let hasUnresolved = false;
+
+  function isImportOrEmpty(line) {
+    const trimmed = line.trim();
+    return trimmed === '' || trimmed.startsWith('import ') || trimmed.startsWith('} from ');
+  }
 
   for (const line of lines) {
     if (line.startsWith('<<<<<<<')) {
-      inConflict = true; conflictType = 'ours'; oursImports = []; theirsImports = [];
-    } else if (line.startsWith('=======')) {
+      inConflict = true;
+      conflictType = 'ours';
+      oursLines = [];
+      theirsLines = [];
+      conflictStartMarker = line;
+    } else if (inConflict && line.startsWith('=======')) {
       conflictType = 'theirs';
-    } else if (line.startsWith('>>>>>>>')) {
-      resolved.push(...[...new Set([...oursImports, ...theirsImports])].sort());
+    } else if (inConflict && line.startsWith('>>>>>>>')) {
+      conflictEndMarker = line;
+      const oursAllImports = oursLines.every(isImportOrEmpty);
+      const theirsAllImports = theirsLines.every(isImportOrEmpty);
+
+      if (oursAllImports && theirsAllImports) {
+        // Safe: both sides are import-only — merge them
+        const oursImports = oursLines.filter(l => l.trim() !== '');
+        const theirsImports = theirsLines.filter(l => l.trim() !== '');
+        resolved.push(...[...new Set([...oursImports, ...theirsImports])].sort());
+      } else {
+        // Unsafe: mixed content — keep conflict markers for manual review
+        resolved.push(conflictStartMarker);
+        resolved.push(...oursLines);
+        resolved.push('=======');
+        resolved.push(...theirsLines);
+        resolved.push(conflictEndMarker);
+        hasUnresolved = true;
+      }
       inConflict = false;
     } else if (inConflict) {
-      if (line.trim().startsWith('import ')) {
-        (conflictType === 'ours' ? oursImports : theirsImports).push(line);
-      }
+      (conflictType === 'ours' ? oursLines : theirsLines).push(line);
     } else {
       resolved.push(line);
     }
   }
-  if (!inConflict) { fs.writeFileSync(file, resolved.join('\n')); return true; }
-  return false;
+
+  // If we're still inside a conflict at EOF, don't write — file is malformed
+  if (inConflict) return false;
+
+  fs.writeFileSync(file, resolved.join('\n'));
+  // Return 'partial' if some blocks were left unresolved, true if fully resolved
+  if (hasUnresolved) return 'partial';
+  return true;
 }
 
 // Smart conflict resolution: merge SCSS sections from both sides
+// NOTE: In merge context, "ours" = target (new PWA), "theirs" = source (customizations).
+// We keep both sides with clear markers so the developer can review.
 function autoResolveStyles(file, content) {
   const lines = content.split('\n');
   const resolved = [];
@@ -88,12 +125,17 @@ function autoResolveStyles(file, content) {
   for (const line of lines) {
     if (line.startsWith('<<<<<<<')) {
       inConflict = true; conflictType = 'ours'; oursStyles = []; theirsStyles = [];
-    } else if (line.startsWith('=======')) {
+    } else if (inConflict && line.startsWith('=======')) {
       conflictType = 'theirs';
-    } else if (line.startsWith('>>>>>>>')) {
-      resolved.push('  /* === Merged upstream styles === */');
-      resolved.push(...theirsStyles);
-      if (oursStyles.length > 0) { resolved.push(''); resolved.push('  /* === Custom styles === */'); resolved.push(...oursStyles); }
+    } else if (inConflict && line.startsWith('>>>>>>>')) {
+      // ours = new PWA (target), theirs = customizations (source)
+      resolved.push('  /* === Upstream (new PWA version) styles === */');
+      resolved.push(...oursStyles);
+      if (theirsStyles.length > 0) {
+        resolved.push('');
+        resolved.push('  /* === Custom styles (review: keep, adapt, or remove) === */');
+        resolved.push(...theirsStyles);
+      }
       inConflict = false;
     } else if (inConflict) {
       (conflictType === 'ours' ? oursStyles : theirsStyles).push(line);
@@ -101,8 +143,9 @@ function autoResolveStyles(file, content) {
       resolved.push(line);
     }
   }
-  if (!inConflict) { fs.writeFileSync(file, resolved.join('\n')); return true; }
-  return false;
+  if (inConflict) return false;
+  fs.writeFileSync(file, resolved.join('\n'));
+  return true;
 }
 
 // Parse arguments
@@ -287,9 +330,10 @@ console.log();
 
 // Step 2: Identify customization files
 log.info('Step 2: Analyzing customization files...');
+let customFilesList = '';
 if (!dryRun) {
   const mergeBase = execSilent(`git merge-base "${sourceBranch}" develop 2>/dev/null`);
-  const customFilesList = mergeBase ? execSilent(`git diff --name-only "${sourceBranch}" ${mergeBase} 2>/dev/null`) : '';
+  customFilesList = mergeBase ? execSilent(`git diff --name-only "${sourceBranch}" ${mergeBase} 2>/dev/null`) : '';
   if (!customFilesList) {
     log.warning('No customization files found');
   } else {
@@ -300,6 +344,79 @@ if (!dryRun) {
   }
 } else {
   log.info(`Would analyze customization files between ${sourceBranch} and original version`);
+}
+console.log();
+
+// Step 2b: Detect file renames/moves between versions
+log.info('Step 2b: Detecting file renames/moves between versions...');
+if (!dryRun) {
+  // Detect renames between the target (new PWA) and the merge-base of source
+  const renameBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}" 2>/dev/null`);
+  if (renameBase) {
+    const renames = execSilent(`git diff --name-status --find-renames --diff-filter=R "${renameBase}" "${targetBranch}" 2>/dev/null`);
+    const deletes = execSilent(`git diff --name-status --diff-filter=D "${renameBase}" "${targetBranch}" 2>/dev/null`);
+
+    const renamedFiles = renames ? renames.split('\n').filter(Boolean).map(line => {
+      const parts = line.split('\t');
+      return { similarity: parts[0], from: parts[1], to: parts[2] };
+    }) : [];
+
+    const deletedFiles = deletes ? deletes.split('\n').filter(Boolean).map(line => {
+      const parts = line.split('\t');
+      return { from: parts[1] };
+    }) : [];
+
+    if (renamedFiles.length > 0 || deletedFiles.length > 0) {
+      console.log();
+      if (renamedFiles.length > 0) {
+        log.warning(`Detected ${renamedFiles.length} renamed/moved file(s) between versions:`);
+        renamedFiles.forEach(({ from, to, similarity }) => {
+          console.log(`  ${from}`);
+          console.log(`    → ${to} (${similarity})`);
+        });
+        console.log();
+        log.info('ACTION REQUIRED: If you have customizations in the OLD file paths above,');
+        log.info('you must manually migrate those customizations to the NEW file paths.');
+      }
+
+      if (deletedFiles.length > 0) {
+        console.log();
+        log.warning(`Detected ${deletedFiles.length} deleted file(s) in the new version:`);
+        deletedFiles.slice(0, 20).forEach(({ from }) => console.log(`  ${from}`));
+        if (deletedFiles.length > 20) log.info(`  ... and ${deletedFiles.length - 20} more`);
+        console.log();
+        log.info('ACTION REQUIRED: If you have customizations in deleted files,');
+        log.info('check if the functionality was moved elsewhere or removed entirely.');
+      }
+
+      // Cross-reference with customization files
+      if (customFilesList) {
+        const customFiles = customFilesList.split('\n').filter(Boolean);
+        const affectedRenames = renamedFiles.filter(r => customFiles.includes(r.from));
+        const affectedDeletes = deletedFiles.filter(d => customFiles.includes(d.from));
+
+        if (affectedRenames.length > 0 || affectedDeletes.length > 0) {
+          console.log();
+          log.error('⚠ CRITICAL: Some of YOUR customized files were renamed/deleted in the new version:');
+          affectedRenames.forEach(({ from, to }) => {
+            console.log(`  ${chalk.red(from)} → ${chalk.green(to)}`);
+          });
+          affectedDeletes.forEach(({ from }) => {
+            console.log(`  ${chalk.red(from)} (DELETED)`);
+          });
+          console.log();
+          log.info('Your customizations in these files will NOT be automatically migrated.');
+          log.info('You must manually move your changes to the new file locations.');
+        }
+      }
+    } else {
+      log.success('No file renames/moves detected between versions');
+    }
+  } else {
+    log.warning('Could not determine merge base for rename detection');
+  }
+} else {
+  log.info(`Would detect file renames/moves between ${sourceBranch} and ${targetBranch}`);
 }
 console.log();
 
@@ -319,58 +436,142 @@ if (!dryRun) {
       files.forEach(f => console.log(`  ${f}`));
       console.log();
 
+      // Step 3a: Commit conflict-free files first (they are already staged by git merge)
+      log.info('Step 3a: Committing conflict-free files...');
+      const allChangedFiles = execSilent('git diff --cached --name-only');
+      const conflictSet = new Set(files);
+      const conflictFreeFiles = allChangedFiles ? allChangedFiles.split('\n').filter(f => f && !conflictSet.has(f)) : [];
+      if (conflictFreeFiles.length > 0) {
+        exec(`git commit -m "feat: merge customizations from ${sourceBranch} (conflict-free)\n\n${conflictFreeFiles.length} file(s) merged without conflicts"`, { silent: true });
+        log.success(`Committed ${conflictFreeFiles.length} conflict-free file(s)`);
+      } else {
+        log.info('No conflict-free files to commit separately');
+      }
+      console.log();
+
       if (autoResolve) {
-        log.info('Attempting smart conflict resolution...');
-        let resolved = 0, failed = 0;
+        log.info('Step 3b: Attempting smart conflict resolution...');
+        log.info('NOTE: In merge context, "ours" = target (new PWA), "theirs" = source (customizations)');
+        console.log();
+
+        // Collect files per strategy for separate commits
+        const resolvedByImports = [];
+        const resolvedByStyles = [];
+        const resolvedByTests = [];
+        const needsManualReview = [];
+
         for (const file of files) {
           log.info(`Processing: ${file}`);
           const content = fs.readFileSync(file, 'utf-8');
 
-          // Strategy 1: Smart import merging for .ts files
-          if (file.endsWith('.ts') && content.includes('import ')) {
-            if (autoResolveImports(file, content)) {
-              exec(`git add "${file}"`, { silent: true });
-              resolved++;
-              log.success('  ✓ Resolved (merged imports)');
+          // Strategy 1: Smart import merging for .ts files (import-only blocks)
+          if (file.endsWith('.ts') && !file.endsWith('.spec.ts') && content.includes('import ')) {
+            const result = autoResolveImports(file, content);
+            if (result === true) {
+              resolvedByImports.push(file);
+              log.success('  ✓ Resolved (merged imports — all blocks were import-only)');
+              continue;
+            } else if (result === 'partial') {
+              needsManualReview.push({ file, reason: 'mixed conflict blocks (some imports resolved, code conflicts remain)' });
+              log.warning('  ⚠ Partially resolved (import-only blocks merged, code conflicts remain — needs manual review)');
               continue;
             }
           }
 
-          // Strategy 2: Smart SCSS merging
+          // Strategy 2: Smart SCSS merging (keeps both sides with clear markers)
           if (file.endsWith('.scss') || file.endsWith('.css')) {
             if (autoResolveStyles(file, content)) {
-              exec(`git add "${file}"`, { silent: true });
-              resolved++;
-              log.success('  ✓ Resolved (merged styles)');
+              resolvedByStyles.push(file);
+              log.success('  ✓ Resolved (merged styles — both sides kept with markers for review)');
               continue;
             }
           }
 
-          // Strategy 3: Test files — prefer ours (customizations)
+          // Strategy 3: Test files — keep customizations (theirs = source)
           if (file.endsWith('.spec.ts')) {
-            const res = exec(`git checkout --ours "${file}"`, { silent: true });
-            if (res.success) { exec(`git add "${file}"`, { silent: true }); resolved++; log.success('  ✓ Resolved (kept ours — test file)'); continue; }
+            const res = exec(`git checkout --theirs "${file}"`, { silent: true });
+            if (res.success) {
+              resolvedByTests.push(file);
+              log.success('  ✓ Resolved (kept custom tests)');
+              continue;
+            }
           }
 
-          // Strategy 4: Fallback — keep ours
-          const res = exec(`git checkout --ours "${file}"`, { silent: true });
-          if (res.success) { exec(`git add "${file}"`, { silent: true }); resolved++; log.success("  ✓ Resolved (kept ours — fallback)"); }
-          else { failed++; log.warning('  ✗ Could not auto-resolve'); }
+          // Strategy 4: No fallback — leave conflict for manual review
+          needsManualReview.push({ file, reason: 'conflict requires manual review' });
+          log.warning('  ⚠ Needs manual review (no safe auto-resolve strategy available)');
         }
-        log.info(`Auto-resolution summary: ${resolved} resolved, ${failed} need manual review`);
 
-        if (failed === 0) {
-          exec(`git commit -m "feat: merge customizations from ${sourceBranch} (auto-resolved)"`, { silent: true });
-          log.success('All conflicts automatically resolved and committed');
-        } else {
-          log.warning('Some conflicts require manual resolution');
-          log.warning('Please resolve conflicts in the following files:');
-          console.log(execSilent('git diff --name-only --diff-filter=U'));
+        // Validation: check resolved files for leftover conflict markers before staging
+        log.info('');
+        log.info('Validating resolved files for leftover conflict markers...');
+        const allResolved = [...resolvedByImports, ...resolvedByStyles, ...resolvedByTests];
+        for (const file of allResolved) {
+          try {
+            const fileContent = fs.readFileSync(file, 'utf-8');
+            if (/^<{7}\s|^>{7}\s/m.test(fileContent)) {
+              // Remove from resolved lists, add to manual review
+              [resolvedByImports, resolvedByStyles, resolvedByTests].forEach(list => {
+                const idx = list.indexOf(file);
+                if (idx !== -1) list.splice(idx, 1);
+              });
+              needsManualReview.push({ file, reason: 'leftover conflict markers detected after auto-resolve' });
+              log.error(`  ✗ ${file} — conflict markers found, needs manual review`);
+            }
+          } catch (e) {
+            // binary file or read error, skip validation
+          }
+        }
+
+        // Commit per strategy (separate commits for traceability)
+        console.log();
+        log.info('Step 3c: Committing resolved conflicts by strategy...');
+
+        if (resolvedByImports.length > 0) {
+          resolvedByImports.forEach(f => exec(`git add "${f}"`, { silent: true }));
+          const fileList = resolvedByImports.map(f => `  - ${f}`).join('\n');
+          exec(`git commit -m "feat: auto-resolve import conflicts (${resolvedByImports.length} file(s))\n\nStrategy: merged import-only conflict blocks from both sides.\n\nFiles:\n${fileList}"`, { silent: true });
+          log.success(`Committed ${resolvedByImports.length} import-resolved file(s)`);
+        }
+
+        if (resolvedByStyles.length > 0) {
+          resolvedByStyles.forEach(f => exec(`git add "${f}"`, { silent: true }));
+          const fileList = resolvedByStyles.map(f => `  - ${f}`).join('\n');
+          exec(`git commit -m "feat: auto-resolve style conflicts (${resolvedByStyles.length} file(s))\n\nStrategy: kept both upstream and custom styles with review markers.\n\nFiles:\n${fileList}"`, { silent: true });
+          log.success(`Committed ${resolvedByStyles.length} style-resolved file(s)`);
+        }
+
+        if (resolvedByTests.length > 0) {
+          resolvedByTests.forEach(f => exec(`git add "${f}"`, { silent: true }));
+          const fileList = resolvedByTests.map(f => `  - ${f}`).join('\n');
+          exec(`git commit -m "feat: auto-resolve test conflicts (${resolvedByTests.length} file(s))\n\nStrategy: kept custom test files (source/theirs).\n\nFiles:\n${fileList}"`, { silent: true });
+          log.success(`Committed ${resolvedByTests.length} test-resolved file(s)`);
+        }
+
+        // Summary
+        console.log();
+        const totalResolved = resolvedByImports.length + resolvedByStyles.length + resolvedByTests.length;
+        log.info('Auto-resolution summary:');
+        if (resolvedByImports.length > 0) log.info(`  Import conflicts resolved: ${resolvedByImports.length}`);
+        if (resolvedByStyles.length > 0)  log.info(`  Style conflicts resolved:  ${resolvedByStyles.length}`);
+        if (resolvedByTests.length > 0)   log.info(`  Test files resolved:       ${resolvedByTests.length}`);
+        log.info(`  Total resolved: ${totalResolved}`);
+        log.info(`  Needs manual review: ${needsManualReview.length}`);
+
+        if (needsManualReview.length > 0) {
+          console.log();
+          log.warning(`${needsManualReview.length} file(s) need manual review:`);
+          needsManualReview.forEach(({ file, reason }) => {
+            console.log(`  ${file}`);
+            console.log(`    → ${reason}`);
+          });
           console.log();
           log.info('After resolving conflicts manually, run:');
           log.info('  git add <resolved-files>');
-          log.info(`  git commit -m 'feat: merge customizations from ${sourceBranch}'`);
+          log.info(`  git commit -m 'feat: merge customizations from ${sourceBranch} (manual)'`);
           process.exit(1);
+        } else {
+          log.success('All conflicts automatically resolved and committed');
         }
       } else {
         log.warning('Merge has conflicts. Please resolve manually or run with --auto-resolve flag');

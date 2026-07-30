@@ -45,28 +45,32 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 
 ---
 
-## 🆕 Recent Updates (March 2026)
+## 🆕 Recent Updates (July 2026)
 
-- ✅ **PWA 10.0.0 support** - Migration patterns for latest release (Angular 17, Bootstrap Icons, Control Flow)
+- ✅ **PWA 12.0.0 support** - Migration patterns for latest release (Angular 19, ngx-translate 18, Swiper 12)
+- ✅ **ngx-translate migration script** - Automated detection and fix for ngx-translate 17+18 breaking changes
 - ✅ **Version-agnostic approach** - Works with ANY PWA version (not hardcoded to specific versions)
 - ✅ **Dynamic pattern detection** - Scripts accept source/target version parameters
-- ✅ **Comprehensive breaking changes** - Pattern database updated with PWA 9.1 → 10.0 changes
+- ✅ **Comprehensive breaking changes** - Pattern database covers PWA 8.0 → 12.0
 
-**Latest PWA Release:** 10.0.0 (March 13, 2026)
-- Angular 17 with new control flow syntax (`@if`, `@for`, `@switch`)
-- Font Awesome replaced with Bootstrap Icons
-- New Angular 17 SSR architecture
-- Node.js 22 LTS support
-- [See full release notes](https://github.com/intershop/intershop-pwa/releases/tag/10.0.0)
+**Latest PWA Release:** 12.0.0 (July 22, 2026)
+- Angular 19 (standalone default, requires `standalone: false` for NgModule declarations)
+- ngx-translate 17+18 (TranslateModule removed, provideTranslateService() instead)
+- Swiper 8 → 12 (Angular components removed, JS API)
+- ALLOWED_HOSTS required for SSR production
+- ESLint Perfectionist plugin for consistent sorting
+- [See full release notes](https://github.com/intershop/intershop-pwa/releases/tag/12.0.0)
 
 ## 📦 What's Included (36 Files Total)
 
-### Migration Instructions (9 files in `.github/instructions/`)
+### Migration Instructions (11 files in `.github/instructions/`)
 - `migration-patterns.instructions.md` - Comprehensive patterns reference (index)
 - `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
-- `migration-approaches.instructions.md` - **NEW:** Three proven migration strategies (cherry-pick/rebase/merge) from official docs
-- `migration-pwa10.instructions.md` - **NEW:** PWA 10.0-specific guide (Angular 17, Bootstrap Icons)
-- `migration-issues.instructions.md` - 13 common issues and solutions (expanded with new issues)
+- `migration-approaches.instructions.md` - Three proven migration strategies (cherry-pick/rebase/merge)
+- `migration-pwa10.instructions.md` - PWA 10.0-specific guide (Angular 17, Bootstrap Icons)
+- `migration-pwa11.instructions.md` - PWA 11.0-specific guide (Angular 18, Formly 7, ESLint 9)
+- `migration-pwa12.instructions.md` - **NEW:** PWA 12.0-specific guide (Angular 19, ngx-translate 18, Swiper 12)
+- `migration-issues.instructions.md` - 13 common issues and solutions
 - `migration-workflow.instructions.md` - Step-by-step workflow patterns
 - `migration-git.instructions.md` - Git operations, conflict resolution, AI merge guidance
 - `migration-examples.instructions.md` - Concrete code examples
@@ -96,8 +100,9 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 
 #### Automated Fixes
 - `fix-template-syntax.js` - Auto-fix template syntax
-- `fix-template-linting.js` - **NEW:** Auto-suppress template linting issues (saves 1-2 hours)
-- `update-snapshots.js` - **NEW:** Intelligent Jest snapshot update manager (saves 20-40 min)
+- `fix-template-linting.js` - Auto-suppress template linting issues (saves 1-2 hours)
+- `migrate-ngx-translate.js` - **NEW:** ngx-translate 17+18 migration (detect + auto-fix)
+- `update-snapshots.js` - Intelligent Jest snapshot update manager (saves 20-40 min)
 
 #### PWA 10.0 Migration Tools
 - `migrate-control-flow.js` - **NEW:** Angular 17 control flow migration (*ngIf → @if, *ngFor → @for)

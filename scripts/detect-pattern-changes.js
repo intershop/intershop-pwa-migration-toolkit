@@ -234,7 +234,7 @@ function extractPatternRules(breakingChanges) {
 /**
  * Scan codebase for pattern matches
  */
-function scanCodebase(patterns, comprehensive = false) {
+function scanCodebase(patterns, comprehensive = false, cwd = process.cwd()) {
   console.log(`${colors.cyan}🔎 Scanning codebase for pattern matches...${colors.reset}`);
   
   const results = [];
@@ -244,7 +244,7 @@ function scanCodebase(patterns, comprehensive = false) {
     try {
       // Build grep command
       const grepCmd = `grep -r -n -E "${pattern.searchRegex}" ${scannedDirs.join(' ')} 2>/dev/null || true`;
-      const output = execSync(grepCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+      const output = execSync(grepCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, cwd });
       
       if (output.trim()) {
         const matches = output.trim().split('\n').map(line => {
@@ -275,7 +275,7 @@ function scanCodebase(patterns, comprehensive = false) {
 /**
  * Apply pattern database rules (Tier 3)
  */
-function applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive) {
+function applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive, cwd) {
   console.log(`${colors.cyan}📚 Applying pattern migration database...${colors.reset}`);
   
   const relevantPatterns = [];
@@ -294,7 +294,7 @@ function applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehen
   
   console.log(`${colors.green}✓ Found ${relevantPatterns.length} relevant pattern(s) from database${colors.reset}`);
   
-  return scanCodebase(relevantPatterns, comprehensive);
+  return scanCodebase(relevantPatterns, comprehensive, cwd);
 }
 
 /**
@@ -366,7 +366,12 @@ function printReport(results, breakingChanges) {
 async function main() {
   const args = process.argv.slice(2);
   const comprehensive = args.includes('--comprehensive');
-  const filteredArgs = args.filter(a => a !== '--comprehensive');
+
+  // Parse --project-dir
+  const { projectDir } = require('./_project-dir');
+
+  const filteredArgs = args.filter(a => a !== '--comprehensive' && a !== '--project-dir')
+    .filter(a => a !== projectDir);
   
   const sourceVersion = filteredArgs[0] || '4.0.0';
   const targetVersion = filteredArgs[1] || '9.1.0';
@@ -378,6 +383,7 @@ async function main() {
   console.log(colors.reset);
   
   console.log(`Mode: ${comprehensive ? 'Comprehensive (Tier 3)' : 'Standard (Tier 2)'}`);
+  console.log(`Project: ${projectDir}`);
   console.log(`Source: ${sourceVersion} → Target: ${targetVersion}\n`);
   
   let allPatterns = [];
@@ -397,14 +403,14 @@ async function main() {
   if (comprehensive) {
     const patternDb = loadPatternDatabase();
     if (patternDb) {
-      const dbResults = applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive);
+      const dbResults = applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive, projectDir);
       results.push(...dbResults);
     }
   }
   
   // Scan for extracted patterns
   if (allPatterns.length > 0) {
-    const scanResults = scanCodebase(allPatterns, comprehensive);
+    const scanResults = scanCodebase(allPatterns, comprehensive, projectDir);
     results.push(...scanResults);
   }
   

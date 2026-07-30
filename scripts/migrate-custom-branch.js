@@ -30,6 +30,7 @@ const { log, exec, execSilent, chalk, askYesNo } = require('./_utils');
 const VIDEO_TUTORIALS = [
   { sourceMin: 7, sourceMax: 7, targetMin: 8, targetMax: 8, title: 'Migrating from PWA 7.0 to 8.0', url: 'https://public.academy.intershop.com/plus/catalog/courses/452' },
   { sourceMin: 8, sourceMax: 8, targetMin: 9, targetMax: 9, title: 'Migrating from PWA 8.0 to 9.0', url: 'https://public.academy.intershop.com/plus/catalog/courses/454' },
+  { sourceMin: 9, sourceMax: 9, targetMin: 11, targetMax: 11, title: 'Migrating from PWA 9.0 to 11.0', url: 'https://public.academy.intershop.com/plus/catalog/courses/488' },
 ];
 
 function showVideoTutorials(sourceBranch, targetBranch) {

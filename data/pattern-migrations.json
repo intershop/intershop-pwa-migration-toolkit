@@ -725,6 +725,284 @@
           }
         }
       ]
+    },
+    {
+      "fromVersion": "11.0",
+      "toVersion": "11.1",
+      "description": "PWA 11.0 → 11.1 Minor Release - Footer Rework, Withdrawal Feature",
+      "patterns": [
+        {
+          "type": "html",
+          "description": "Footer: StoreLocatorFooterComponent removed from PWA footer",
+          "searchRegex": "ish-store-locator-footer|StoreLocatorFooterComponent",
+          "files": "**/*.{html,ts,module.ts}",
+          "severity": "medium",
+          "manual": true,
+          "migration": "Remove all references to StoreLocatorFooterComponent. Store locator link is now managed via ICM CMS (include.footer.content.pagelet2-Include)",
+          "example": {
+            "before": "<ish-store-locator-footer />",
+            "after": "<!-- Managed via ICM CMS footer content include -->"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Withdrawal: New feature requires ICM 14.3.0+",
+          "searchRegex": "withdrawal|WithdrawalEnabled",
+          "files": "**/*.{ts,html}",
+          "severity": "low",
+          "manual": true,
+          "note": "New /withdrawal route and footer link auto-hidden when ICM preference is disabled. No action needed unless you customized the footer."
+        }
+      ]
+    },
+    {
+      "fromVersion": "11.1",
+      "toVersion": "11.2",
+      "description": "PWA 11.1 → 11.2 Minor Release - Extended Withdrawal Display",
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Withdrawal display on Order Detail Page (ICM 14.4.0+)",
+          "searchRegex": "order-detail.*withdrawal|WithdrawalComponent",
+          "files": "**/*.{ts,html}",
+          "severity": "low",
+          "manual": true,
+          "note": "Withdrawal info now shown on order detail page. Feature requires ICM 14.4.0. No action needed unless you customized order detail page."
+        }
+      ]
+    },
+    {
+      "fromVersion": "11.2",
+      "toVersion": "12.0",
+      "description": "PWA 11.2 → 12.0 Major Release - Angular 19, ngx-translate 17+18, Swiper 12, ALLOWED_HOSTS",
+      "releaseDate": "2026-07-22",
+      "angularVersion": "19",
+      "nodeVersion": "22.22.0",
+      "npmVersion": "10.9.4",
+      "icmRequirements": {
+        "minimum": "14.4.0",
+        "recommended": "14.4.0",
+        "notes": "Order template/wishlist performance optimization requires ICM 14.2.0; CMS registration include requires icm-as-customization-headless:4.3.0",
+        "features": [
+          {
+            "feature": "Wishlist/Order Template Performance",
+            "icmMinVersion": "14.2.0",
+            "description": "Reduced REST calls via improved /wishlists API"
+          },
+          {
+            "feature": "Customer Approval Message",
+            "icmMinVersion": "14.2.0",
+            "description": "Display approval message after registration"
+          }
+        ]
+      },
+      "patterns": [
+        {
+          "type": "typescript",
+          "description": "Angular 19: standalone: false required for all non-standalone components/directives/pipes",
+          "searchRegex": "@Component\\(\\{[^}]*(?!standalone)[^}]*\\}\\)",
+          "files": "**/*.{component,directive,pipe}.ts",
+          "severity": "critical",
+          "autoFixable": true,
+          "schematic": "ng update @angular/core@19",
+          "note": "Angular 19 makes standalone:true the default. All NgModule-based declarations need explicit standalone:false. The ng update schematic handles this automatically.",
+          "example": {
+            "before": "@Component({ selector: 'ish-my', templateUrl: './my.component.html' })",
+            "after": "@Component({ standalone: false, selector: 'ish-my', templateUrl: './my.component.html' })"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "ngx-translate 17: currentLang property replaced by getCurrentLang() method",
+          "searchRegex": "translateService\\.currentLang|translate\\.currentLang|\\.currentLang(?!\\()",
+          "files": "**/*.ts",
+          "severity": "high",
+          "autoFixable": true,
+          "script": "scripts/migrate-ngx-translate.js",
+          "example": {
+            "before": "const lang = this.translateService.currentLang;",
+            "after": "const lang = this.translateService.getCurrentLang();"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "ngx-translate 18: TranslateModule removed, use provideTranslateService()",
+          "searchRegex": "TranslateModule\\.forRoot|TranslateModule\\.forChild|TranslateModule",
+          "files": "**/*.{ts,module.ts}",
+          "severity": "critical",
+          "autoFixable": true,
+          "script": "scripts/migrate-ngx-translate.js",
+          "migration": "Replace TranslateModule.forRoot() with provideTranslateService() in providers. Remove TranslateModule.forChild() entirely. Add TranslatePipe/TranslateDirective to imports where translate pipe/directive is used.",
+          "example": {
+            "before": "imports: [TranslateModule.forRoot({ ... })]\n// or in feature modules:\nimports: [TranslateModule]",
+            "after": "providers: [provideTranslateService({ ... })]\n// in feature modules:\nimports: [TranslatePipe]"
+          }
+        },
+        {
+          "type": "html",
+          "description": "ngx-translate 18: Element-text-as-key translate directive deprecated",
+          "searchRegex": "<[a-z]+[^>]*\\stranslate\\s*>\\s*[a-z]",
+          "files": "**/*.html",
+          "severity": "high",
+          "autoFixable": true,
+          "script": "scripts/migrate-ngx-translate.js",
+          "migration": "Replace <span translate>my.key</span> with {{ 'my.key' | translate }} or [translate]=\"'my.key'\"",
+          "example": {
+            "before": "<span translate>checkout.button.label</span>",
+            "after": "{{ 'checkout.button.label' | translate }}"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "ngx-translate 18: getCurrentLang() can return undefined",
+          "searchRegex": "getCurrentLang\\(\\)(?!\\s*[?!])",
+          "files": "**/*.ts",
+          "severity": "medium",
+          "manual": true,
+          "migration": "Handle undefined return value from getCurrentLang()",
+          "example": {
+            "before": "const lang: string = this.translate.getCurrentLang();",
+            "after": "const lang = this.translate.getCurrentLang() ?? 'en_US';"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Swiper 12: Angular Swiper components removed, use JS API",
+          "searchRegex": "SwiperComponent|SwiperModule|swiper/angular|<swiper|\\[swiper\\]",
+          "files": "**/*.{ts,html,module.ts}",
+          "severity": "high",
+          "manual": true,
+          "migration": "Remove SwiperModule import, use Swiper JS API directly. See official migration guides for v9, v10, v11.",
+          "example": {
+            "before": "import { SwiperModule } from 'swiper/angular';\n// template: <swiper [config]=\"swiperConfig\">...</swiper>",
+            "after": "// Use Swiper JS API with DeferredItemComponent for lazy loading\nimport Swiper from 'swiper';"
+          },
+          "officialDocs": {
+            "v9": "https://swiperjs.com/migration-guide-v9",
+            "v10": "https://swiperjs.com/migration-guide-v10",
+            "v11": "https://swiperjs.com/migration-guide-v11"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "SSR: ALLOWED_HOSTS must be set for production",
+          "searchRegex": "ALLOWED_HOSTS|CommonEngine|allowedHosts",
+          "files": "**/server.ts,**/main.server.ts,docker-compose.yml,**/deployment/**",
+          "severity": "critical",
+          "manual": true,
+          "migration": "Set ALLOWED_HOSTS environment variable to production hostname(s). Without it, only localhost is accepted.",
+          "example": {
+            "before": "# No ALLOWED_HOSTS configured",
+            "after": "ALLOWED_HOSTS=shop.example.com,*.example.com"
+          }
+        },
+        {
+          "type": "config",
+          "description": "ESLint: Perfectionist plugin added for consistent sorting",
+          "searchRegex": "eslint-plugin-perfectionist|perfectionist",
+          "files": "**/eslint.config.{mjs,js,cjs},**/package.json",
+          "severity": "medium",
+          "autoFixable": true,
+          "migration": "Add eslint-plugin-perfectionist to ESLint config. Rules sort-arrays, sort-enums, sort-union-types, sort-intersection-types enforced.",
+          "note": "Run ng lint --fix to auto-sort after adding the plugin"
+        },
+        {
+          "type": "html",
+          "description": "Filter component renamed: FilterNavigationBadgesComponent → FilterNavigationActionsComponent",
+          "searchRegex": "ish-filter-navigation-badges|FilterNavigationBadgesComponent",
+          "files": "**/*.{html,ts,module.ts}",
+          "severity": "high",
+          "autoFixable": true,
+          "migration": "Replace ish-filter-navigation-badges with ish-filter-navigation-actions. Component now only provides 'Remove all filters' action.",
+          "example": {
+            "before": "<ish-filter-navigation-badges [filterNavigation]=\"filterNavigation\" />",
+            "after": "<ish-filter-navigation-actions [filterNavigation]=\"filterNavigation\" />"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Design View: PreviewContextID=DESIGNVIEW replaced by DesignView query parameter",
+          "searchRegex": "PreviewContextID.*DESIGNVIEW|DESIGNVIEW",
+          "files": "**/*.{ts,html}",
+          "severity": "high",
+          "manual": true,
+          "migration": "Design View is now activated via its own DesignView query parameter. PreviewContextID is used exclusively for preview context data.",
+          "example": {
+            "before": "// Design View activated by PreviewContextID=DESIGNVIEW",
+            "after": "// Design View activated by ?DesignView query parameter\n// PreviewContextID is now only for preview context data"
+          }
+        },
+        {
+          "type": "scss",
+          "description": "Modal: Custom .modal-fullscreen and .modal-dialog-scrollable SCSS removed",
+          "searchRegex": "\\.modal-fullscreen|\\.modal-dialog-scrollable",
+          "files": "**/*.scss",
+          "severity": "medium",
+          "manual": true,
+          "migration": "Remove custom SCSS overrides. Use native ng-bootstrap modal options: fullscreen: true, scrollable: true",
+          "example": {
+            "before": "// Custom SCSS:\n.modal-fullscreen { ... }",
+            "after": "// Use NgbModal options:\nthis.modalService.open(component, { fullscreen: true, scrollable: true });"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "ProductRatingStarComponent removed, use NgbRating",
+          "searchRegex": "ProductRatingStarComponent|ish-product-rating-star|product-rating-star",
+          "files": "**/*.{ts,html,module.ts}",
+          "severity": "high",
+          "manual": true,
+          "migration": "Replace ProductRatingStarComponent with ng-bootstrap NgbRating component. If customized, either skip the commit or migrate to NgbRating.",
+          "example": {
+            "before": "<ish-product-rating-star [rating]=\"product.roundedAverageRating\" />",
+            "after": "<ngb-rating [rate]=\"product.roundedAverageRating\" [readonly]=\"true\" />"
+          }
+        },
+        {
+          "type": "typescript",
+          "description": "Order template/wishlist: Reworked API with fewer REST calls (ICM 14.2.0)",
+          "searchRegex": "OrderTemplatesFacade\\.orderTemplates\\$|wishlistService|WishlistsFacade",
+          "files": "**/*.{ts,html}",
+          "severity": "medium",
+          "manual": true,
+          "migration": "If displaying order templates in custom components, use OrderTemplatesFacade.orderTemplatesWithDetails$(count?) to retrieve list and lazily load details.",
+          "note": "Requires ICM 14.2.0 for improved /wishlists REST API"
+        },
+        {
+          "type": "typescript",
+          "description": "DeferredItemComponent: New lazy loading with IntersectionObserver",
+          "searchRegex": "DeferredItemComponent|ishLazyLoadingContent|ish-deferred-item",
+          "files": "**/*.{ts,html,module.ts}",
+          "severity": "low",
+          "manual": true,
+          "note": "New component for viewport-based lazy loading. Use ish-deferred-item with ishLazyLoadingContent for lazy loading scenarios."
+        }
+      ],
+      "dependencyChanges": [
+        {"package": "@angular/core", "from": "~18.x", "to": "~19.x", "breaking": true, "note": "Major Angular upgrade - standalone default"},
+        {"package": "@ngx-translate/core", "from": "~16.x", "to": "~18.x", "breaking": true, "note": "TranslateModule removed, provideTranslateService() instead"},
+        {"package": "swiper", "from": "~8.x", "to": "~12.x", "breaking": true, "note": "Angular components removed, use JS API"},
+        {"package": "eslint-plugin-perfectionist", "action": "added", "note": "Enforces sorting of arrays, enums, union/intersection types"},
+        {"package": "node", "from": "22.x", "to": "22.x", "breaking": false, "note": "Same Node 22 LTS"}
+      ],
+      "migrationNotes": [
+        "Run ng update @angular/core@19 @angular/cli@19 for standalone:false annotations",
+        "Use scripts/migrate-ngx-translate.js for automated ngx-translate 17+18 migration",
+        "Set ALLOWED_HOSTS environment variable for SSR production deployments",
+        "Swiper migration spans v8→v12, review official guides for each major version",
+        "Run ng lint --fix after adding eslint-plugin-perfectionist for auto-sorting",
+        "FilterNavigationBadgesComponent → FilterNavigationActionsComponent (selector change)",
+        "ProductRatingStarComponent removed - migrate to NgbRating or skip commit"
+      ],
+      "officialDocs": {
+        "migrationGuide": "https://github.com/intershop/intershop-pwa/blob/develop/docs/guides/migrations.md#from-1120-to-1200",
+        "angularUpdateGuide": "https://angular.dev/update-guide?v=18.0-19.0&l=3",
+        "ngxTranslate17": "https://ngx-translate.org/v17/getting-started/migration-guide/",
+        "ngxTranslate18": "https://ngx-translate.org/getting-started/migration-guide/",
+        "swiperV9": "https://swiperjs.com/migration-guide-v9",
+        "swiperV10": "https://swiperjs.com/migration-guide-v10",
+        "swiperV11": "https://swiperjs.com/migration-guide-v11"
+      }
     }
   ],
   "commonPatterns": {

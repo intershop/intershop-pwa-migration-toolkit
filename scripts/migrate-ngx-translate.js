@@ -3,28 +3,30 @@
 /**
  * PWA 12.0 Migration: ngx-translate 16 → 17 → 18
  *
- * Detects and migrates ngx-translate breaking changes:
- *   - v17: currentLang → getCurrentLang()
- *   - v18: TranslateModule removed → provideTranslateService()
- *   - v18: TranslatePipe/TranslateDirective now standalone (must be imported directly)
- *   - v18: Element-text-as-key <span translate>key</span> deprecated
+ * Orchestrates the ngx-translate migration using the best available strategy:
+ *   1. Official intershop-schematics (if available, from PWA 12.1+)
+ *   2. Regex-based fixes (fallback)
  *
  * Usage:
  *   node scripts/migrate-ngx-translate.js                          # Detect only
- *   node scripts/migrate-ngx-translate.js --fix                    # Apply fixes
- *   node scripts/migrate-ngx-translate.js --phase detect           # Detection phase only
- *   node scripts/migrate-ngx-translate.js --phase fix              # Fix phase only
+ *   node scripts/migrate-ngx-translate.js --fix                    # Apply fixes (auto-selects strategy)
+ *   node scripts/migrate-ngx-translate.js --fix --strategy=schematic  # Force official schematic
+ *   node scripts/migrate-ngx-translate.js --fix --strategy=regex      # Force regex fixes
+ *   node scripts/migrate-ngx-translate.js --fix --open             # Open modified files in VS Code
  *   node scripts/migrate-ngx-translate.js --project-dir /path/to   # Specify project
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const { log, findFiles, grepFiles, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
 const args = process.argv.slice(2);
-const doFix = args.includes('--fix') || args.includes('--phase') && args[args.indexOf('--phase') + 1] === 'fix';
-const detectOnly = args.includes('--phase') && args[args.indexOf('--phase') + 1] === 'detect';
+const doFix = args.includes('--fix');
+const openFiles = args.includes('--open');
+const strategyArg = args.find(a => a.startsWith('--strategy='));
+const forcedStrategy = strategyArg ? strategyArg.split('=')[1] : null;
 
 const srcDir = path.join(projectDir, 'src');
 
@@ -65,7 +67,6 @@ function main() {
 
   const tsFiles = findFiles(srcDir, /\.(ts|module\.ts)$/);
   const htmlFiles = findFiles(srcDir, /\.html$/);
-  const allFiles = [...tsFiles, ...htmlFiles];
 
   log.info(`Scanning ${tsFiles.length} TypeScript and ${htmlFiles.length} HTML files...`);
   console.log();
@@ -73,12 +74,132 @@ function main() {
   const findings = detect(tsFiles, htmlFiles);
   printReport(findings);
 
-  if (doFix && !detectOnly) {
-    console.log();
-    applyFixes(findings);
-  } else if (!detectOnly && findings.total > 0) {
+  if (findings.total === 0) return;
+
+  if (!doFix) {
     console.log();
     log.info(`Run with ${chalk.cyan('--fix')} to apply automated fixes.`);
+    return;
+  }
+
+  // ─── Strategy Selection ─────────────────────────────────────────────────
+  console.log();
+  const strategy = selectStrategy();
+  let modifiedFiles;
+
+  if (strategy === 'schematic') {
+    modifiedFiles = applySchematic();
+  } else {
+    modifiedFiles = applyRegexFixes(findings);
+  }
+
+  // ─── Post-migration verification ───────────────────────────────────────
+  if (modifiedFiles.size > 0) {
+    console.log();
+    printModifiedFiles(modifiedFiles);
+
+    if (openFiles) {
+      openInVSCode(modifiedFiles);
+    }
+
+    console.log();
+    log.info('Next steps:');
+    console.log('  1. Review the changes');
+    console.log('  2. Run the build: npm run build');
+    console.log('  3. Re-run this script without --fix to verify no issues remain');
+  }
+}
+
+// ─── Strategy ───────────────────────────────────────────────────────────────
+
+function selectStrategy() {
+  if (forcedStrategy) {
+    log.info(`Strategy: ${forcedStrategy} (forced via --strategy)`);
+    return forcedStrategy;
+  }
+
+  if (hasSchematic()) {
+    log.info('Strategy: official intershop-schematics (detected in project)');
+    return 'schematic';
+  }
+
+  log.info('Strategy: regex-based fixes (intershop-schematics not available yet)');
+  log.info(`${chalk.dim('Tip: After upgrading to PWA 12.1+, re-run with --strategy=schematic for AST-based transforms')}`);
+  return 'regex';
+}
+
+function hasSchematic() {
+  try {
+    const pkgPath = path.join(projectDir, 'node_modules', 'intershop-schematics', 'package.json');
+    if (!fs.existsSync(pkgPath)) return false;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    // Schematics with migration support ship from 12.1.0
+    const migrationsJson = path.join(projectDir, 'node_modules', 'intershop-schematics', 'src', 'migrations', 'migrations.json');
+    return fs.existsSync(migrationsJson);
+  } catch {
+    return false;
+  }
+}
+
+function applySchematic() {
+  log.section('Running official intershop-schematics migration...');
+  const modifiedFiles = new Set();
+
+  try {
+    // Capture file state before
+    const before = getFileHashes(srcDir);
+
+    const cmd = 'npx ng update intershop-schematics --migrate-only --from=11.2.0 --to=12.1.0';
+    log.info(`Executing: ${chalk.cyan(cmd)}`);
+    execSync(cmd, { cwd: projectDir, stdio: 'inherit' });
+
+    // Detect what changed
+    const after = getFileHashes(srcDir);
+    for (const [file, hash] of after) {
+      if (before.get(file) !== hash) modifiedFiles.add(file);
+    }
+
+    log.success(`Schematic completed. ${modifiedFiles.size} file(s) modified.`);
+  } catch (e) {
+    log.error(`Schematic failed: ${e.message}`);
+    log.info('Falling back to regex-based fixes...');
+    return applyRegexFixes({ ...detect(findFiles(srcDir, /\.ts$/), findFiles(srcDir, /\.html$/)) });
+  }
+
+  return modifiedFiles;
+}
+
+function getFileHashes(dir) {
+  const hashes = new Map();
+  const files = findFiles(dir, /\.(ts|html)$/);
+  for (const file of files) {
+    try {
+      const stat = fs.statSync(file);
+      hashes.set(file, `${stat.size}:${stat.mtimeMs}`);
+    } catch { /* skip */ }
+  }
+  return hashes;
+}
+
+// ─── File output + VS Code integration ──────────────────────────────────────
+
+function printModifiedFiles(files) {
+  log.section(`Modified files (${files.size}):`);
+  const sorted = [...files].sort().map(f => path.relative(projectDir, f));
+  for (const f of sorted) {
+    console.log(`  ${chalk.green('M')} ${f}`);
+  }
+}
+
+function openInVSCode(files) {
+  const sorted = [...files].sort();
+  try {
+    for (const file of sorted) {
+      execSync(`code "${file}"`, { stdio: 'ignore' });
+    }
+    log.info(`Opened ${sorted.length} file(s) in VS Code.`);
+  } catch {
+    log.warning('Could not open files in VS Code (is "code" in PATH?).');
   }
 }
 
@@ -162,10 +283,10 @@ function printReport(findings) {
   }
 }
 
-// ─── Fixes ──────────────────────────────────────────────────────────────────
+// ─── Regex Fixes (fallback when schematics unavailable) ─────────────────────
 
-function applyFixes(findings) {
-  log.section('Applying automated fixes...');
+function applyRegexFixes(findings) {
+  log.section('Applying regex-based fixes...');
   let fixedFiles = new Set();
 
   // Fix 1: .currentLang → .getCurrentLang()
@@ -270,9 +391,10 @@ function applyFixes(findings) {
   console.log();
   log.success(`Total: ${fixedFiles.size} file(s) modified.`);
   if (fixedFiles.size > 0) {
-    log.info('Review changes and run the build to verify.');
     log.warning('Manual review needed: getCurrentLang() can return undefined in v18 — add ?? fallback where needed.');
   }
+
+  return fixedFiles;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

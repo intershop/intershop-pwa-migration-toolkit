@@ -21,6 +21,7 @@
     "migrate:controlflow": "node scripts/migrate-control-flow.js",
     "migrate:icons": "node scripts/migrate-bootstrap-icons.js",
     "migrate:translate": "node scripts/migrate-ngx-translate.js",
+    "migrate:standalone": "node scripts/migrate-standalone-false.js",
     "merge:i18n": "node scripts/merge-i18n-files.js",
     "merge:docker": "node scripts/merge-docker-compose.js",
     "update:snapshots": "node scripts/update-snapshots.js"

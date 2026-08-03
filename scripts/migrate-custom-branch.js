@@ -650,8 +650,29 @@ if (!dryRun) {
 }
 console.log();
 
-// Step 7: Generate report
-log.info('Step 7: Generating migration report...');
+// Step 7: Pattern detection — show required action items
+log.info('Step 7: Checking for required action items...');
+const detectScript = path.join(__dirname, 'detect-pattern-changes.js');
+if (fs.existsSync(detectScript)) {
+  const svMatch = sourceBranch.match(/\d+\.\d+\.\d+/);
+  const tvMatch2 = targetBranch.match(/\d+\.\d+\.\d+/);
+  const sv = svMatch ? svMatch[0] : '4.0.0';
+  const tv2 = tvMatch2 ? tvMatch2[0] : '12.0.0';
+  if (!dryRun) {
+    const detectResult = exec(`node "${detectScript}" ${sv} ${tv2}`, { silent: true });
+    if (detectResult.output) {
+      console.log(detectResult.output);
+    }
+  } else {
+    log.info(`Would run: node scripts/detect-pattern-changes.js ${sv} ${tv2}`);
+  }
+} else {
+  log.warning('detect-pattern-changes.js not found, skipping action items check');
+}
+console.log();
+
+// Step 8: Generate report
+log.info('Step 8: Generating migration report...');
 const reportDate = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const reportFile = `MIGRATION_REPORT_${reportDate}.md`;
 

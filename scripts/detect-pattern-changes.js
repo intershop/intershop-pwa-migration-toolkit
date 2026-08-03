@@ -298,9 +298,33 @@ function applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehen
 }
 
 /**
+ * Collect critical action items that apply regardless of scan results
+ */
+function getRequiredActionItems(patternDb, sourceVersion, targetVersion, detectedDescriptions) {
+  if (!patternDb) return [];
+
+  const items = [];
+  for (const migration of patternDb.migrations) {
+    const fromVer = parseFloat(migration.fromVersion);
+    const toVer = parseFloat(migration.toVersion);
+    const source = parseFloat(sourceVersion);
+    const target = parseFloat(targetVersion);
+
+    if (toVer > source && fromVer <= target) {
+      for (const p of migration.patterns) {
+        if (p.severity === 'critical' && p.manual && !detectedDescriptions.has(p.description)) {
+          items.push(p);
+        }
+      }
+    }
+  }
+  return items;
+}
+
+/**
  * Generate human-readable report
  */
-function printReport(results, breakingChanges) {
+function printReport(results, breakingChanges, actionItems) {
   console.log('\n' + '='.repeat(70));
   console.log(`${colors.bright}${colors.blue}Pattern Detection Report${colors.reset}`);
   console.log('='.repeat(70) + '\n');
@@ -315,46 +339,69 @@ function printReport(results, breakingChanges) {
     }
   }
   
-  if (results.length === 0) {
+  if (results.length === 0 && (!actionItems || actionItems.length === 0)) {
     console.log(`${colors.green}✅ No deprecated patterns detected in your codebase${colors.reset}\n`);
     return;
   }
   
-  console.log(`${colors.bright}Detected Patterns Requiring Updates:${colors.reset}\n`);
+  if (results.length === 0) {
+    console.log(`${colors.green}✅ No deprecated patterns detected in your codebase${colors.reset}\n`);
+  } else {
+    console.log(`${colors.bright}Detected Patterns Requiring Updates:${colors.reset}\n`);
   
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    console.log(`${colors.yellow}${i + 1}. ${result.pattern.description}${colors.reset}`);
-    console.log(`   Version: ${result.pattern.version || 'N/A'}`);
-    console.log(`   Type: ${result.pattern.type}`);
-    console.log(`   Occurrences: ${result.matchCount}`);
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      console.log(`${colors.yellow}${i + 1}. ${result.pattern.description}${colors.reset}`);
+      console.log(`   Version: ${result.pattern.version || 'N/A'}`);
+      console.log(`   Type: ${result.pattern.type}`);
+      console.log(`   Occurrences: ${result.matchCount}`);
     
-    if (result.pattern.requiresImport) {
-      console.log(`   ${colors.cyan}Required import: ${result.pattern.requiresImport}${colors.reset}`);
+      if (result.pattern.requiresImport) {
+        console.log(`   ${colors.cyan}Required import: ${result.pattern.requiresImport}${colors.reset}`);
+      }
+    
+      if (result.pattern.manual) {
+        console.log(`   ${colors.red}⚠ Requires manual review${colors.reset}`);
+      }
+    
+      console.log(`   Files affected:`);
+      const fileList = [...new Set(result.matches.map(m => m.file))];
+      fileList.slice(0, 5).forEach(file => {
+        console.log(`     - ${file}`);
+      });
+    
+      if (fileList.length > 5) {
+        console.log(`     ... and ${fileList.length - 5} more`);
+      }
+    
+      console.log('');
     }
-    
-    if (result.pattern.manual) {
-      console.log(`   ${colors.red}⚠ Requires manual review${colors.reset}`);
-    }
-    
-    console.log(`   Files affected:`);
-    const fileList = [...new Set(result.matches.map(m => m.file))];
-    fileList.slice(0, 5).forEach(file => {
-      console.log(`     - ${file}`);
-    });
-    
-    if (fileList.length > 5) {
-      console.log(`     ... and ${fileList.length - 5} more`);
-    }
-    
-    console.log('');
   }
   
+  if (actionItems && actionItems.length > 0) {
+    console.log(`${colors.bright}${colors.red}Required Action Items (config/deployment changes):${colors.reset}\n`);
+    for (let i = 0; i < actionItems.length; i++) {
+      const item = actionItems[i];
+      console.log(`${colors.red}❗ ${i + 1}. ${item.description}${colors.reset}`);
+      console.log(`   Severity: ${item.severity}`);
+      if (item.migration) {
+        console.log(`   Action: ${item.migration}`);
+      }
+      if (item.example) {
+        console.log(`   Example: ${item.example.after}`);
+      }
+      console.log('');
+    }
+  }
+
   console.log('='.repeat(70));
   console.log(`${colors.bright}Summary:${colors.reset}`);
   console.log(`  Total pattern types detected: ${results.length}`);
   console.log(`  Total occurrences: ${results.reduce((sum, r) => sum + r.matchCount, 0)}`);
   console.log(`  Files affected: ${[...new Set(results.flatMap(r => r.matches.map(m => m.file)))].length}`);
+  if (actionItems && actionItems.length > 0) {
+    console.log(`  ${colors.red}Required action items: ${actionItems.length}${colors.reset}`);
+  }
   console.log('='.repeat(70) + '\n');
   
   console.log(`${colors.cyan}📊 Detailed report saved to: ${OUTPUT_REPORT}${colors.reset}\n`);
@@ -400,12 +447,10 @@ async function main() {
   }
   
   // Load pattern database (Tier 3)
-  if (comprehensive) {
-    const patternDb = loadPatternDatabase();
-    if (patternDb) {
-      const dbResults = applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive, projectDir);
-      results.push(...dbResults);
-    }
+  const patternDb = loadPatternDatabase();
+  if (comprehensive && patternDb) {
+    const dbResults = applyPatternDatabase(patternDb, sourceVersion, targetVersion, comprehensive, projectDir);
+    results.push(...dbResults);
   }
   
   // Scan for extracted patterns
@@ -414,8 +459,12 @@ async function main() {
     results.push(...scanResults);
   }
   
+  // Collect critical action items not caught by scanning
+  const detectedDescriptions = new Set(results.map(r => r.pattern.description));
+  const actionItems = getRequiredActionItems(patternDb, sourceVersion, targetVersion, detectedDescriptions);
+
   // Generate report
-  printReport(results, breakingChanges);
+  printReport(results, breakingChanges, actionItems);
   
   // Save detailed JSON report
   const report = {
@@ -424,6 +473,7 @@ async function main() {
     sourceVersion,
     targetVersion,
     breakingChanges,
+    actionItems,
     results: results.map(r => ({
       pattern: {
         ...r.pattern,
@@ -437,7 +487,7 @@ async function main() {
   fs.writeFileSync(OUTPUT_REPORT, JSON.stringify(report, null, 2));
   
   // Exit with appropriate code
-  if (results.length > 0) {
+  if (results.length > 0 || actionItems.length > 0) {
     console.log(`${colors.yellow}⚠  Patterns detected - please review and update${colors.reset}`);
     process.exit(1);
   } else {

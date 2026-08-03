@@ -2,7 +2,7 @@
   "folders": [
     {
       "name": "Custom PWA",
-      "path": "../developer-pwa"
+      "path": "../../pwa/developer-pwa"
     },
     {
       "name": "Migration Toolkit",
@@ -14,13 +14,13 @@
       "**/node_modules": true
     },
     "terminal.integrated.env.linux": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa/"
+      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
     },
     "terminal.integrated.env.osx": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa/"
+      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
     },
     "terminal.integrated.env.windows": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa/"
+      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
     }
   }
 }

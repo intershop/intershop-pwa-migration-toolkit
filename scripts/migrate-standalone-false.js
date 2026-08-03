@@ -99,6 +99,24 @@ function main() {
     modifiedFiles = applyRegexFix(missing, overrides);
   }
 
+  // Step 5: Fix inline components in spec files (TestBed declarations)
+  const specFindings = detectSpecInlineComponents();
+  if (specFindings.length > 0) {
+    console.log();
+    log.section(`Inline components in spec files (TestBed declarations): ${specFindings.length}`);
+    for (const f of specFindings.slice(0, 10)) {
+      console.log(`  ${chalk.yellow('!')} ${path.relative(projectDir, f.file)} — ${f.components.join(', ')}`);
+    }
+    if (specFindings.length > 10) console.log(`  ... and ${specFindings.length - 10} more`);
+
+    if (doFix) {
+      const specFixed = fixSpecInlineComponents(specFindings);
+      for (const f of specFixed) modifiedFiles.add(f);
+    } else {
+      log.info(`Run with ${chalk.cyan('--fix')} to auto-fix these.`);
+    }
+  }
+
   if (modifiedFiles.size > 0) {
     console.log();
     printModifiedFiles(modifiedFiles);
@@ -347,6 +365,91 @@ function openInVSCode(files) {
   } catch {
     log.warning('Could not open files in VS Code (is "code" in PATH?).');
   }
+}
+
+// ─── Spec File Inline Components ────────────────────────────────────────────
+
+function detectSpecInlineComponents() {
+  const specFiles = findFiles(srcDir, /\.spec\.ts$/);
+  const results = [];
+
+  for (const file of specFiles) {
+    const content = readSafe(file);
+    if (!content) continue;
+
+    // Find inline @Component declarations without explicit standalone flag
+    const componentRegex = /@Component\s*\(\s*\{([^}]*)\}\s*\)\s*\n?\s*class\s+(\w+)/g;
+    let match;
+    const components = [];
+    while ((match = componentRegex.exec(content)) !== null) {
+      const decoratorBody = match[1];
+      const className = match[2];
+      if (/standalone\s*:/.test(decoratorBody)) continue;
+
+      // Check if this component is in a TestBed declarations array
+      if (new RegExp(`declarations\\s*:\\s*\\[[^\\]]*\\b${className}\\b`).test(content)) {
+        components.push(className);
+      }
+    }
+
+    if (components.length > 0) {
+      results.push({ file, components });
+    }
+  }
+
+  return results;
+}
+
+function fixSpecInlineComponents(findings) {
+  const modified = new Set();
+
+  for (const { file, components } of findings) {
+    let content = fs.readFileSync(file, 'utf-8');
+    const before = content;
+
+    for (const className of components) {
+      // Add standalone: true to the inline @Component decorator
+      const decoratorRegex = new RegExp(
+        `(@Component\\s*\\(\\s*\\{)(\\s*)([^}]*)(}\\s*\\)\\s*\\n?\\s*class\\s+${className}\\b)`
+      );
+      content = content.replace(decoratorRegex, (m, open, ws, body, close) => {
+        if (/standalone\s*:/.test(body)) return m;
+        return `${open}${ws}standalone: true, ${body}${close}`;
+      });
+
+      // Move from declarations to imports in TestBed.configureTestingModule
+      content = content.replace(
+        /(declarations\s*:\s*\[)([^\]]*)\]/g,
+        (m, start, items) => {
+          if (!new RegExp(`\\b${className}\\b`).test(items)) return m;
+          const cleaned = items
+            .replace(new RegExp(`\\b${className}\\b\\s*,?\\s*`), '')
+            .replace(/,\s*$/, '').replace(/^\s*,/, '');
+          return `${start}${cleaned}]`;
+        }
+      );
+
+      // Add to imports array
+      content = content.replace(
+        /(imports\s*:\s*\[)([^\]]*)\]/g,
+        (m, start, items) => {
+          if (new RegExp(`\\b${className}\\b`).test(items)) return m;
+          const trimmed = items.trim().replace(/,\s*$/, '');
+          return trimmed
+            ? `${start}${items.trimEnd()},\n        ${className},\n      ]`
+            : `${start}${className}]`;
+        }
+      );
+    }
+
+    if (content !== before) {
+      fs.writeFileSync(file, content, 'utf-8');
+      modified.add(file);
+    }
+  }
+
+  log.success(`Fixed ${modified.size} spec file(s): inline components → standalone + imports`);
+  return modified;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

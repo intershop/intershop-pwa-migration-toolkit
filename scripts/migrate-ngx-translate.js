@@ -320,8 +320,15 @@ function applyRegexFixes(findings) {
       // Move from imports to providers if in NgModule
       content = moveForRootToProviders(content);
 
+      // Add TranslatePipe to imports (TranslateModule previously provided both service and pipe)
+      content = addToImportsArray(content, 'TranslatePipe');
+
       // Update import statement
       content = ensureImport(content, 'provideTranslateService', '@ngx-translate/core');
+      content = ensureImport(content, 'TranslatePipe', '@ngx-translate/core');
+
+      // Clean up unused TranslateModule from TS import if no longer referenced in module arrays
+      content = removeUnusedTsImport(content, 'TranslateModule', '@ngx-translate/core');
 
       if (content !== before) {
         fs.writeFileSync(file, content, 'utf-8');
@@ -347,16 +354,20 @@ function applyRegexFixes(findings) {
     log.success(`Fixed ${files.length} file(s): removed TranslateModule.forChild()`);
   }
 
-  // Fix 4: bare TranslateModule → TranslatePipe in imports
+  // Fix 4: bare TranslateModule → TranslatePipe in module/TestBed arrays
   if (findings.translateModuleImport.length > 0) {
     const files = [...new Set(findings.translateModuleImport.map(f => f.file))];
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
-      // Replace bare TranslateModule with TranslatePipe in imports arrays
-      content = content.replace(/\bTranslateModule\b(?!\s*\.)/g, 'TranslatePipe');
+      // Replace bare TranslateModule with TranslatePipe only in module config arrays, not TS imports
+      content = content.replace(
+        /(imports|declarations|exports)\s*:\s*\[([^\]]*)\]/g,
+        (match) => match.replace(/\bTranslateModule\b(?!\s*\.)/g, 'TranslatePipe')
+      );
       // Update the import statement from @ngx-translate/core
       content = ensureImport(content, 'TranslatePipe', '@ngx-translate/core');
+      content = removeUnusedTsImport(content, 'TranslateModule', '@ngx-translate/core');
       if (content !== before) {
         fs.writeFileSync(file, content, 'utf-8');
         fixedFiles.add(file);
@@ -409,16 +420,65 @@ function readSafe(file) {
 
 function moveForRootToProviders(content) {
   // If provideTranslateService is inside an imports array, move it to providers
-  const importsRegex = /(imports\s*:\s*\[)([^\]]*)(provideTranslateService\([^)]*\))([^\]]*)\]/g;
-  return content.replace(importsRegex, (match, start, before, provider, after) => {
-    const cleanedImports = (before + after).replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,/, '');
-    const hasProviders = content.includes('providers:');
-    if (hasProviders) {
-      // Will need manual placement - leave a comment
-      return `${start}${cleanedImports}] /* TODO: move ${provider} to providers array */`;
-    }
-    return `${start}${cleanedImports}],\n    providers: [${provider}]`;
+  const importsRegex = /(imports\s*:\s*\[)([^\]]*)(provideTranslateService\([^)]*\))([^\]]*)\]/;
+  const match = content.match(importsRegex);
+  if (!match) return content;
+
+  const provider = match[3];
+
+  // Remove from imports, add TranslatePipe to preserve pipe availability
+  content = content.replace(importsRegex, (m, start, before, prov, after) => {
+    const cleaned = (before + after).replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,/, '');
+    return `${start}${cleaned}]`;
   });
+
+  // Insert into existing providers array, or create one
+  const providersRegex = /(providers\s*:\s*\[)([^\]]*)\]/;
+  if (providersRegex.test(content)) {
+    content = content.replace(providersRegex, (m, pStart, pContents) => {
+      const trimmed = pContents.trim().replace(/,\s*$/, '');
+      return trimmed ? `${pStart}${pContents.trimEnd()}, ${provider}]` : `${pStart}${provider}]`;
+    });
+  } else {
+    content = content.replace(/(imports\s*:\s*\[[^\]]*\]),?/, `$1,\n    providers: [${provider}],`);
+  }
+
+  return content;
+}
+
+function addToImportsArray(content, symbol) {
+  // Add a symbol to the Angular imports array if not already present
+  return content.replace(/(imports\s*:\s*\[)([^\]]*)\]/g, (match, start, items) => {
+    if (new RegExp(`\\b${symbol}\\b`).test(items)) return match;
+    const trimmed = items.trim().replace(/,\s*$/, '');
+    return trimmed ? `${start}${items.trimEnd()}, ${symbol}]` : `${start}${symbol}]`;
+  });
+}
+
+function removeUnusedTsImport(content, symbol, from) {
+  // Remove a symbol from a TS import statement if it's no longer used in the rest of the file
+  const importLineRegex = new RegExp(`(import\\s*\\{)([^}]*)(}\\s*from\\s*['"]${from.replace(/\//g, '\\/')}['"])`);
+  const importMatch = content.match(importLineRegex);
+  if (!importMatch) return content;
+
+  const importedSymbols = importMatch[2];
+  if (!new RegExp(`\\b${symbol}\\b`).test(importedSymbols)) return content;
+
+  // Check if symbol is used anywhere outside the import statement
+  const withoutImport = content.replace(importMatch[0], '');
+  if (new RegExp(`\\b${symbol}\\b`).test(withoutImport)) return content;
+
+  // Remove the symbol from the import
+  const cleaned = importedSymbols
+    .replace(new RegExp(`\\b${symbol}\\b\\s*,?\\s*`), '')
+    .replace(/,\s*$/, '').replace(/^\s*,\s*/, '');
+
+  if (!cleaned.trim()) {
+    // No symbols left — remove entire import line
+    return content.replace(new RegExp(`import\\s*\\{[^}]*\\}\\s*from\\s*['"]${from.replace(/\//g, '\\/')}['"]\\s*;?\\s*\\n?`), '');
+  }
+
+  return content.replace(importLineRegex, `$1 ${cleaned.trim()} $3`);
 }
 
 function ensureImport(content, symbol, from) {

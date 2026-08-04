@@ -63,6 +63,8 @@ function main() {
   if (missing.length === 0) {
     console.log();
     log.success('All NgModule-declared artifacts already have standalone: false.');
+    // Still check spec files (Step 5) below
+    runSpecFixStep(new Set());
     return;
   }
 
@@ -100,22 +102,7 @@ function main() {
   }
 
   // Step 5: Fix inline components in spec files (TestBed declarations)
-  const specFindings = detectSpecInlineComponents();
-  if (specFindings.length > 0) {
-    console.log();
-    log.section(`Inline components in spec files (TestBed declarations): ${specFindings.length}`);
-    for (const f of specFindings.slice(0, 10)) {
-      console.log(`  ${chalk.yellow('!')} ${path.relative(projectDir, f.file)} — ${f.components.join(', ')}`);
-    }
-    if (specFindings.length > 10) console.log(`  ... and ${specFindings.length - 10} more`);
-
-    if (doFix) {
-      const specFixed = fixSpecInlineComponents(specFindings);
-      for (const f of specFixed) modifiedFiles.add(f);
-    } else {
-      log.info(`Run with ${chalk.cyan('--fix')} to auto-fix these.`);
-    }
-  }
+  runSpecFixStep(modifiedFiles);
 
   if (modifiedFiles.size > 0) {
     console.log();
@@ -369,9 +356,29 @@ function openInVSCode(files) {
 
 // ─── Spec File Inline Components ────────────────────────────────────────────
 
+function runSpecFixStep(modifiedFiles) {
+  const specFindings = detectSpecInlineComponents();
+  if (specFindings.length > 0) {
+    console.log();
+    log.section(`Inline components in spec files (TestBed declarations): ${specFindings.length}`);
+    for (const f of specFindings.slice(0, 10)) {
+      console.log(`  ${chalk.yellow('!')} ${path.relative(projectDir, f.file)} — ${f.components.join(', ')}`);
+    }
+    if (specFindings.length > 10) console.log(`  ... and ${specFindings.length - 10} more`);
+
+    if (doFix) {
+      const specFixed = fixSpecInlineComponents(specFindings);
+      for (const f of specFixed) modifiedFiles.add(f);
+    } else {
+      log.info(`Run with ${chalk.cyan('--fix')} to auto-fix these.`);
+    }
+  }
+}
+
 function detectSpecInlineComponents() {
   const specFiles = findFiles(srcDir, /\.spec\.ts$/);
   const results = [];
+  const skipPattern = /^(Dummy|Mock|Stub|Fake|Test)/;
 
   for (const file of specFiles) {
     const content = readSafe(file);
@@ -385,6 +392,7 @@ function detectSpecInlineComponents() {
       const decoratorBody = match[1];
       const className = match[2];
       if (/standalone\s*:/.test(decoratorBody)) continue;
+      if (skipPattern.test(className)) continue;
 
       // Check if this component is in a TestBed declarations array
       if (new RegExp(`declarations\\s*:\\s*\\[[^\\]]*\\b${className}\\b`).test(content)) {
@@ -417,29 +425,8 @@ function fixSpecInlineComponents(findings) {
         return `${open}${ws}standalone: true, ${body}${close}`;
       });
 
-      // Move from declarations to imports in TestBed.configureTestingModule
-      content = content.replace(
-        /(declarations\s*:\s*\[)([^\]]*)\]/g,
-        (m, start, items) => {
-          if (!new RegExp(`\\b${className}\\b`).test(items)) return m;
-          const cleaned = items
-            .replace(new RegExp(`\\b${className}\\b\\s*,?\\s*`), '')
-            .replace(/,\s*$/, '').replace(/^\s*,/, '');
-          return `${start}${cleaned}]`;
-        }
-      );
-
-      // Add to imports array
-      content = content.replace(
-        /(imports\s*:\s*\[)([^\]]*)\]/g,
-        (m, start, items) => {
-          if (new RegExp(`\\b${className}\\b`).test(items)) return m;
-          const trimmed = items.trim().replace(/,\s*$/, '');
-          return trimmed
-            ? `${start}${items.trimEnd()},\n        ${className},\n      ]`
-            : `${start}${className}]`;
-        }
-      );
+      // Move from declarations to imports within TestBed.configureTestingModule blocks only
+      content = replaceInTestBedBlock(content, className);
     }
 
     if (content !== before) {
@@ -450,6 +437,88 @@ function fixSpecInlineComponents(findings) {
 
   log.success(`Fixed ${modified.size} spec file(s): inline components → standalone + imports`);
   return modified;
+}
+
+// Extract and modify only TestBed.configureTestingModule(...) blocks, handling nested brackets
+function replaceInTestBedBlock(content, className) {
+  const marker = 'TestBed.configureTestingModule(';
+  let idx = 0;
+  while ((idx = content.indexOf(marker, idx)) !== -1) {
+    const blockStart = idx + marker.length;
+    const blockEnd = findMatchingParen(content, blockStart - 1);
+    if (blockEnd === -1) { idx++; continue; }
+
+    let block = content.slice(blockStart, blockEnd);
+
+    // Find top-level declarations array using bracket matching
+    const declInfo = findTopLevelArray(block, 'declarations');
+    if (!declInfo || !new RegExp(`\\b${className}\\b`).test(declInfo.items)) { idx++; continue; }
+
+    // Remove from declarations
+    const cleanedItems = declInfo.items
+      .replace(new RegExp(`\\b${className}\\b\\s*,?\\s*`), '')
+      .replace(/,\s*$/, '').replace(/^\s*,/, '');
+    block = block.slice(0, declInfo.start) + cleanedItems + block.slice(declInfo.end);
+
+    // Find top-level imports array and add the component
+    const impInfo = findTopLevelArray(block, 'imports');
+    if (impInfo) {
+      if (!new RegExp(`\\b${className}\\b`).test(impInfo.items)) {
+        const trimmed = impInfo.items.trim().replace(/,\s*$/, '');
+        const newItems = trimmed ? `${impInfo.items.trimEnd()}, ${className}` : className;
+        block = block.slice(0, impInfo.start) + newItems + block.slice(impInfo.end);
+      }
+    } else {
+      // No imports array — add one after declarations
+      const declInfo2 = findTopLevelArray(block, 'declarations');
+      if (declInfo2) {
+        const insertPos = declInfo2.bracketEnd + 1;
+        block = block.slice(0, insertPos) + `,\n      imports: [${className}]` + block.slice(insertPos);
+      }
+    }
+
+    content = content.slice(0, blockStart) + block + content.slice(blockEnd);
+    idx = blockStart + block.length;
+  }
+  return content;
+}
+
+// Find a top-level property array (e.g. "declarations: [...]") within a config object, respecting nested brackets
+function findTopLevelArray(block, propName) {
+  const propRegex = new RegExp(`${propName}\\s*:\\s*\\[`);
+  const match = propRegex.exec(block);
+  if (!match) return null;
+
+  const bracketOpen = match.index + match[0].length - 1;
+  const bracketClose = findMatchingBracket(block, bracketOpen);
+  if (bracketClose === -1) return null;
+
+  return {
+    start: bracketOpen + 1,
+    end: bracketClose,
+    bracketEnd: bracketClose,
+    items: block.slice(bracketOpen + 1, bracketClose),
+  };
+}
+
+function findMatchingBracket(str, openIdx) {
+  let depth = 1;
+  for (let i = openIdx + 1; i < str.length; i++) {
+    if (str[i] === '[') depth++;
+    else if (str[i] === ']') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+function findMatchingParen(str, openIdx) {
+  const open = str[openIdx];
+  const close = open === '(' ? ')' : open === '[' ? ']' : '}';
+  let depth = 1;
+  for (let i = openIdx + 1; i < str.length; i++) {
+    if (str[i] === open) depth++;
+    else if (str[i] === close) { depth--; if (depth === 0) return i; }
+  }
+  return -1;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

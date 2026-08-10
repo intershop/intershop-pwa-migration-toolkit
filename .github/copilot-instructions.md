@@ -40,6 +40,7 @@ The env var `PWA_PROJECT_DIR` points to the custom project. Most scripts accept 
 | `check:node` | Verify Node.js version compatibility |
 | `check:template` | Check Angular template syntax for issues |
 | `check:icm` | Check ICM compatibility |
+| `check:imports` | Detect broken relative imports (moved/deleted files) |
 | `validate:theme` | Validate SCSS theme variable completeness |
 
 ### Fix & Sync

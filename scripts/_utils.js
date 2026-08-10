@@ -231,6 +231,36 @@ function tempFile(prefix = 'pwa-migration-', ext = '.tmp') {
   return path.join(os.tmpdir(), `${prefix}${Date.now()}${ext}`);
 }
 
+// ─── Bracket Matching ───────────────────────────────────────────────────────
+
+// Find the matching closing bracket for an opening bracket at openIdx
+function findMatchingBracket(str, openIdx, openChar = '[', closeChar = ']') {
+  let depth = 1;
+  for (let i = openIdx + 1; i < str.length; i++) {
+    if (str[i] === openChar) depth++;
+    else if (str[i] === closeChar) { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// Find a property array (e.g. "imports: [...]") respecting nested brackets
+function findPropertyArray(content, propName, startFrom = 0) {
+  const propRegex = new RegExp(`${propName}\\s*:\\s*\\[`);
+  const slice = content.slice(startFrom);
+  const match = propRegex.exec(slice);
+  if (!match) return null;
+
+  const arrayOpen = startFrom + match.index + match[0].length - 1;
+  const arrayClose = findMatchingBracket(content, arrayOpen);
+  if (arrayClose === -1) return null;
+
+  return {
+    start: arrayOpen,
+    end: arrayClose,
+    items: content.slice(arrayOpen + 1, arrayClose),
+  };
+}
+
 // ─── Exports ────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -245,5 +275,7 @@ module.exports = {
   askYesNo,
   askInput,
   tempFile,
+  findMatchingBracket,
+  findPropertyArray,
   chalk,
 };

@@ -16,6 +16,7 @@
     "check:node": "node scripts/check-nodejs-version.js",
     "check:template": "node scripts/check-template-syntax.js",
     "check:icm": "node scripts/check-icm-compatibility.js",
+    "check:imports": "node scripts/check-broken-imports.js",
     "validate:theme": "node scripts/validate-theme-completeness.js",
     "sync:theme": "node scripts/sync-custom-theme-variables.js",
     "migrate:controlflow": "node scripts/migrate-control-flow.js",

@@ -19,7 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { log, findFiles, grepFiles, chalk } = require('./_utils');
+const { log, findFiles, grepFiles, findMatchingBracket, findPropertyArray, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
 const args = process.argv.slice(2);
@@ -360,11 +360,9 @@ function applyRegexFixes(findings) {
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
-      // Replace bare TranslateModule with TranslatePipe only in module config arrays, not TS imports
-      content = content.replace(
-        /(imports|declarations|exports)\s*:\s*\[([^\]]*)\]/g,
-        (match) => match.replace(/\bTranslateModule\b(?!\s*\.)/g, 'TranslatePipe')
-      );
+      // Replace bare TranslateModule with TranslatePipe in config arrays, using bracket-matching
+      content = replaceInPropertyArrays(content, ['imports', 'declarations', 'exports'],
+        /\bTranslateModule\b(?!\s*\.)/g, 'TranslatePipe');
       // Update the import statement from @ngx-translate/core
       content = ensureImport(content, 'TranslatePipe', '@ngx-translate/core');
       content = removeUnusedTsImport(content, 'TranslateModule', '@ngx-translate/core');
@@ -403,12 +401,39 @@ function applyRegexFixes(findings) {
   log.success(`Total: ${fixedFiles.size} file(s) modified.`);
   if (fixedFiles.size > 0) {
     log.warning('Manual review needed: getCurrentLang() can return undefined in v18 — add ?? fallback where needed.');
+    validateFixedFiles(fixedFiles);
   }
 
   return fixedFiles;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+function validateFixedFiles(fixedFiles) {
+  const BAD_PATTERNS = [
+    { regex: /RouterModule\.forRoot\s*\([^)]*TranslatePipe/, msg: 'TranslatePipe inside RouterModule.forRoot()' },
+    { regex: /RouterModule\.forRoot\s*\([^)]*provideTranslateService/, msg: 'provideTranslateService inside RouterModule.forRoot()' },
+    { regex: /provideRouter\s*\([^)]*TranslatePipe/, msg: 'TranslatePipe inside provideRouter()' },
+    { regex: /provideRouter\s*\([^)]*provideTranslateService/, msg: 'provideTranslateService inside provideRouter()' },
+  ];
+
+  let warnings = 0;
+  for (const file of fixedFiles) {
+    const content = fs.readFileSync(file, 'utf-8');
+    const lines = content.split('\n');
+    for (const { regex, msg } of BAD_PATTERNS) {
+      for (let i = 0; i < lines.length; i++) {
+        if (regex.test(lines[i])) {
+          log.warning(`${path.relative(projectDir, file)}:${i + 1} — ${msg} (needs manual fix)`);
+          warnings++;
+        }
+      }
+    }
+  }
+  if (warnings > 0) {
+    log.warning(`${warnings} suspicious placement(s) found — please review above.`);
+  }
+}
 
 function readSafe(file) {
   try {
@@ -419,40 +444,101 @@ function readSafe(file) {
 }
 
 function moveForRootToProviders(content) {
-  // If provideTranslateService is inside an imports array, move it to providers
-  const importsRegex = /(imports\s*:\s*\[)([^\]]*)(provideTranslateService\([^)]*\))([^\]]*)\]/;
-  const match = content.match(importsRegex);
-  if (!match) return content;
+  const arr = findPropertyArray(content, 'imports');
+  if (!arr) return content;
 
-  const provider = match[3];
+  const items = arr.items;
+  // Match provideTranslateService(...) including nested parens
+  const provideIdx = items.indexOf('provideTranslateService(');
+  if (provideIdx === -1) return content;
 
-  // Remove from imports, add TranslatePipe to preserve pipe availability
-  content = content.replace(importsRegex, (m, start, before, prov, after) => {
-    const cleaned = (before + after).replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,/, '');
-    return `${start}${cleaned}]`;
-  });
+  // Find the full call expression using paren matching
+  const absIdx = arr.start + 1 + provideIdx;
+  const parenOpen = content.indexOf('(', absIdx);
+  const parenClose = findMatchingBracket(content, parenOpen, '(', ')');
+  if (parenClose === -1) return content;
 
-  // Insert into existing providers array, or create one
-  const providersRegex = /(providers\s*:\s*\[)([^\]]*)\]/;
-  if (providersRegex.test(content)) {
-    content = content.replace(providersRegex, (m, pStart, pContents) => {
-      const trimmed = pContents.trim().replace(/,\s*$/, '');
-      return trimmed ? `${pStart}${pContents.trimEnd()}, ${provider}]` : `${pStart}${provider}]`;
-    });
-  } else {
-    content = content.replace(/(imports\s*:\s*\[[^\]]*\]),?/, `$1,\n    providers: [${provider}],`);
+  const provider = content.slice(absIdx, parenClose + 1);
+
+  // Remove provider from imports array (including surrounding comma/whitespace)
+  const beforeProvider = content.slice(0, absIdx);
+  const afterProvider = content.slice(parenClose + 1);
+  let joined = beforeProvider + afterProvider;
+  // Clean dangling commas inside the imports array
+  const newArr = findPropertyArray(joined, 'imports');
+  if (newArr) {
+    const cleanedItems = newArr.items.replace(/,\s*,/g, ',').replace(/^\s*,\s*/, '').replace(/,\s*$/, '');
+    joined = joined.slice(0, newArr.start + 1) + cleanedItems + joined.slice(newArr.end);
   }
 
-  return content;
+  // Insert into existing providers array, or create one
+  const provArr = findPropertyArray(joined, 'providers');
+  if (provArr) {
+    const trimmed = provArr.items.trim().replace(/,\s*$/, '');
+    const newItems = trimmed ? `${provArr.items.trimEnd()}, ${provider}` : provider;
+    joined = joined.slice(0, provArr.start + 1) + newItems + joined.slice(provArr.end);
+  } else {
+    // Create providers array after imports
+    const importsArr = findPropertyArray(joined, 'imports');
+    if (importsArr) {
+      const insertAt = importsArr.end + 1;
+      joined = joined.slice(0, insertAt) + `,\n    providers: [${provider}]` + joined.slice(insertAt);
+    }
+  }
+
+  return joined;
 }
 
 function addToImportsArray(content, symbol) {
-  // Add a symbol to the Angular imports array if not already present
-  return content.replace(/(imports\s*:\s*\[)([^\]]*)\]/g, (match, start, items) => {
-    if (new RegExp(`\\b${symbol}\\b`).test(items)) return match;
+  const regex = /imports\s*:\s*\[/g;
+  let match;
+  let result = content;
+  let offset = 0;
+
+  while ((match = regex.exec(content)) !== null) {
+    const arrayOpen = match.index + match[0].length - 1;
+    const arrayClose = findMatchingBracket(content, arrayOpen);
+    if (arrayClose === -1) continue;
+
+    const items = content.slice(arrayOpen + 1, arrayClose);
+    if (new RegExp(`\\b${symbol}\\b`).test(items)) continue;
+
     const trimmed = items.trim().replace(/,\s*$/, '');
-    return trimmed ? `${start}${items.trimEnd()}, ${symbol}]` : `${start}${symbol}]`;
-  });
+    const newItems = trimmed ? `${items.trimEnd()}, ${symbol}` : symbol;
+    const replacement = content.slice(match.index, arrayOpen + 1) + newItems + ']';
+    const original = content.slice(match.index, arrayClose + 1);
+
+    result = result.slice(0, match.index + offset) + replacement + result.slice(match.index + offset + original.length);
+    offset += replacement.length - original.length;
+  }
+
+  return result;
+}
+
+function replaceInPropertyArrays(content, propNames, pattern, replacement) {
+  for (const prop of propNames) {
+    const regex = new RegExp(`${prop}\\s*:\\s*\\[`, 'g');
+    let match;
+    let result = content;
+    let offset = 0;
+
+    while ((match = regex.exec(content)) !== null) {
+      const arrayOpen = match.index + match[0].length - 1;
+      const arrayClose = findMatchingBracket(content, arrayOpen);
+      if (arrayClose === -1) continue;
+
+      const items = content.slice(arrayOpen + 1, arrayClose);
+      const newItems = items.replace(pattern, replacement);
+      if (newItems === items) continue;
+
+      const original = content.slice(match.index, arrayClose + 1);
+      const replaced = content.slice(match.index, arrayOpen + 1) + newItems + ']';
+      result = result.slice(0, match.index + offset) + replaced + result.slice(match.index + offset + original.length);
+      offset += replaced.length - original.length;
+    }
+    content = result;
+  }
+  return content;
 }
 
 function removeUnusedTsImport(content, symbol, from) {

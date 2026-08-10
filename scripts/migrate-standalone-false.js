@@ -22,7 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { log, findFiles, chalk } = require('./_utils');
+const { log, findFiles, findMatchingBracket, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
 const args = process.argv.slice(2);
@@ -499,15 +499,6 @@ function findTopLevelArray(block, propName) {
     bracketEnd: bracketClose,
     items: block.slice(bracketOpen + 1, bracketClose),
   };
-}
-
-function findMatchingBracket(str, openIdx) {
-  let depth = 1;
-  for (let i = openIdx + 1; i < str.length; i++) {
-    if (str[i] === '[') depth++;
-    else if (str[i] === ']') { depth--; if (depth === 0) return i; }
-  }
-  return -1;
 }
 
 function findMatchingParen(str, openIdx) {

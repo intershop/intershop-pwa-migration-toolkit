@@ -18,9 +18,9 @@ The env var `PWA_PROJECT_DIR` points to the custom project. Most scripts accept 
 
 | npm script | Purpose |
 |---|---|
-| `migrate` | Git-based branch migration (merge upstream into custom) |
-| `migrate:standalone` | Add `standalone: false` to NgModule-declared artifacts + sync overrides |
-| `migrate:translate` | Migrate ngx-translate breaking changes (v16→v18) |
+| `migrate` | Git-based branch migration (merge upstream into custom). Shows ours/theirs banner, auto-resolves infrastructure files, extracts/re-injects custom feature toggles, verifies non-custom files against upstream |
+| `migrate:standalone` | Add `standalone: false` to NgModule-declared artifacts + sync overrides. Also scans TestBed declarations in spec files and detects external components not covered by NgModule scan |
+| `migrate:translate` | Migrate ngx-translate breaking changes (v16→v18). Supports `--custom-only` and `--upstream-tag=<tag>` to skip already-migrated upstream files. Deduplicates imports automatically |
 | `migrate:controlflow` | Migrate Angular control flow syntax (`*ngIf` → `@if`) |
 | `migrate:icons` | Migrate Bootstrap icon classes |
 

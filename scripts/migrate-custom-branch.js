@@ -149,6 +149,26 @@ function autoResolveStyles(file, content) {
   return true;
 }
 
+// Extract values from a TypeScript `features:` array in environment files
+function extractFeaturesArray(content) {
+  const match = content.match(/features\s*:\s*\[([\s\S]*?)\]/);
+  if (!match) return [];
+  return match[1].match(/'([^']+)'|"([^"]+)"/g)?.map(s => s.replace(/['"]/g, '')) || [];
+}
+
+// Re-inject custom feature toggles into environment file content
+function reinjectFeatureToggles(content, toggles) {
+  const match = content.match(/(features\s*:\s*\[)([\s\S]*?)(\])/);
+  if (!match) return content;
+  const existing = extractFeaturesArray(content);
+  const toAdd = toggles.filter(t => !existing.includes(t));
+  if (toAdd.length === 0) return content;
+  const existingBlock = match[2].trimEnd().replace(/,?\s*$/, '');
+  const newEntries = toAdd.map(t => `'${t}'`).join(', ');
+  const separator = existingBlock.trim() ? ', ' : '';
+  return content.replace(match[0], `${match[1]}${existingBlock}${separator}${newEntries}${match[3]}`);
+}
+
 // Parse arguments
 const args = process.argv.slice(2);
 let sourceBranch = 'training_4.0.0';
@@ -421,6 +441,45 @@ if (!dryRun) {
 }
 console.log();
 
+// Pre-merge: Extract custom values from hybrid files (environment, docker-compose, i18n)
+// These files need both upstream structure AND custom config preserved.
+const ALWAYS_UPSTREAM_FILES = [
+  'server.ts', 'package.json', 'package-lock.json',
+  'angular.json', 'tsconfig.json', 'tsconfig.app.json', 'tsconfig.spec.json',
+  'jest.config.ts', 'eslint.config.mjs',
+];
+const customFeatureToggles = new Map();
+const customEnvironmentValues = new Map();
+
+if (!dryRun) {
+  log.info('Pre-merge: Extracting custom values from hybrid files...');
+  // Extract custom feature toggles from environment files on the source branch
+  const envFiles = execSilent(`git ls-tree -r --name-only "${sourceBranch}" -- "src/environments/" 2>/dev/null`);
+  if (envFiles) {
+    // Get upstream environment files for comparison
+    for (const envFile of envFiles.split('\n').filter(Boolean)) {
+      const customContent = execSilent(`git show "${sourceBranch}:${envFile}" 2>/dev/null`);
+      const upstreamContent = execSilent(`git show "${targetBranch}:${envFile}" 2>/dev/null`);
+      if (!customContent) continue;
+
+      // Extract features array values from custom branch
+      const customFeatures = extractFeaturesArray(customContent);
+      const upstreamFeatures = upstreamContent ? extractFeaturesArray(upstreamContent) : [];
+
+      // Find custom-only toggles (not in upstream)
+      const customOnly = customFeatures.filter(f => !upstreamFeatures.includes(f));
+      if (customOnly.length > 0) {
+        customFeatureToggles.set(envFile, customOnly);
+        log.info(`  ${envFile}: found ${customOnly.length} custom feature toggle(s): ${customOnly.join(', ')}`);
+      }
+    }
+  }
+  if (customFeatureToggles.size === 0) {
+    log.info('  No custom feature toggles found in environment files');
+  }
+  console.log();
+}
+
 // Step 3: Merge source into migration branch
 log.info('Step 3: Merging customizations into migration branch...');
 if (!dryRun) {
@@ -435,6 +494,18 @@ if (!dryRun) {
       const files = conflictFiles.split('\n').filter(Boolean);
       log.warning(`Found ${files.length} files with merge conflicts:`);
       files.forEach(f => console.log(`  ${f}`));
+      console.log();
+
+      // Explicit ours/theirs guidance — critical for correct conflict resolution
+      console.log(chalk.yellow('╔══════════════════════════════════════════════════════════════════╗'));
+      console.log(chalk.yellow('║  IMPORTANT: Merge direction in this migration                   ║'));
+      console.log(chalk.yellow('║                                                                 ║'));
+      console.log(chalk.yellow(`║  --ours   = upstream ${(targetTag || targetBranch).padEnd(12)} (NEW PWA version)       ║`));
+      console.log(chalk.yellow(`║  --theirs = ${sourceBranch.padEnd(20)} (YOUR custom branch)       ║`));
+      console.log(chalk.yellow('║                                                                 ║'));
+      console.log(chalk.yellow('║  To accept UPSTREAM version:  git checkout --ours -- <file>      ║'));
+      console.log(chalk.yellow('║  To keep YOUR customization:  git checkout --theirs -- <file>    ║'));
+      console.log(chalk.yellow('╚══════════════════════════════════════════════════════════════════╝'));
       console.log();
 
       // Step 3a: Commit conflict-free files first (they are already staged by git merge)
@@ -592,6 +663,101 @@ if (!dryRun) {
   log.info(`Would merge ${sourceBranch} into ${migrationBranch}`);
 }
 console.log();
+
+// Post-merge: Re-inject custom feature toggles into environment files
+if (!dryRun && customFeatureToggles.size > 0) {
+  log.info('Post-merge: Re-injecting custom feature toggles into environment files...');
+  let togglesRestored = 0;
+  for (const [envFile, toggles] of customFeatureToggles) {
+    if (!fs.existsSync(envFile)) continue;
+    const content = fs.readFileSync(envFile, 'utf-8');
+    const updated = reinjectFeatureToggles(content, toggles);
+    if (updated !== content) {
+      fs.writeFileSync(envFile, updated, 'utf-8');
+      togglesRestored += toggles.length;
+      log.success(`  ${envFile}: restored ${toggles.join(', ')}`);
+    } else {
+      // Check if toggles are already present
+      const existing = extractFeaturesArray(content);
+      const missing = toggles.filter(t => !existing.includes(t));
+      if (missing.length > 0) {
+        log.warning(`  ${envFile}: could not auto-restore ${missing.join(', ')} — please add manually`);
+      }
+    }
+  }
+  if (togglesRestored > 0) {
+    exec('git add src/environments/', { silent: true });
+    exec(`git commit -m "fix: restore custom feature toggles in environment files\n\nRestored: ${[...customFeatureToggles.entries()].map(([f, t]) => `${f}: ${t.join(', ')}`).join('; ')}"`, { silent: true });
+    log.success(`Restored ${togglesRestored} custom feature toggle(s)`);
+  }
+  console.log();
+}
+
+// Post-merge: Auto-resolve "always-upstream" conflict files
+if (!dryRun) {
+  const stillConflicted = execSilent('git diff --name-only --diff-filter=U 2>/dev/null');
+  if (stillConflicted) {
+    const conflictFiles = stillConflicted.split('\n').filter(Boolean);
+    const autoUpstream = conflictFiles.filter(f => ALWAYS_UPSTREAM_FILES.includes(path.basename(f)));
+    if (autoUpstream.length > 0) {
+      log.info(`Auto-resolving ${autoUpstream.length} infrastructure file(s) to upstream version:`);
+      for (const f of autoUpstream) {
+        exec(`git checkout --ours -- "${f}"`, { silent: true });
+        exec(`git add "${f}"`, { silent: true });
+        log.success(`  ${f} → upstream (${targetTag || targetBranch})`);
+      }
+      exec(`git commit -m "fix: resolve infrastructure files to upstream version\n\nFiles: ${autoUpstream.join(', ')}"`, { silent: true });
+      console.log();
+    }
+  }
+}
+
+// Post-merge verification: Ensure non-custom files match upstream exactly
+if (!dryRun) {
+  log.info('Post-merge verification: Checking non-custom files against upstream...');
+  const upstreamRef = targetTag || targetBranch;
+  const customFiles = customFilesList ? new Set(customFilesList.split('\n').filter(Boolean)) : new Set();
+
+  // Get all tracked files
+  const allFiles = execSilent('git ls-files');
+  if (allFiles) {
+    const filesToCheck = allFiles.split('\n').filter(f => {
+      if (!f) return false;
+      if (customFiles.has(f)) return false;
+      // Only check source files, not generated/config
+      if (!f.match(/\.(ts|html|scss|css)$/)) return false;
+      // Skip custom directories
+      if (f.includes('/extensions/') && customFiles.size > 0) return false;
+      return true;
+    });
+
+    let restored = 0;
+    const restoredFiles = [];
+    for (const file of filesToCheck) {
+      const upstreamContent = execSilent(`git show "${upstreamRef}:${file}" 2>/dev/null`);
+      if (upstreamContent === null) continue;
+      try {
+        const currentContent = fs.readFileSync(file, 'utf-8');
+        if (currentContent !== upstreamContent) {
+          fs.writeFileSync(file, upstreamContent, 'utf-8');
+          restored++;
+          restoredFiles.push(file);
+        }
+      } catch { /* file might not exist locally */ }
+    }
+
+    if (restored > 0) {
+      log.warning(`Restored ${restored} non-custom file(s) to upstream version (git auto-merge picked wrong hunks):`);
+      restoredFiles.slice(0, 10).forEach(f => console.log(`  ${f}`));
+      if (restoredFiles.length > 10) console.log(`  ... and ${restoredFiles.length - 10} more`);
+      exec('git add -A', { silent: true });
+      exec(`git commit -m "fix: restore ${restored} non-custom files to upstream version\n\nPost-merge verification detected files where git auto-merge picked wrong hunks."`, { silent: true });
+    } else {
+      log.success('All non-custom files match upstream — no corrections needed');
+    }
+  }
+  console.log();
+}
 
 // Step 4: Run automated migration scripts
 log.info('Step 4: Running automated migration scripts...');

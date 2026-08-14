@@ -79,7 +79,7 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 ### Migration Scripts (25 files in `scripts/`)
 
 #### Core Migration
-- `migrate-custom-branch.js` - Automated migration (CI/CD ready) with **Node.js version validation** ⭐ ENHANCED
+- `migrate-custom-branch.js` - Automated migration (CI/CD ready) with **Node.js version validation**, ours/theirs guidance banner, custom feature toggle preservation, infrastructure file auto-resolution, and post-merge verification ⭐ ENHANCED
 - `analyze-migration.js` - Complexity analyzer + strategy advisor (Big Bang / Hybrid / Incremental) ⭐
 - `generate-migration-report.js` - Comprehensive migration documentation generator
 - `pre-commit-customization-check.js` - **NEW:** Pre-commit hook to catch customization anti-patterns early
@@ -101,7 +101,7 @@ The scripts can also be run manually if you prefer — see [QUICK-START.md](QUIC
 #### Automated Fixes
 - `fix-template-syntax.js` - Auto-fix template syntax
 - `fix-template-linting.js` - Auto-suppress template linting issues (saves 1-2 hours)
-- `migrate-ngx-translate.js` - **NEW:** ngx-translate 17+18 migration (detect + auto-fix)
+- `migrate-ngx-translate.js` - **NEW:** ngx-translate 17+18 migration (detect + auto-fix, `--custom-only` to skip upstream files, import deduplication)
 - `update-snapshots.js` - Intelligent Jest snapshot update manager (saves 20-40 min)
 
 #### PWA 10.0 Migration Tools

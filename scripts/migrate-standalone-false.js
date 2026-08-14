@@ -104,6 +104,24 @@ function main() {
   // Step 5: Fix inline components in spec files (TestBed declarations)
   runSpecFixStep(modifiedFiles);
 
+  // Step 6: Detect external components in TestBed declarations not covered by NgModule scan
+  const testBedExtras = detectTestBedExternalComponents(new Set(filesToFix));
+  if (testBedExtras.length > 0) {
+    console.log();
+    log.section(`External components in TestBed declarations missing standalone: false (${testBedExtras.length}):`);
+    for (const f of testBedExtras.slice(0, 10)) {
+      console.log(`  ${chalk.yellow('!')} ${path.relative(projectDir, f)}`);
+    }
+    if (testBedExtras.length > 10) console.log(`  ... and ${testBedExtras.length - 10} more`);
+
+    if (doFix) {
+      const extraFixed = applyRegexFix(testBedExtras, findOverrideFiles(testBedExtras));
+      for (const f of extraFixed) modifiedFiles.add(f);
+    } else {
+      log.info(`Run with ${chalk.cyan('--fix')} to auto-fix these.`);
+    }
+  }
+
   if (modifiedFiles.size > 0) {
     console.log();
     printModifiedFiles(modifiedFiles);
@@ -195,6 +213,7 @@ function checkStandaloneStatus(files) {
   const alreadySet = [];
 
   for (const file of files) {
+    if (!fs.existsSync(file)) continue;
     const content = readSafe(file);
     if (!content) continue;
 
@@ -251,6 +270,10 @@ function applyRegexFix(files, overrides) {
   const modified = new Set();
 
   for (const file of files) {
+    if (!fs.existsSync(file)) {
+      log.warning(`Skipping deleted file: ${path.relative(projectDir, file)}`);
+      continue;
+    }
     let content = fs.readFileSync(file, 'utf-8');
     const before = content;
 
@@ -356,6 +379,48 @@ function openInVSCode(files) {
 
 // ─── Spec File Inline Components ────────────────────────────────────────────
 
+// Detect external components referenced in TestBed declarations that were not found via NgModule scan
+function detectTestBedExternalComponents(alreadyCoveredFiles) {
+  const specFiles = findFiles(srcDir, /\.spec\.ts$/);
+  const extraFiles = new Set();
+
+  for (const specFile of specFiles) {
+    const content = readSafe(specFile);
+    if (!content) continue;
+    const dir = path.dirname(specFile);
+
+    // Find symbols in TestBed declarations arrays
+    const declMatch = content.match(/declarations\s*:\s*\[([\s\S]*?)\]/g);
+    if (!declMatch) continue;
+
+    for (const block of declMatch) {
+      const symbols = block.match(/\b([A-Z][a-zA-Z0-9]+)\b/g);
+      if (!symbols) continue;
+
+      for (const sym of symbols) {
+        // Find import path for this symbol
+        const importMatch = content.match(new RegExp(`import\\s*\\{[^}]*\\b${sym}\\b[^}]*\\}\\s*from\\s*['"]([^'"]+)['"]`));
+        if (!importMatch) continue;
+        const importPath = importMatch[1];
+        if (!importPath.startsWith('.') && !importPath.startsWith('/')) continue;
+
+        const resolved = resolveImportPath(dir, importPath);
+        if (!resolved || !fs.existsSync(resolved)) continue;
+        if (alreadyCoveredFiles.has(resolved)) continue;
+
+        const fileContent = readSafe(resolved);
+        if (!fileContent) continue;
+        if (!/@(Component|Directive|Pipe)\s*\(/.test(fileContent)) continue;
+        if (/standalone\s*:\s*(true|false)/.test(fileContent)) continue;
+
+        extraFiles.add(resolved);
+      }
+    }
+  }
+
+  return [...extraFiles];
+}
+
 function runSpecFixStep(modifiedFiles) {
   const specFindings = detectSpecInlineComponents();
   if (specFindings.length > 0) {
@@ -378,7 +443,6 @@ function runSpecFixStep(modifiedFiles) {
 function detectSpecInlineComponents() {
   const specFiles = findFiles(srcDir, /\.spec\.ts$/);
   const results = [];
-  const skipPattern = /^(Dummy|Mock|Stub|Fake|Test)/;
 
   for (const file of specFiles) {
     const content = readSafe(file);
@@ -392,7 +456,6 @@ function detectSpecInlineComponents() {
       const decoratorBody = match[1];
       const className = match[2];
       if (/standalone\s*:/.test(decoratorBody)) continue;
-      if (skipPattern.test(className)) continue;
 
       // Check if this component is in a TestBed declarations array
       if (new RegExp(`declarations\\s*:\\s*\\[[^\\]]*\\b${className}\\b`).test(content)) {

@@ -25,6 +25,9 @@ const { projectDir } = require('./_project-dir');
 const args = process.argv.slice(2);
 const doFix = args.includes('--fix');
 const openFiles = args.includes('--open');
+const customOnly = args.includes('--custom-only');
+const upstreamTagArg = args.find(a => a.startsWith('--upstream-tag='));
+const upstreamTag = upstreamTagArg ? upstreamTagArg.split('=')[1] : null;
 const strategyArg = args.find(a => a.startsWith('--strategy='));
 const forcedStrategy = strategyArg ? strategyArg.split('=')[1] : null;
 
@@ -54,6 +57,39 @@ const PATTERNS = {
     description: '<span translate>key</span> → {{ \'key\' | translate }} (ngx-translate 18)',
   },
 };
+
+// ─── Upstream Comparison ─────────────────────────────────────────────────────
+
+// Check if a file is identical to its upstream version (already migrated)
+function isAlreadyMigratedByUpstream(filePath) {
+  if (!upstreamTag && !customOnly) return false;
+
+  const relPath = path.relative(projectDir, filePath);
+  const tag = upstreamTag || detectUpstreamTag();
+  if (!tag) return false;
+
+  try {
+    const upstreamContent = execSync(`git show "${tag}:${relPath}" 2>/dev/null`, { encoding: 'utf-8', cwd: projectDir });
+    const currentContent = fs.readFileSync(filePath, 'utf-8');
+    return currentContent === upstreamContent;
+  } catch {
+    return false;
+  }
+}
+
+let _detectedUpstreamTag = undefined;
+function detectUpstreamTag() {
+  if (_detectedUpstreamTag !== undefined) return _detectedUpstreamTag;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf-8'));
+    const version = pkg.version;
+    const tagExists = execSync(`git rev-parse "${version}" 2>/dev/null`, { encoding: 'utf-8', cwd: projectDir }).trim();
+    _detectedUpstreamTag = tagExists ? version : null;
+  } catch {
+    _detectedUpstreamTag = null;
+  }
+  return _detectedUpstreamTag;
+}
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
@@ -288,10 +324,23 @@ function printReport(findings) {
 function applyRegexFixes(findings) {
   log.section('Applying regex-based fixes...');
   let fixedFiles = new Set();
+  let skippedUpstream = 0;
+
+  // Filter out files already migrated by upstream (--custom-only or --upstream-tag)
+  function filterFiles(fileList) {
+    if (!customOnly && !upstreamTag) return fileList;
+    return fileList.filter(file => {
+      if (isAlreadyMigratedByUpstream(file)) {
+        skippedUpstream++;
+        return false;
+      }
+      return true;
+    });
+  }
 
   // Fix 1: .currentLang → .getCurrentLang()
   if (findings.currentLang.length > 0) {
-    const files = [...new Set(findings.currentLang.map(f => f.file))];
+    const files = filterFiles([...new Set(findings.currentLang.map(f => f.file))]);
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
@@ -306,7 +355,7 @@ function applyRegexFixes(findings) {
 
   // Fix 2: TranslateModule.forRoot(...) → provideTranslateService(...)
   if (findings.translateModuleForRoot.length > 0) {
-    const files = [...new Set(findings.translateModuleForRoot.map(f => f.file))];
+    const files = filterFiles([...new Set(findings.translateModuleForRoot.map(f => f.file))]);
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
@@ -340,7 +389,7 @@ function applyRegexFixes(findings) {
 
   // Fix 3: TranslateModule.forChild() → remove
   if (findings.translateModuleForChild.length > 0) {
-    const files = [...new Set(findings.translateModuleForChild.map(f => f.file))];
+    const files = filterFiles([...new Set(findings.translateModuleForChild.map(f => f.file))]);
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
@@ -356,7 +405,7 @@ function applyRegexFixes(findings) {
 
   // Fix 4: bare TranslateModule → TranslatePipe in module/TestBed arrays
   if (findings.translateModuleImport.length > 0) {
-    const files = [...new Set(findings.translateModuleImport.map(f => f.file))];
+    const files = filterFiles([...new Set(findings.translateModuleImport.map(f => f.file))]);
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
@@ -376,7 +425,7 @@ function applyRegexFixes(findings) {
 
   // Fix 5: <el translate>key</el> → {{ 'key' | translate }}
   if (findings.elementTextAsKey.length > 0) {
-    const files = [...new Set(findings.elementTextAsKey.map(f => f.file))];
+    const files = filterFiles([...new Set(findings.elementTextAsKey.map(f => f.file))]);
     for (const file of files) {
       let content = fs.readFileSync(file, 'utf-8');
       const before = content;
@@ -399,7 +448,14 @@ function applyRegexFixes(findings) {
 
   console.log();
   log.success(`Total: ${fixedFiles.size} file(s) modified.`);
+  if (skippedUpstream > 0) {
+    log.info(`Skipped ${skippedUpstream} file(s) already migrated by upstream.`);
+  }
   if (fixedFiles.size > 0) {
+    // Deduplicate import lines in all modified files
+    for (const file of fixedFiles) {
+      deduplicateImportLines(file);
+    }
     log.warning('Manual review needed: getCurrentLang() can return undefined in v18 — add ?? fallback where needed.');
     validateFixedFiles(fixedFiles);
   }
@@ -567,16 +623,44 @@ function removeUnusedTsImport(content, symbol, from) {
   return content.replace(importLineRegex, `$1 ${cleaned.trim()} $3`);
 }
 
+function deduplicateImportLines(file) {
+  let content = fs.readFileSync(file, 'utf-8');
+  const lines = content.split('\n');
+  const seenImports = new Set();
+  const deduped = [];
+  let changed = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^import\s+\{/.test(trimmed)) {
+      if (seenImports.has(trimmed)) {
+        changed = true;
+        continue;
+      }
+      seenImports.add(trimmed);
+    }
+    deduped.push(line);
+  }
+
+  if (changed) {
+    fs.writeFileSync(file, deduped.join('\n'), 'utf-8');
+  }
+}
+
 function ensureImport(content, symbol, from) {
   const importRegex = new RegExp(`from\\s+['"]${from.replace(/\//g, '\\/')}['"]`);
   if (!importRegex.test(content)) return content;
 
-  const symbolRegex = new RegExp(`\\b${symbol}\\b`);
-  const importLineRegex = new RegExp(`(import\\s*\\{)([^}]*)(}\\s*from\\s*['"]${from.replace(/\//g, '\\/')}['"])`);
-
-  if (symbolRegex.test(content.match(importLineRegex)?.[2] || '')) {
-    return content; // already imported
+  // Check if symbol is already imported from this module (any import line)
+  const allImportsRegex = new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*['"]${from.replace(/\//g, '\\/')}['"]`, 'g');
+  let m;
+  while ((m = allImportsRegex.exec(content)) !== null) {
+    if (new RegExp(`\\b${symbol}\\b`).test(m[1])) {
+      return content; // already imported
+    }
   }
+
+  const importLineRegex = new RegExp(`(import\\s*\\{)([^}]*)(}\\s*from\\s*['"]${from.replace(/\//g, '\\/')}['"])`);
 
   return content.replace(importLineRegex, (match, start, symbols, end) => {
     const trimmed = symbols.trim().replace(/,\s*$/, '');

@@ -25,7 +25,7 @@ code pwa-migration.code-workspace
 
 **That's it.** Now ask Copilot:
 
-> "Migrate my custom PWA from 10.0 to the latest version"
+> "Please migrate my custom PWA from the current version to the latest version. Please use https://github.com/intershop/intershop-pwa as public source."
 
 Copilot will guide you through the entire process — assessing complexity, creating branches, resolving conflicts, and verifying the build.
 

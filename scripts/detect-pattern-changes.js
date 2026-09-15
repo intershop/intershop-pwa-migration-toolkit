@@ -17,7 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { findFiles } = require('./_utils');
 
 // Configuration
 const INTERSHOP_REPO = 'https://raw.githubusercontent.com/intershop/intershop-pwa';
@@ -242,20 +242,13 @@ function scanCodebase(patterns, comprehensive = false, cwd = process.cwd()) {
   
   for (const pattern of patterns) {
     try {
-      // Build grep command
-      const grepCmd = `grep -r -n -E "${pattern.searchRegex}" ${scannedDirs.join(' ')} 2>/dev/null || true`;
-      const output = execSync(grepCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, cwd });
-      
-      if (output.trim()) {
-        const matches = output.trim().split('\n').map(line => {
-          const [filePath, lineNum, ...contentParts] = line.split(':');
-          return {
-            file: filePath.trim(),
-            line: parseInt(lineNum),
-            content: contentParts.join(':').trim()
-          };
-        });
+      const searchRegex = new RegExp(pattern.searchRegex);
+      const matches = scannedDirs.flatMap(dir => findFiles(path.join(cwd, dir), /./))
+        .flatMap(file => fs.readFileSync(file, 'utf8').split('\n').flatMap((content, index) =>
+          searchRegex.test(content) ? [{ file: path.relative(cwd, file), line: index + 1, content: content.trim() }] : []
+        ));
         
+      if (matches.length > 0) {
         results.push({
           pattern,
           matchCount: matches.length,
@@ -264,8 +257,8 @@ function scanCodebase(patterns, comprehensive = false, cwd = process.cwd()) {
         
         console.log(`${colors.yellow}⚠  Found ${matches.length} occurrence(s) of: ${pattern.description}${colors.reset}`);
       }
-    } catch (error) {
-      // Grep errors are expected when no matches found
+    } catch {
+      // Skip unreadable files and invalid migration patterns.
     }
   }
   

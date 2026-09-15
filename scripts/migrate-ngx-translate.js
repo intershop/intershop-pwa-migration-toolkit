@@ -18,7 +18,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 const { log, findFiles, grepFiles, findMatchingBracket, findPropertyArray, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
@@ -64,12 +64,12 @@ const PATTERNS = {
 function isAlreadyMigratedByUpstream(filePath) {
   if (!upstreamTag && !customOnly) return false;
 
-  const relPath = path.relative(projectDir, filePath);
+  const relPath = path.relative(projectDir, filePath).split(path.sep).join('/');
   const tag = upstreamTag || detectUpstreamTag();
   if (!tag) return false;
 
   try {
-    const upstreamContent = execSync(`git show "${tag}:${relPath}" 2>/dev/null`, { encoding: 'utf-8', cwd: projectDir });
+    const upstreamContent = execFileSync('git', ['show', `${tag}:${relPath}`], { encoding: 'utf-8', cwd: projectDir });
     const currentContent = fs.readFileSync(filePath, 'utf-8');
     return currentContent === upstreamContent;
   } catch {
@@ -83,7 +83,7 @@ function detectUpstreamTag() {
   try {
     const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf-8'));
     const version = pkg.version;
-    const tagExists = execSync(`git rev-parse "${version}" 2>/dev/null`, { encoding: 'utf-8', cwd: projectDir }).trim();
+    const tagExists = execFileSync('git', ['rev-parse', version], { encoding: 'utf-8', cwd: projectDir }).trim();
     _detectedUpstreamTag = tagExists ? version : null;
   } catch {
     _detectedUpstreamTag = null;
@@ -231,7 +231,7 @@ function openInVSCode(files) {
   const sorted = [...files].sort();
   try {
     for (const file of sorted) {
-      execSync(`code "${file}"`, { stdio: 'ignore' });
+      execFileSync('code', [file], { stdio: 'ignore' });
     }
     log.info(`Opened ${sorted.length} file(s) in VS Code.`);
   } catch {

@@ -21,7 +21,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 const { log, findFiles, findMatchingBracket, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
@@ -329,7 +329,7 @@ function applyViaAngularSchematic() {
   try {
     const cmd = 'npx ng generate @angular/core:explicit-standalone-flag';
     log.info(`Executing: ${chalk.cyan(cmd)}`);
-    const output = execSync(cmd, { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
+    const output = execFileSync('npx', ['ng', 'generate', '@angular/core:explicit-standalone-flag'], { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
 
     // Parse output for modified files
     const lines = output.split('\n');
@@ -369,7 +369,7 @@ function printModifiedFiles(files) {
 function openInVSCode(files) {
   try {
     for (const file of [...files].sort()) {
-      execSync(`code "${file}"`, { stdio: 'ignore' });
+      execFileSync('code', [file], { stdio: 'ignore' });
     }
     log.info(`Opened ${files.size} file(s) in VS Code.`);
   } catch {

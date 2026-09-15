@@ -14,7 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { findFiles } = require('./_utils');
 
 // Font Awesome to Bootstrap Icons mapping
 // https://icons.getbootstrap.com/
@@ -148,26 +148,9 @@ class IconMigrator {
   }
 
   async detectIcons() {
-    // Scan HTML files
-    const htmlFiles = execSync('find src -name "*.html" -type f 2>/dev/null || true')
-      .toString()
-      .trim()
-      .split('\n')
-      .filter(Boolean);
-
-    // Scan TypeScript files (for dynamic class assignments)
-    const tsFiles = execSync('find src -name "*.ts" -type f 2>/dev/null || true')
-      .toString()
-      .trim()
-      .split('\n')
-      .filter(Boolean);
-
-    // Scan SCSS files (for icon CSS)
-    const scssFiles = execSync('find src -name "*.scss" -type f 2>/dev/null || true')
-      .toString()
-      .trim()
-      .split('\n')
-      .filter(Boolean);
+    const htmlFiles = findFiles('src', /\.html$/);
+    const tsFiles = findFiles('src', /\.ts$/);
+    const scssFiles = findFiles('src', /\.scss$/);
 
     this.files = [...htmlFiles, ...tsFiles, ...scssFiles];
 

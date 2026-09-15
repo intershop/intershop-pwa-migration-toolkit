@@ -4,6 +4,10 @@ This workspace helps migrate Intershop PWA customizations between versions.
 In the multi-root workspace, "Custom PWA" is the target project and "Migration Toolkit" provides the tools.
 The env var `PWA_PROJECT_DIR` points to the custom project. Most scripts accept `--project-dir` to override it.
 
+## Terminal and Path Compatibility
+
+Use only relative project paths such as `--project-dir ../custom-pwa`; never write user-, drive-, or machine-specific absolute paths into workspace files or documentation. Prefer `node scripts/<script>.js` as the portable invocation; retain existing `./scripts/<script>.js` guidance for compatible Unix shells. Windows support is additional to Linux, macOS, WSL, and Git Bash. Do not propose Bash-only commands to Windows users without an equivalent PowerShell or CMD command.
+
 ## Workflow
 
 1. Detect source/target versions from `package.json` in the custom project

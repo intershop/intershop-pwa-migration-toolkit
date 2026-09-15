@@ -1,5 +1,7 @@
 # PWA Migration Toolkit - Quick Start
 
+> **Portable terminal rule:** Keep the toolkit and PWA in sibling folders and use relative paths such as `../custom-pwa`. Windows support is additional to Linux, macOS, WSL, and Git Bash. `node scripts/<script>.js` works in PowerShell, `cmd.exe`, Git Bash, and the VS Code terminal.
+
 ## Choose Your Deployment Mode
 
 | Mode | Best For | Separation | Updates |
@@ -17,12 +19,13 @@ Copilot instructions and skills apply automatically across both roots.
 ### Step 1: Clone the Toolkit Alongside Your PWA
 
 ```bash
-# Example layout (adapt paths to your setup):
-#   /home/training/developer/pwa/               ← your custom PWA
-#   /home/training/developer/pwa-migration-toolkit/  ← this toolkit
+# Example layout (adapt the relative path to your setup):
+#   workspace/
+#     custom-pwa/                 ← your custom PWA
+#     pwa-migration-toolkit/      ← this toolkit
 
-# Clone the toolkit (keep it permanently)
-cd /home/training/developer
+# Clone the toolkit alongside the custom PWA (keep it permanently)
+cd workspace
 git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
 
 # Install dependencies (one-time)
@@ -83,21 +86,20 @@ Or: File → Open Workspace from File → select `pwa-migration.code-workspace`
 
 Scripts automatically detect the PWA project via one of these (checked in order):
 
-1. `--project-dir /path/to/your/pwa` argument
+1. `--project-dir <relative-path-to-your-pwa>` argument
 2. `PWA_PROJECT_DIR` environment variable
 3. Current working directory (if you `cd` into the PWA first)
 
 ```bash
-# Option A: Pass the project dir explicitly
-node scripts/analyze-migration.js --project-dir /home/training/developer/pwa/developer-pwa 4.0.0 10.0.0
+# Option A: Pass the project dir explicitly (relative to the toolkit folder)
+node scripts/analyze-migration.js --project-dir ../custom-pwa 4.0.0 10.0.0
 
-# Option B: Set the env var once (add to your shell profile, or let the workspace file handle it)
-export PWA_PROJECT_DIR="/home/training/developer/pwa/developer-pwa"
+# Option B: Let the workspace file set PWA_PROJECT_DIR automatically
 node scripts/validate-theme-completeness.js
 
-# Option C: cd into the PWA and run from there (legacy behavior, still works)
-cd /home/training/developer/pwa/developer-pwa
-/home/training/developer/thomas/pwa-migration-toolkit/scripts/check-template-syntax.js
+# Option C: Run a script from the PWA with a relative toolkit path
+cd ../custom-pwa
+node ../pwa-migration-toolkit/scripts/check-template-syntax.js
 ```
 
 ### That's It!
@@ -116,26 +118,26 @@ For one-off migrations where you don't need to keep the toolkit updated.
 ### Step 1: Copy Toolkit Files to Your Custom PWA
 
 ```bash
-# Navigate to YOUR custom PWA project
-cd /path/to/your-custom-pwa-project
+# Navigate to YOUR custom PWA project from its parent directory
+cd custom-pwa
 
 # Clone this toolkit temporarily
-git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tmp/toolkit
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git .toolkit-tmp
 
 # Copy all toolkit files to your project
 mkdir -p .github/instructions .github/skills scripts data docs/guides
-cp /tmp/toolkit/.github/instructions/* .github/instructions/
-cp /tmp/toolkit/.github/skills/* .github/skills/
-cp /tmp/toolkit/scripts/* scripts/
-cp /tmp/toolkit/data/* data/
-cp /tmp/toolkit/docs/guides/* docs/guides/
+cp .toolkit-tmp/.github/instructions/* .github/instructions/
+cp .toolkit-tmp/.github/skills/* .github/skills/
+cp .toolkit-tmp/scripts/* scripts/
+cp .toolkit-tmp/data/* data/
+cp .toolkit-tmp/docs/guides/* docs/guides/
 # Scripts are cross-platform Node.js - no chmod needed
 
 # Copy the gitignore template
-cp /tmp/toolkit/.gitignore-toolkit-template .
+cp .toolkit-tmp/.gitignore-toolkit-template .
 
 # Cleanup
-rm -rf /tmp/toolkit
+rm -rf .toolkit-tmp
 ```
 
 ### Step 2: Exclude Toolkit Files from Git
@@ -251,18 +253,18 @@ When you want the latest toolkit version:
 
 ```bash
 # Pull latest toolkit
-git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tmp/toolkit
+git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git .toolkit-tmp
 
 # Copy updated files (overwrites old toolkit files)
-cp /tmp/toolkit/.github/instructions/* .github/instructions/
-cp /tmp/toolkit/.github/skills/* .github/skills/
-cp /tmp/toolkit/scripts/* scripts/
-cp /tmp/toolkit/data/* data/
-cp /tmp/toolkit/docs/guides/* docs/guides/
+cp .toolkit-tmp/.github/instructions/* .github/instructions/
+cp .toolkit-tmp/.github/skills/* .github/skills/
+cp .toolkit-tmp/scripts/* scripts/
+cp .toolkit-tmp/data/* data/
+cp .toolkit-tmp/docs/guides/* docs/guides/
 # Scripts are cross-platform Node.js - no chmod needed
 
 # Cleanup
-rm -rf /tmp/toolkit
+rm -rf .toolkit-tmp
 
 # Files are still ignored - no git changes needed!
 ```

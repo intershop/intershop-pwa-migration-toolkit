@@ -88,7 +88,7 @@ if (!sourceBranch) {
 // Auto-detect Intershop remote
 if (!intershopRemote) {
   for (const remote of ['upstream', 'intershop-pwa', 'intershop', 'origin']) {
-    const url = execSilent(`git remote get-url ${remote} 2>/dev/null`);
+    const url = execSilent(`git remote get-url ${remote}`);
     if (url && url.includes('intershop/intershop-pwa')) {
       intershopRemote = remote;
       break;
@@ -105,7 +105,7 @@ if (!intershopRemote) {
 // Resolve target
 if (targetTag) {
   for (const prefix of ['', 'tags/', `${intershopRemote}/`]) {
-    if (execSilent(`git rev-parse "${prefix}${targetTag}" 2>/dev/null`)) {
+    if (execSilent(`git rev-parse "${prefix}${targetTag}"`)) {
       targetBranch = `${prefix}${targetTag}`;
       break;
     }
@@ -131,7 +131,7 @@ if (!outputJson) {
 }
 
 // Find the common ancestor (where project forked from standard PWA)
-const mergeBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}" 2>/dev/null`);
+const mergeBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}"`);
 if (!mergeBase) {
   log.error('Could not find merge base between source and target.');
   log.info('Ensure both branches share a common history (Intershop PWA base).');
@@ -145,14 +145,14 @@ if (!outputJson) {
 }
 
 // 1. Files changed by the PROJECT (source vs merge-base) = customizations
-const projectChangesRaw = execSilent(`git diff --name-status "${mergeBase}" "${sourceBranch}" 2>/dev/null`);
+const projectChangesRaw = execSilent(`git diff --name-status "${mergeBase}" "${sourceBranch}"`);
 const projectChanges = projectChangesRaw ? projectChangesRaw.split('\n').filter(Boolean).map(line => {
   const [status, ...fileParts] = line.split('\t');
   return { status: status[0], file: fileParts[fileParts.length - 1] };
 }) : [];
 
 // 2. Files changed UPSTREAM (merge-base vs target) = what the new version brings
-const upstreamChangesRaw = execSilent(`git diff --name-status "${mergeBase}" "${targetBranch}" 2>/dev/null`);
+const upstreamChangesRaw = execSilent(`git diff --name-status "${mergeBase}" "${targetBranch}"`);
 const upstreamChanges = upstreamChangesRaw ? upstreamChangesRaw.split('\n').filter(Boolean).map(line => {
   const [status, ...fileParts] = line.split('\t');
   return { status: status[0], file: fileParts[fileParts.length - 1] };
@@ -163,8 +163,8 @@ const projectFileMap = new Map(projectChanges.map(c => [c.file, c.status]));
 const upstreamFileMap = new Map(upstreamChanges.map(c => [c.file, c.status]));
 
 // 3. Files that exist in source but not in standard (project added them)
-const allSourceFiles = execSilent(`git ls-tree -r --name-only "${sourceBranch}" 2>/dev/null`);
-const allTargetFiles = execSilent(`git ls-tree -r --name-only "${targetBranch}" 2>/dev/null`);
+const allSourceFiles = execSilent(`git ls-tree -r --name-only "${sourceBranch}"`);
+const allTargetFiles = execSilent(`git ls-tree -r --name-only "${targetBranch}"`);
 const targetFileSet = new Set(allTargetFiles ? allTargetFiles.split('\n').filter(Boolean) : []);
 
 // ─── Categorize ─────────────────────────────────────────────────────────────

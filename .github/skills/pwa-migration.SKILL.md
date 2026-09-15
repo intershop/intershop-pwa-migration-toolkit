@@ -11,6 +11,10 @@ description: |
 
 # Intershop PWA Migration Expert Skill
 
+## Terminal and Path Rules
+
+Use relative paths such as `../custom-pwa` for all project references. Prefer `node scripts/<script>.js`, which works in PowerShell, CMD, Git Bash, and VS Code terminals; retain `./scripts/<script>.js` for compatible Unix shells. Windows support is additional to Linux, macOS, WSL, and Git Bash. For manual inspection, prefer an existing toolkit script over Bash-only commands such as `grep`, `find`, `sed`, or `rm -rf` when assisting Windows users.
+
 ## When to Invoke This Skill
 
 **Use this skill for:**

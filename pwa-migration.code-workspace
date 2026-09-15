@@ -14,13 +14,13 @@
       "**/node_modules": true
     },
     "terminal.integrated.env.linux": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
     },
     "terminal.integrated.env.osx": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
     },
     "terminal.integrated.env.windows": {
-      "PWA_PROJECT_DIR": "/home/training/developer/pwa/developer-pwa"
+      "PWA_PROJECT_DIR": "${workspaceFolder:Custom PWA}"
     }
   }
 }

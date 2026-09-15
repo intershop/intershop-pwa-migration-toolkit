@@ -7,11 +7,10 @@
  * After that, just open the workspace and ask Copilot to help you migrate.
  *
  * Usage:
- *   node setup.js /path/to/your/custom-pwa
+ *   node setup.js ../custom-pwa
  *
  * Example:
- *   node setup.js /home/training/developer/pwa/developer-pwa
- *   node setup.js ../pwa/developer-pwa
+ *   node setup.js ../custom-pwa
  */
 
 const fs = require('fs');
@@ -77,9 +76,9 @@ async function main() {
     ],
     settings: {
       'files.exclude': { '**/node_modules': true },
-      'terminal.integrated.env.linux': { PWA_PROJECT_DIR: pwaPath },
-      'terminal.integrated.env.osx': { PWA_PROJECT_DIR: pwaPath },
-      'terminal.integrated.env.windows': { PWA_PROJECT_DIR: pwaPath },
+      'terminal.integrated.env.linux': { PWA_PROJECT_DIR: '${workspaceFolder:Custom PWA}' },
+      'terminal.integrated.env.osx': { PWA_PROJECT_DIR: '${workspaceFolder:Custom PWA}' },
+      'terminal.integrated.env.windows': { PWA_PROJECT_DIR: '${workspaceFolder:Custom PWA}' },
     },
   };
 

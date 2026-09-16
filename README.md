@@ -1085,5 +1085,5 @@ Total issues documented: **13** (was 8)
 
 ---
 
-**Maintained by:** [Intershop Communications AG - Training Department]  
-**Repo:** git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+**Maintained by:** [Intershop Communications AG]  
+**Repo:** [https://github.com/intershop/intershop-pwa-migration-toolkit]

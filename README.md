@@ -2,6 +2,9 @@
 
 **Give GitHub Copilot the knowledge to guide you through an Intershop PWA migration.**
 
+> [!CAUTION]
+> PLease notice that this project is currently in its Beta phase. You would use it at your own risk. Intershop cannot be held responsible for any unwanted behavior or outcome.
+
 You don't need to read or understand all the files in this toolkit — just open the workspace and ask Copilot to help you migrate. The instructions, scripts, and patterns are here so the AI knows what to do on your behalf.
 
 ## 🚀 Setup (2 minutes)

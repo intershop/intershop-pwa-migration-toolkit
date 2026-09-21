@@ -52,6 +52,8 @@ Keep the toolkit and custom PWA in sibling folders and use relative paths, for e
 
 Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows remain supported. `node scripts/<script>.js` is the portable invocation for PowerShell, `cmd.exe`, Git Bash, and VS Code terminals; direct execution (`./scripts/...`) remains available in shells that support it. Use shell-specific commands such as `grep`, `find`, `sed`, and `rm -rf` only in compatible shells, or provide an equivalent for PowerShell and CMD.
 
+> Real-world validation note: the migration workflow has been exercised successfully in a Windows + Git Bash environment. The toolkit is designed for that setup, but custom PWA migrations may still require project-specific follow-ups such as Angular 19 metadata fixes, `ngx-translate` adjustments, or cleanup of generated artifacts after upstream changes.
+
 ---
 
 ## 🆕 Recent Updates (July 2026)

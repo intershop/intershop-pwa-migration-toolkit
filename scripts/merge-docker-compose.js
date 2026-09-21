@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
-const { log, execSilent, chalk } = require('./_utils');
+const { log, execFileSilent, execSilent, chalk } = require('./_utils');
 
 // Parse arguments
 let autoMode = false;
@@ -44,7 +44,7 @@ OPTIONS:
 log.header('🐳 Docker Compose Merge Tool');
 
 // Check merge conflict state
-const inConflict = !!execSilent('git status 2>/dev/null').match(/both modified.*docker-compose\.yml/);
+const inConflict = !!execFileSilent('git', ['status']).match(/both modified.*docker-compose\.yml/);
 if (inConflict) {
   log.section('Detected Merge Conflict');
 } else {
@@ -67,8 +67,8 @@ let oursContent, theirsContent;
 
 if (inConflict) {
   log.section('Extracting Conflict Versions');
-  const theirs = execSilent('git show :2:docker-compose.yml 2>/dev/null');
-  const ours = execSilent('git show :3:docker-compose.yml 2>/dev/null');
+  const theirs = execFileSilent('git', ['show', ':2:docker-compose.yml']);
+  const ours = execFileSilent('git', ['show', ':3:docker-compose.yml']);
   theirsContent = theirs || '';
   oursContent = ours || '';
   if (!theirs) log.warning("Could not extract 'theirs' version (new PWA)");

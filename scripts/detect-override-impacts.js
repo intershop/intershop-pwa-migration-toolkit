@@ -25,7 +25,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { log, execSilent, chalk } = require('./_utils');
+const { log, execFileSilent, execSilent, chalk } = require('./_utils');
 const { projectDir } = require('./_project-dir');
 
 // Parse arguments
@@ -83,7 +83,7 @@ function getChangedFiles() {
     files = fs.readFileSync(changedFilesPath, 'utf-8').split('\n').filter(Boolean);
   } else if (sourceRef && targetRef) {
     // From git diff
-    const diff = execSilent(`git diff --name-only "${sourceRef}" "${targetRef}" 2>/dev/null`, projectDir);
+    const diff = execFileSilent('git', ['diff', '--name-only', sourceRef, targetRef], projectDir);
     if (!diff) {
       log.error(`Could not get diff between ${sourceRef} and ${targetRef}`);
       log.info('Make sure the refs exist. Try: git fetch --tags');

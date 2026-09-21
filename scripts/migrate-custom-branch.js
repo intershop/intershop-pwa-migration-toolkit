@@ -223,7 +223,7 @@ function detectIntershopRemote() {
   if (intershopRemote) return true;
   log.info('Auto-detecting Intershop PWA remote...');
   for (const remote of ['upstream', 'intershop-pwa', 'intershop', 'origin']) {
-    const url = execSilent(`git remote get-url ${remote} 2>/dev/null`);
+    const url = execSilent(`git remote get-url ${remote}`);
     if (url && url.includes('intershop/intershop-pwa')) {
       intershopRemote = remote;
       log.success(`Detected Intershop PWA remote: ${intershopRemote}`);
@@ -243,7 +243,7 @@ function validateTarget() {
   if (targetTag) {
     log.info(`Validating tag: ${targetTag}`);
     for (const prefix of ['', 'tags/', `${intershopRemote}/`]) {
-      if (execSilent(`git rev-parse "${prefix}${targetTag}" 2>/dev/null`)) {
+      if (execSilent(`git rev-parse "${prefix}${targetTag}"`)) {
         targetBranch = `${prefix}${targetTag}`;
         log.success(`Found tag: ${targetBranch}`);
         return true;
@@ -262,7 +262,7 @@ function validateTarget() {
     return false;
   }
 
-  if (!execSilent(`git rev-parse --verify "${targetBranch}" 2>/dev/null`)) {
+  if (!execSilent(`git rev-parse --verify "${targetBranch}"`)) {
     log.error(`Target branch '${targetBranch}' does not exist`);
     console.log();
     console.log('Available branches:');
@@ -283,7 +283,7 @@ log.info(`Fetching from ${intershopRemote}...`);
 exec(`git fetch "${intershopRemote}" --tags`, { silent: true });
 
 // Validate branches
-if (!execSilent(`git rev-parse --verify "${sourceBranch}" 2>/dev/null`)) {
+if (!execSilent(`git rev-parse --verify "${sourceBranch}"`)) {
   log.error(`Source branch '${sourceBranch}' does not exist`);
   process.exit(1);
 }
@@ -337,7 +337,7 @@ if (dryRun) {
 // Step 1: Create migration branch
 log.info('Step 1: Creating migration branch from target branch...');
 if (!dryRun) {
-  if (execSilent(`git rev-parse --verify "${migrationBranch}" 2>/dev/null`)) {
+  if (execSilent(`git rev-parse --verify "${migrationBranch}"`)) {
     log.warning('Migration branch already exists, deleting it...');
     exec(`git branch -D "${migrationBranch}"`, { silent: true });
   }
@@ -353,8 +353,8 @@ console.log();
 log.info('Step 2: Analyzing customization files...');
 let customFilesList = '';
 if (!dryRun) {
-  const mergeBase = execSilent(`git merge-base "${sourceBranch}" develop 2>/dev/null`);
-  customFilesList = mergeBase ? execSilent(`git diff --name-only "${sourceBranch}" ${mergeBase} 2>/dev/null`) : '';
+  const mergeBase = execSilent(`git merge-base "${sourceBranch}" develop`);
+  customFilesList = mergeBase ? execSilent(`git diff --name-only "${sourceBranch}" ${mergeBase}`) : '';
   if (!customFilesList) {
     log.warning('No customization files found');
   } else {
@@ -372,10 +372,10 @@ console.log();
 log.info('Step 2b: Detecting file renames/moves between versions...');
 if (!dryRun) {
   // Detect renames between the target (new PWA) and the merge-base of source
-  const renameBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}" 2>/dev/null`);
+  const renameBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}"`);
   if (renameBase) {
-    const renames = execSilent(`git diff --name-status --find-renames --diff-filter=R "${renameBase}" "${targetBranch}" 2>/dev/null`);
-    const deletes = execSilent(`git diff --name-status --diff-filter=D "${renameBase}" "${targetBranch}" 2>/dev/null`);
+    const renames = execSilent(`git diff --name-status --find-renames --diff-filter=R "${renameBase}" "${targetBranch}"`);
+    const deletes = execSilent(`git diff --name-status --diff-filter=D "${renameBase}" "${targetBranch}"`);
 
     const renamedFiles = renames ? renames.split('\n').filter(Boolean).map(line => {
       const parts = line.split('\t');
@@ -454,12 +454,12 @@ const customEnvironmentValues = new Map();
 if (!dryRun) {
   log.info('Pre-merge: Extracting custom values from hybrid files...');
   // Extract custom feature toggles from environment files on the source branch
-  const envFiles = execSilent(`git ls-tree -r --name-only "${sourceBranch}" -- "src/environments/" 2>/dev/null`);
+  const envFiles = execSilent(`git ls-tree -r --name-only "${sourceBranch}" -- "src/environments/"`);
   if (envFiles) {
     // Get upstream environment files for comparison
     for (const envFile of envFiles.split('\n').filter(Boolean)) {
-      const customContent = execSilent(`git show "${sourceBranch}:${envFile}" 2>/dev/null`);
-      const upstreamContent = execSilent(`git show "${targetBranch}:${envFile}" 2>/dev/null`);
+      const customContent = execSilent(`git show "${sourceBranch}:${envFile}"`);
+      const upstreamContent = execSilent(`git show "${targetBranch}:${envFile}"`);
       if (!customContent) continue;
 
       // Extract features array values from custom branch
@@ -695,7 +695,7 @@ if (!dryRun && customFeatureToggles.size > 0) {
 
 // Post-merge: Auto-resolve "always-upstream" conflict files
 if (!dryRun) {
-  const stillConflicted = execSilent('git diff --name-only --diff-filter=U 2>/dev/null');
+  const stillConflicted = execSilent('git diff --name-only --diff-filter=U');
   if (stillConflicted) {
     const conflictFiles = stillConflicted.split('\n').filter(Boolean);
     const autoUpstream = conflictFiles.filter(f => ALWAYS_UPSTREAM_FILES.includes(path.basename(f)));
@@ -734,7 +734,7 @@ if (!dryRun) {
     let restored = 0;
     const restoredFiles = [];
     for (const file of filesToCheck) {
-      const upstreamContent = execSilent(`git show "${upstreamRef}:${file}" 2>/dev/null`);
+      const upstreamContent = execSilent(`git show "${upstreamRef}:${file}"`);
       if (upstreamContent === null) continue;
       try {
         const currentContent = fs.readFileSync(file, 'utf-8');
@@ -843,7 +843,7 @@ const reportDate = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const reportFile = `MIGRATION_REPORT_${reportDate}.md`;
 
 if (!dryRun) {
-  const changedFiles = execSilent(`git diff --name-only "${targetBranch}" "${migrationBranch}" 2>/dev/null`) || 'Could not determine changed files';
+  const changedFiles = execSilent(`git diff --name-only "${targetBranch}" "${migrationBranch}"`) || 'Could not determine changed files';
   const report = `# Migration Report
 
 **Date:** ${new Date().toISOString().slice(0, 19).replace('T', ' ')}

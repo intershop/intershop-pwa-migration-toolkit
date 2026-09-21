@@ -8,7 +8,7 @@
  *   const { log, exec, compareVersions, findFiles } = require('./_utils');
  */
 
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
@@ -68,6 +68,21 @@ function exec(command, options = {}) {
 function execSilent(command, cwd) {
   try {
     return execSync(command, { encoding: 'utf-8', stdio: 'pipe', cwd }).trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Execute an executable with arguments, without invoking a shell.
+ * @param {string} file
+ * @param {string[]} [args]
+ * @param {string} [cwd]
+ * @returns {string}
+ */
+function execFileSilent(file, args = [], cwd) {
+  try {
+    return execFileSync(file, args, { encoding: 'utf-8', stdio: 'pipe', cwd }).trim();
   } catch {
     return '';
   }
@@ -267,6 +282,7 @@ module.exports = {
   log,
   exec,
   execSilent,
+  execFileSilent,
   parseVersion,
   compareVersions,
   findFiles,

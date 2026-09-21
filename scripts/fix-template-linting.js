@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { findFiles } = require('./_utils');
 
 // Colors
 const RED = '\x1b[31m';
@@ -87,12 +88,7 @@ class TemplateLintingFixer {
    */
   getTemplateFiles() {
     try {
-      // Find all HTML template files including themed variants
-      // Pattern matches: *.html (includes .component.html, .component.b2c.html, etc.)
-      const output = execSync('find src -name "*.html" -type f', {
-        encoding: 'utf8'
-      });
-      return output.trim().split('\n').filter(f => f);
+      return findFiles('src', /\.html$/);
     } catch (err) {
       this.printError('Failed to find template files');
       return [];

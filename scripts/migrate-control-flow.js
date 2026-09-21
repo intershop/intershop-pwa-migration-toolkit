@@ -22,7 +22,7 @@ console.log(chalk.cyan('━━━━━━━━━━━━━━━━━━�
 console.log();
 
 // Check Angular CLI
-if (!execSilent('ng version 2>/dev/null')) {
+if (!execSilent('ng version')) {
   log.error('Angular CLI not found');
   console.log(chalk.yellow('Install it with: npm install -g @angular/cli'));
   process.exit(1);

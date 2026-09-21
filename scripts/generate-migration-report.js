@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { projectDir } = require('./_project-dir');
-const { log, exec, execSilent, findFiles, chalk } = require('./_utils');
+const { log, exec, execFileSilent, execSilent, findFiles, chalk } = require('./_utils');
 
 process.chdir(projectDir);
 
@@ -98,18 +98,20 @@ try {
 } catch {}
 
 // Branch info
-const branchCreated = execSilent(`git log --reverse --format="%ci" "${migrationBranch}" 2>/dev/null | head -1`);
-const lastCommit = execSilent('git log -1 --format="%ci" 2>/dev/null');
+const branchCreated = execFileSilent('git', ['log', '--reverse', '--format=%ci', migrationBranch], projectDir).split('\n')[0];
+const lastCommit = execFileSilent('git', ['log', '-1', '--format=%ci'], projectDir);
 
 // Determine base branch
-const baseBranch = execSilent('git show-ref --verify --quiet refs/heads/develop 2>/dev/null && echo develop') ||
-                   execSilent('git show-ref --verify --quiet refs/heads/main 2>/dev/null && echo main') || '';
+const baseBranch = execFileSilent('git', ['show-ref', '--verify', '--quiet', 'refs/heads/develop'], projectDir) === '' &&
+  execFileSilent('git', ['rev-parse', '--verify', 'develop'], projectDir) ? 'develop' :
+  (execFileSilent('git', ['rev-parse', '--verify', 'main'], projectDir) ? 'main' : '');
 
 let filesChanged = 'N/A', commits = 'N/A', diffStat = '';
 if (baseBranch) {
-  filesChanged = execSilent(`git diff --stat "${baseBranch}...${migrationBranch}" 2>/dev/null | tail -1 | awk '{print $1}'`) || 'N/A';
-  commits = execSilent(`git log --oneline "${baseBranch}..${migrationBranch}" 2>/dev/null | wc -l`).trim() || 'N/A';
-  diffStat = execSilent(`git diff --stat "${baseBranch}...${migrationBranch}" 2>/dev/null | head -20`) || 'Unable to determine file changes';
+  const statLines = execFileSilent('git', ['diff', '--stat', `${baseBranch}...${migrationBranch}`], projectDir).split('\n').filter(Boolean);
+  filesChanged = statLines.at(-1)?.match(/^\s*(\d+)/)?.[1] || 'N/A';
+  commits = String(execFileSilent('git', ['log', '--oneline', `${baseBranch}..${migrationBranch}`], projectDir).split('\n').filter(Boolean).length);
+  diffStat = statLines.slice(0, 20).join('\n') || 'Unable to determine file changes';
 }
 
 // Pattern detection

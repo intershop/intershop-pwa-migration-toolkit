@@ -23,7 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const { projectDir } = require('./_project-dir');
-const { log, execSilent, parseVersion, findFiles, chalk, askYesNo } = require('./_utils');
+const { log, execFileSilent, execSilent, parseVersion, findFiles, chalk, askYesNo } = require('./_utils');
 
 process.chdir(projectDir);
 
@@ -57,9 +57,11 @@ if (!sourceVersion) {
   const match = (branch || '').match(/\d+\.\d+\.\d+/);
   if (match) sourceVersion = match[0];
   if (!sourceVersion) {
-    const pkg = execSilent('grep \'"version"\' package.json', projectDir);
-    const pkgMatch = (pkg || '').match(/\d+\.\d+\.\d+/);
-    if (pkgMatch) sourceVersion = pkgMatch[0];
+    try {
+      sourceVersion = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf-8')).version || '';
+    } catch {
+      sourceVersion = '';
+    }
   }
 }
 
@@ -96,9 +98,10 @@ function countCustomComponents() {
 }
 
 function countModifiedFiles() {
-  const base = execSilent('git rev-parse --verify develop 2>/dev/null && echo develop || (git rev-parse --verify main 2>/dev/null && echo main)');
+  const base = execFileSilent('git', ['rev-parse', '--verify', 'develop'], projectDir) ? 'develop' :
+    (execFileSilent('git', ['rev-parse', '--verify', 'main'], projectDir) ? 'main' : '');
   if (!base) return 0;
-  const modified = execSilent(`git diff --name-only ${base} -- src/ 2>/dev/null`);
+  const modified = execFileSilent('git', ['diff', '--name-only', base, '--', 'src/'], projectDir);
   return modified ? modified.split('\n').filter(Boolean).length : 0;
 }
 
@@ -113,7 +116,7 @@ function calculateCustomizationPercentage() {
 function analyzeBreakingChanges(source, target) {
   const detectScript = path.join(__dirname, 'detect-pattern-changes.js');
   if (!fs.existsSync(detectScript)) return null;
-  const output = execSilent(`node "${detectScript}" "${source}" "${target}" 2>/dev/null`);
+  const output = execSilent(`node "${detectScript}" "${source}" "${target}"`);
   if (!output) return null;
   return (output.match(/Severity:/g) || []).length;
 }

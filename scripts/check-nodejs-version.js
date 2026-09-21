@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const { projectDir } = require('./_project-dir');
-const { log, exec, execSilent, parseVersion, chalk } = require('./_utils');
+const { log, exec, execFileSilent, execSilent, parseVersion, chalk } = require('./_utils');
 
 // Parse arguments
 const args = process.argv.slice(2).filter(a => a !== '--project-dir' && !process.argv[process.argv.indexOf('--project-dir') + 1]?.includes(a));
@@ -111,7 +111,9 @@ console.log(chalk.bold('Recommended Actions:'));
 console.log();
 
 // Check if nvm is available
-const nvmAvailable = !!process.env.NVM_DIR || fs.existsSync(path.join(process.env.HOME || '', '.nvm', 'nvm.sh'));
+const isWindows = process.platform === 'win32';
+const nvmAvailable = isWindows ? !!execFileSilent('nvm', ['version']) :
+  (!!process.env.NVM_DIR || fs.existsSync(path.join(process.env.HOME || '', '.nvm', 'nvm.sh')));
 
 if (nvmAvailable) {
   console.log(chalk.cyan('Option 1: Update automatically (recommended)'));
@@ -126,6 +128,19 @@ if (nvmAvailable) {
   if (autoUpdate) {
     console.log(chalk.blue('🔄 Auto-update enabled. Updating Node.js...'));
     console.log();
+
+    if (isWindows) {
+      const installResult = exec(`nvm install ${requiredNode}`, { silent: true });
+      const useResult = installResult.success && exec(`nvm use ${requiredNode}`, { silent: true });
+      if (useResult?.success) {
+        fs.writeFileSync(path.join(projectDir, '.nvmrc'), requiredNode + '\n');
+        console.log(chalk.green('✓ Created/updated .nvmrc'));
+        console.log(chalk.green('✅ Update complete! Restart the terminal before running npm install.'));
+      } else {
+        log.error('Failed to update Node.js through nvm for Windows. Please update manually.');
+      }
+      process.exit(useResult?.success ? 0 : 1);
+    }
 
     // nvm must be invoked through bash since it's a shell function
     const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || '', '.nvm');
@@ -149,7 +164,11 @@ if (nvmAvailable) {
   }
 } else {
   console.log(chalk.cyan('Option 1: Install nvm (Node Version Manager)'));
-  console.log(`  ${chalk.bold('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash')}`);
+  if (isWindows) {
+    console.log(`  ${chalk.bold('Install nvm-windows from https://github.com/coreybutler/nvm-windows/releases')}`);
+  } else {
+    console.log(`  ${chalk.bold('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash')}`);
+  }
   console.log('  Then restart your terminal and run:');
   console.log(`  ${chalk.bold(`nvm install ${requiredNode}`)}`);
   console.log();

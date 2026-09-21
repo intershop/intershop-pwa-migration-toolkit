@@ -19,8 +19,8 @@ cd pwa-migration-toolkit
 # 2. Install dependencies
 npm install
 
-# 3. Run setup — point it at your custom PWA project
-node setup.js /path/to/your/custom-pwa
+# 3. Run setup — point it at your custom PWA project with a relative path
+node setup.js ../custom-pwa
 
 # 4. Open the workspace
 code pwa-migration.code-workspace
@@ -45,6 +45,14 @@ This toolkit doesn't require you to learn 25 scripts. It works like this:
 5. **You review and approve** the changes
 
 The scripts can also be run manually if you prefer — see [QUICK-START.md](QUICK-START.md) for details.
+
+## Portable Paths and Windows Terminals
+
+Keep the toolkit and custom PWA in sibling folders and use relative paths, for example `../custom-pwa`. The generated workspace resolves `PWA_PROJECT_DIR` from the `Custom PWA` workspace folder, so it contains no user-specific or drive-specific path.
+
+Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows remain supported. `node scripts/<script>.js` is the portable invocation for PowerShell, `cmd.exe`, Git Bash, and VS Code terminals; direct execution (`./scripts/...`) remains available in shells that support it. Use shell-specific commands such as `grep`, `find`, `sed`, and `rm -rf` only in compatible shells, or provide an equivalent for PowerShell and CMD.
+
+> Real-world validation note: the migration workflow has been exercised successfully in a Windows + Git Bash environment. The toolkit is designed for that setup, but custom PWA migrations may still require project-specific follow-ups such as Angular 19 metadata fixes, `ngx-translate` adjustments, or cleanup of generated artifacts after upstream changes.
 
 ---
 
@@ -320,7 +328,7 @@ User: "What does the KB say about SCSS variable renames in PWA 10?"
 ```bash
 cd pwa-migration-toolkit
 npm install
-node setup.js /path/to/your/custom-pwa
+node setup.js ../custom-pwa
 ```
 
 ### Windows
@@ -330,7 +338,7 @@ Works in **any** terminal (PowerShell, CMD, Git Bash, Windows Terminal):
 ```powershell
 cd pwa-migration-toolkit
 npm install
-node setup.js C:\path\to\your\custom-pwa
+node setup.js ..\custom-pwa
 ```
 
 No WSL or Git Bash required. All 20 scripts are pure Node.js.
@@ -550,19 +558,19 @@ npm test
 **Linux / macOS / WSL2 / Git Bash:**
 
 ```bash
-# In your custom PWA project
-cd /path/to/your-custom-pwa
+# In your custom PWA project (relative to its parent directory)
+cd custom-pwa
 
 # Clone toolkit temporarily
-git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git /tmp/toolkit
+git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git .toolkit-tmp
 
 # Copy all toolkit files
 mkdir -p .github/instructions .github/skills scripts data docs/guides
-cp /tmp/toolkit/.github/instructions/* .github/instructions/
-cp /tmp/toolkit/.github/skills/* .github/skills/
-cp /tmp/toolkit/scripts/* scripts/
-cp /tmp/toolkit/data/* data/
-cp /tmp/toolkit/docs/guides/* docs/guides/
+cp .toolkit-tmp/.github/instructions/* .github/instructions/
+cp .toolkit-tmp/.github/skills/* .github/skills/
+cp .toolkit-tmp/scripts/* scripts/
+cp .toolkit-tmp/data/* data/
+cp .toolkit-tmp/docs/guides/* docs/guides/
 # No chmod needed - use: node scripts/<name>.js
 
 # IMPORTANT: Add toolkit files to .gitignore to keep them out of your repo
@@ -589,31 +597,31 @@ docs/guides/customization-*.md
 EOF
 
 # OR use the pre-made template:
-# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+# cat .toolkit-tmp/.gitignore-toolkit-template >> .gitignore
 
 # Verify toolkit files won't be committed
 git status --ignored | grep -E "(scripts|\.github|data/pattern)"
 
 # Cleanup
-rm -rf /tmp/toolkit
+rm -rf .toolkit-tmp
 ```
 
 **Windows PowerShell (alternative):**
 
 ```powershell
-# In your custom PWA project
-cd C:\path\to\your-custom-pwa
+# In your custom PWA project (relative to its parent directory)
+cd .\custom-pwa
 
 # Clone toolkit temporarily
-git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git $env:TEMP\toolkit
+git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git .toolkit-tmp
 
 # Copy all toolkit files
 New-Item -ItemType Directory -Force -Path .github\instructions, .github\skills, scripts, data, docs\guides
-Copy-Item -Path "$env:TEMP\toolkit\.github\instructions\*" -Destination .github\instructions\ -Recurse
-Copy-Item -Path "$env:TEMP\toolkit\.github\skills\*" -Destination .github\skills\ -Recurse
-Copy-Item -Path "$env:TEMP\toolkit\scripts\*" -Destination scripts\ -Recurse
-Copy-Item -Path "$env:TEMP\toolkit\data\*" -Destination data\ -Recurse
-Copy-Item -Path "$env:TEMP\toolkit\docs\guides\*" -Destination docs\guides\ -Recurse
+Copy-Item -Path .toolkit-tmp\.github\instructions\* -Destination .github\instructions\ -Recurse
+Copy-Item -Path .toolkit-tmp\.github\skills\* -Destination .github\skills\ -Recurse
+Copy-Item -Path .toolkit-tmp\scripts\* -Destination scripts\ -Recurse
+Copy-Item -Path .toolkit-tmp\data\* -Destination data\ -Recurse
+Copy-Item -Path .toolkit-tmp\docs\guides\* -Destination docs\guides\ -Recurse
 
 # IMPORTANT: Add toolkit files to .gitignore
 @"
@@ -639,10 +647,10 @@ docs/guides/customization-*.md
 "@ | Add-Content .gitignore
 
 # OR use the pre-made template:
-# Get-Content "$env:TEMP\toolkit\.gitignore-toolkit-template" | Add-Content .gitignore
+# Get-Content .toolkit-tmp\.gitignore-toolkit-template | Add-Content .gitignore
 
 # Cleanup
-Remove-Item -Recurse -Force "$env:TEMP\toolkit"
+Remove-Item -Recurse -Force .toolkit-tmp
 
 # Note: All scripts are cross-platform Node.js - no WSL or Bash required
 ```
@@ -962,15 +970,15 @@ node scripts/migrate-custom-branch.js --auto-resolve
 
 ```bash
 # In your custom PWA (pull latest toolkit)
-git clone git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git /tmp/toolkit
+git clone git@gitlab.your-company.com:pwa/pwa-migration-toolkit.git .toolkit-tmp
 
 # Copy all toolkit files
 mkdir -p .github/instructions .github/skills scripts data docs/guides
-cp /tmp/toolkit/.github/instructions/* .github/instructions/
-cp /tmp/toolkit/.github/skills/* .github/skills/
-cp /tmp/toolkit/scripts/* scripts/
-cp /tmp/toolkit/data/* data/
-cp /tmp/toolkit/docs/guides/* docs/guides/
+cp .toolkit-tmp/.github/instructions/* .github/instructions/
+cp .toolkit-tmp/.github/skills/* .github/skills/
+cp .toolkit-tmp/scripts/* scripts/
+cp .toolkit-tmp/data/* data/
+cp .toolkit-tmp/docs/guides/* docs/guides/
 # No chmod needed - use: node scripts/<name>.js
 
 # IMPORTANT: Add toolkit files to .gitignore (if not already added)
@@ -997,10 +1005,10 @@ docs/guides/customization-*.md
 EOF
 
 # OR use the pre-made template:
-# cat /tmp/toolkit/.gitignore-toolkit-template >> .gitignore
+# cat .toolkit-tmp/.gitignore-toolkit-template >> .gitignore
 
 # Cleanup
-rm -rf /tmp/toolkit
+rm -rf .toolkit-tmp
 ```
 
 ---

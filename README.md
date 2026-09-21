@@ -13,7 +13,7 @@ You don't need to read or understand all the files in this toolkit — just open
 
 ```bash
 # 1. Clone this toolkit
-git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git
+git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git
 cd pwa-migration-toolkit
 
 # 2. Install dependencies
@@ -554,7 +554,7 @@ npm test
 cd /path/to/your-custom-pwa
 
 # Clone toolkit temporarily
-git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git /tmp/toolkit
+git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git /tmp/toolkit
 
 # Copy all toolkit files
 mkdir -p .github/instructions .github/skills scripts data docs/guides
@@ -605,7 +605,7 @@ rm -rf /tmp/toolkit
 cd C:\path\to\your-custom-pwa
 
 # Clone toolkit temporarily
-git clone git@gitlab.intershop.de:IntershopTraining/trainings/pwa-migration-toolkit.git $env:TEMP\toolkit
+git clone https://github.com/intershop/intershop-pwa-migration-toolkit.git $env:TEMP\toolkit
 
 # Copy all toolkit files
 New-Item -ItemType Directory -Force -Path .github\instructions, .github\skills, scripts, data, docs\guides

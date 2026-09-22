@@ -9,3 +9,6 @@ node_modules/
 
 # Generated detection reports (session output, not project code)
 pattern-detection-report.json
+
+# Local solution card metadata
+docs/catalog/pwa-migration-toolkit-solution-card.md

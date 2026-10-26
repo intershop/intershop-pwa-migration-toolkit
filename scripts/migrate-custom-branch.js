@@ -169,9 +169,21 @@ function reinjectFeatureToggles(content, toggles) {
   return content.replace(match[0], `${match[1]}${existingBlock}${separator}${newEntries}${match[3]}`);
 }
 
+function findConflictMarkerFiles(files) {
+  const markerPattern = /^(?:<{7}(?: .*)?|={7}|>{7}(?: .*)?|\|{7}(?: .*)?)$/m;
+  return files.filter(file => {
+    try {
+      return markerPattern.test(fs.readFileSync(file, 'utf-8'));
+    } catch {
+      return false;
+    }
+  });
+}
+
 // Parse arguments
 const args = process.argv.slice(2);
 let sourceBranch = 'training_4.0.0';
+let sourceBase = '';
 let targetBranch = 'feature/migration-4.0-to-9.1';
 let targetTag = '';
 let intershopRemote = '';
@@ -183,6 +195,7 @@ let dryRun = false;
 for (let i = 0; i < args.length; i++) {
   switch (args[i]) {
     case '--source-branch': sourceBranch = args[++i]; break;
+    case '--source-base': sourceBase = args[++i]; break;
     case '--target-branch': targetBranch = args[++i]; break;
     case '--target-tag': targetTag = args[++i]; break;
     case '--intershop-remote': intershopRemote = args[++i]; break;
@@ -195,6 +208,7 @@ for (let i = 0; i < args.length; i++) {
 
 Options:
   --source-branch <branch>    Your OLD custom branch (default: training_4.0.0)
+  --source-base <ref>          Upstream PWA baseline for the source (e.g. tag 5.2.0)
   --target-branch <branch>    Upstream PWA version reference
   --migration-branch <branch> Your NEW custom branch name
   --target-tag <tag>          Use a tag instead of branch for upstream
@@ -290,9 +304,79 @@ if (!execSilent(`git rev-parse --verify "${sourceBranch}"`)) {
 
 if (!validateTarget()) process.exit(1);
 
+const sourcePackageContent = execSilent(`git show "${sourceBranch}:package.json"`);
+let sourceVersion = '';
+if (sourcePackageContent) {
+  try {
+    sourceVersion = JSON.parse(sourcePackageContent).version || '';
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      log.error(`Could not parse ${sourceBranch}:package.json: ${error.message}`);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+const sourceBaseCommit = sourceBase ? execSilent(`git rev-parse --verify "${sourceBase}^{commit}"`) : '';
+if (sourceBase && !sourceBaseCommit) {
+  log.error(`Source baseline '${sourceBase}' is not a valid commit or tag.`);
+  process.exit(1);
+}
+
+if (sourceBaseCommit) {
+  const baselinePackageContent = execSilent(`git show "${sourceBaseCommit}:package.json"`);
+  if (baselinePackageContent && sourceVersion) {
+    try {
+      const baselineVersion = JSON.parse(baselinePackageContent).version;
+      if (baselineVersion && baselineVersion !== sourceVersion) {
+        log.error(`Source baseline '${sourceBase}' declares PWA ${baselineVersion}, but '${sourceBranch}' declares PWA ${sourceVersion}.`);
+        log.info('Choose the upstream tag that matches the source PWA version. No migration branch was created.');
+        process.exit(1);
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        log.error(`Could not parse ${sourceBase}:package.json: ${error.message}`);
+        process.exit(1);
+      }
+      throw error;
+    }
+  }
+}
+
+if (!sourceBaseCommit && sourceVersion && /^\d+\.\d+\.\d+$/.test(sourceVersion)) {
+  const sourceTagRef = `refs/tags/${sourceVersion}`;
+  if (execSilent(`git rev-parse --verify "${sourceTagRef}"`) &&
+      !execSilent(`git merge-base --is-ancestor "${sourceTagRef}" "${sourceBranch}" && echo yes`)) {
+    log.error(`Source branch '${sourceBranch}' declares PWA ${sourceVersion}, but tag '${sourceVersion}' is not in its history.`);
+    log.info(`Retry with --source-base ${sourceVersion} after verifying that tag matches the source PWA baseline.`);
+    process.exit(1);
+  }
+}
+
 // Check uncommitted changes
 if (execSilent('git diff-index HEAD --') !== '') {
   log.error('You have uncommitted changes. Please commit or stash them first.');
+  process.exit(1);
+}
+
+if (execSilent(`git rev-parse --verify "${migrationBranch}"`)) {
+  log.error(`Migration branch '${migrationBranch}' already exists. It was not changed.`);
+  log.info('Choose a new --migration-branch name, or inspect and remove the old branch yourself.');
+  process.exit(1);
+}
+
+const historyMergeBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}"`);
+const migrationBase = sourceBaseCommit || historyMergeBase;
+if (!migrationBase) {
+  log.error(`No common ancestor found between '${sourceBranch}' and '${targetBranch}'.`);
+  log.info('Specify --source-base with the upstream PWA commit or tag matching the source tree.');
+  process.exit(1);
+}
+
+if (!execSilent(`git merge-base --is-ancestor "${migrationBase}" "${targetBranch}" && echo yes`)) {
+  log.error(`Migration base '${sourceBase || migrationBase}' is not an ancestor of target '${targetBranch}'.`);
+  log.info('Choose a target version that descends from the source baseline, or establish a separate migration plan.');
   process.exit(1);
 }
 
@@ -300,6 +384,7 @@ log.info('============================================');
 log.info('Automated PWA Migration');
 log.info('============================================');
 log.info(`Source Branch (Customizations): ${sourceBranch}`);
+log.info(`Source PWA Baseline: ${sourceBase || historyMergeBase}`);
 log.info(`Target Branch (New PWA Version): ${targetBranch}`);
 log.info(`Migration Branch: ${migrationBranch}`);
 log.info(`Auto-resolve conflicts: ${autoResolve}`);
@@ -337,12 +422,18 @@ if (dryRun) {
 // Step 1: Create migration branch
 log.info('Step 1: Creating migration branch from target branch...');
 if (!dryRun) {
-  if (execSilent(`git rev-parse --verify "${migrationBranch}"`)) {
-    log.warning('Migration branch already exists, deleting it...');
-    exec(`git branch -D "${migrationBranch}"`, { silent: true });
+  const checkoutResult = exec(`git checkout "${targetBranch}"`, { silent: true });
+  if (!checkoutResult.success) {
+    log.error(`Could not check out target '${targetBranch}'.`);
+    console.log(checkoutResult.error || checkoutResult.output);
+    process.exit(1);
   }
-  exec(`git checkout "${targetBranch}"`, { silent: true });
-  exec(`git checkout -b "${migrationBranch}"`, { silent: true });
+  const branchResult = exec(`git checkout -b "${migrationBranch}"`, { silent: true });
+  if (!branchResult.success) {
+    log.error(`Could not create migration branch '${migrationBranch}'.`);
+    console.log(branchResult.error || branchResult.output);
+    process.exit(1);
+  }
   log.success('Migration branch created');
 } else {
   log.info(`Would create branch: ${migrationBranch} from ${targetBranch}`);
@@ -353,8 +444,7 @@ console.log();
 log.info('Step 2: Analyzing customization files...');
 let customFilesList = '';
 if (!dryRun) {
-  const mergeBase = execSilent(`git merge-base "${sourceBranch}" develop`);
-  customFilesList = mergeBase ? execSilent(`git diff --name-only "${sourceBranch}" ${mergeBase}`) : '';
+  customFilesList = execSilent(`git diff --name-only "${migrationBase}" "${sourceBranch}"`);
   if (!customFilesList) {
     log.warning('No customization files found');
   } else {
@@ -372,7 +462,7 @@ console.log();
 log.info('Step 2b: Detecting file renames/moves between versions...');
 if (!dryRun) {
   // Detect renames between the target (new PWA) and the merge-base of source
-  const renameBase = execSilent(`git merge-base "${sourceBranch}" "${targetBranch}"`);
+  const renameBase = migrationBase;
   if (renameBase) {
     const renames = execSilent(`git diff --name-status --find-renames --diff-filter=R "${renameBase}" "${targetBranch}"`);
     const deletes = execSilent(`git diff --name-status --diff-filter=D "${renameBase}" "${targetBranch}"`);
@@ -483,7 +573,20 @@ if (!dryRun) {
 // Step 3: Merge source into migration branch
 log.info('Step 3: Merging customizations into migration branch...');
 if (!dryRun) {
-  const mergeResult = exec(`git merge --no-commit --no-ff "${sourceBranch}" 2>&1`, { silent: true });
+  let mergeSourceRef = sourceBranch;
+  if (sourceBaseCommit) {
+    const sourceTree = execSilent(`git rev-parse "${sourceBranch}^{tree}"`);
+    const bridgeResult = exec(`git commit-tree "${sourceTree}" -p "${sourceBranch}" -p "${sourceBaseCommit}" -m "chore: bridge ${sourceBranch} onto PWA baseline ${sourceBase}"`, { silent: true });
+    if (!bridgeResult.success || !bridgeResult.output) {
+      log.error('Could not create the synthetic source snapshot for the explicit baseline.');
+      console.log(bridgeResult.error || bridgeResult.output);
+      process.exit(1);
+    }
+    mergeSourceRef = bridgeResult.output;
+    log.info(`Using a synthetic source snapshot based on ${sourceBase}; source branch remains unchanged.`);
+  }
+
+  const mergeResult = exec(`git merge --no-commit --no-ff "${mergeSourceRef}" 2>&1`, { silent: true });
 
   if (mergeResult.success) {
     log.success('Merge successful without conflicts');
@@ -506,19 +609,6 @@ if (!dryRun) {
       console.log(chalk.yellow('║  To accept UPSTREAM version:  git checkout --ours -- <file>      ║'));
       console.log(chalk.yellow('║  To keep YOUR customization:  git checkout --theirs -- <file>    ║'));
       console.log(chalk.yellow('╚══════════════════════════════════════════════════════════════════╝'));
-      console.log();
-
-      // Step 3a: Commit conflict-free files first (they are already staged by git merge)
-      log.info('Step 3a: Committing conflict-free files...');
-      const allChangedFiles = execSilent('git diff --cached --name-only');
-      const conflictSet = new Set(files);
-      const conflictFreeFiles = allChangedFiles ? allChangedFiles.split('\n').filter(f => f && !conflictSet.has(f)) : [];
-      if (conflictFreeFiles.length > 0) {
-        exec(`git commit -m "feat: merge customizations from ${sourceBranch} (conflict-free)\n\n${conflictFreeFiles.length} file(s) merged without conflicts"`, { silent: true });
-        log.success(`Committed ${conflictFreeFiles.length} conflict-free file(s)`);
-      } else {
-        log.info('No conflict-free files to commit separately');
-      }
       console.log();
 
       if (autoResolve) {
@@ -595,29 +685,15 @@ if (!dryRun) {
           }
         }
 
-        // Commit per strategy (separate commits for traceability)
+        // Stage safe resolutions, but create no commit while any conflict needs review.
         console.log();
-        log.info('Step 3c: Committing resolved conflicts by strategy...');
-
-        if (resolvedByImports.length > 0) {
-          resolvedByImports.forEach(f => exec(`git add "${f}"`, { silent: true }));
-          const fileList = resolvedByImports.map(f => `  - ${f}`).join('\n');
-          exec(`git commit -m "feat: auto-resolve import conflicts (${resolvedByImports.length} file(s))\n\nStrategy: merged import-only conflict blocks from both sides.\n\nFiles:\n${fileList}"`, { silent: true });
-          log.success(`Committed ${resolvedByImports.length} import-resolved file(s)`);
-        }
-
-        if (resolvedByStyles.length > 0) {
-          resolvedByStyles.forEach(f => exec(`git add "${f}"`, { silent: true }));
-          const fileList = resolvedByStyles.map(f => `  - ${f}`).join('\n');
-          exec(`git commit -m "feat: auto-resolve style conflicts (${resolvedByStyles.length} file(s))\n\nStrategy: kept both upstream and custom styles with review markers.\n\nFiles:\n${fileList}"`, { silent: true });
-          log.success(`Committed ${resolvedByStyles.length} style-resolved file(s)`);
-        }
-
-        if (resolvedByTests.length > 0) {
-          resolvedByTests.forEach(f => exec(`git add "${f}"`, { silent: true }));
-          const fileList = resolvedByTests.map(f => `  - ${f}`).join('\n');
-          exec(`git commit -m "feat: auto-resolve test conflicts (${resolvedByTests.length} file(s))\n\nStrategy: kept custom test files (source/theirs).\n\nFiles:\n${fileList}"`, { silent: true });
-          log.success(`Committed ${resolvedByTests.length} test-resolved file(s)`);
+        log.info('Step 3c: Staging resolved conflicts...');
+        const resolvedFiles = [...resolvedByImports, ...resolvedByStyles, ...resolvedByTests];
+        const stageFailures = resolvedFiles.filter(file => !exec(`git add -- "${file}"`, { silent: true }).success);
+        if (stageFailures.length > 0) {
+          log.error(`Could not stage ${stageFailures.length} automatically resolved file(s):`);
+          stageFailures.forEach(file => console.log(`  ${file}`));
+          process.exit(1);
         }
 
         // Summary
@@ -638,12 +714,34 @@ if (!dryRun) {
             console.log(`    → ${reason}`);
           });
           console.log();
-          log.info('After resolving conflicts manually, run:');
+          log.info('No merge commit was created. After resolving every conflict, verify markers and run:');
+          log.info("  git grep -n -E '^(<<<<<<<|=======|>>>>>>>)'");
           log.info('  git add <resolved-files>');
           log.info(`  git commit -m 'feat: merge customizations from ${sourceBranch} (manual)'`);
           process.exit(1);
         } else {
-          log.success('All conflicts automatically resolved and committed');
+          const remainingConflicts = execSilent('git diff --name-only --diff-filter=U');
+          if (remainingConflicts) {
+            log.error('Git still reports unresolved conflicts; no merge commit was created.');
+            console.log(remainingConflicts);
+            process.exit(1);
+          }
+
+          const stagedFiles = execSilent('git diff --cached --name-only').split('\n').filter(Boolean);
+          const markerFiles = findConflictMarkerFiles(stagedFiles);
+          if (markerFiles.length > 0) {
+            log.error('Conflict markers remain in staged files; no merge commit was created:');
+            markerFiles.forEach(file => console.log(`  ${file}`));
+            process.exit(1);
+          }
+
+          const commitResult = exec(`git commit -m "feat: merge customizations from ${sourceBranch} (auto-resolved)"`, { silent: true });
+          if (!commitResult.success) {
+            log.error('Git could not create the merge commit.');
+            console.log(commitResult.error || commitResult.output);
+            process.exit(1);
+          }
+          log.success('All conflicts were resolved, checked for markers, and committed');
         }
       } else {
         log.warning('Merge has conflicts. Please resolve manually or run with --auto-resolve flag');
@@ -896,18 +994,25 @@ console.log();
 
 // Final summary
 log.info('============================================');
-log.success('Migration Process Complete!');
+if (dryRun) {
+  log.info('Dry Run Complete - No migration branch or merge was created.');
+} else {
+  log.success('Migration Process Complete!');
+}
 log.info('============================================');
 console.log();
 const currentBranch = execSilent('git branch --show-current');
 log.info(`Current branch: ${currentBranch}`);
-log.info(`Migration report: ${reportFile}`);
-console.log();
-log.info('Next steps:');
-log.info(`  1. Review changes: git diff ${targetBranch}`);
-log.info(`  2. Review migration report: cat ${reportFile}`);
-log.info('  3. Run tests: npm test');
-log.info('  4. Choose workflow:');
-log.info('     - Test locally: npm run start');
-log.info(`     - Push to remote: git push -u origin ${migrationBranch}`);
+if (dryRun) {
+  log.info(`Planned migration branch: ${migrationBranch} (not created)`);
+  log.info('Review the plan, then rerun without --dry-run to start the migration.');
+} else {
+  log.info(`Migration report: ${reportFile}`);
+  console.log();
+  log.info('Next steps:');
+  log.info(`  1. Review changes: git diff ${targetBranch}`);
+  log.info(`  2. Review migration report: cat ${reportFile}`);
+  log.info('  3. Run tests: npm test');
+  log.info('  4. Push only after review, and only to your project remote (never Intershop upstream).');
+}
 console.log();

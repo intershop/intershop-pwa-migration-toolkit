@@ -54,7 +54,10 @@ function main() {
   log.info(`Resolved ${filesToFix.length} files needing standalone: false`);
 
   // Step 3: Check which files already have standalone: false
-  const { missing, alreadySet } = checkStandaloneStatus(filesToFix);
+  const { missing: missingDeclarations, alreadySet } = checkStandaloneStatus(filesToFix);
+  const overrides = findOverrideFiles(filesToFix);
+  const { missing: missingOverrides } = checkStandaloneStatus(overrides.map(({ override }) => override));
+  const missing = [...new Set([...missingDeclarations, ...missingOverrides])];
 
   console.log();
   log.info(`Already has standalone: false — ${alreadySet.length} file(s)`);
@@ -69,7 +72,6 @@ function main() {
   }
 
   // Step 4: Check override files
-  const overrides = findOverrideFiles(missing);
   if (overrides.length > 0) {
     log.info(`Found ${overrides.length} override file(s) to sync`);
   }
@@ -220,8 +222,8 @@ function checkStandaloneStatus(files) {
     // Check if file has a @Component/@Directive/@Pipe decorator
     if (!/@(Component|Directive|Pipe)\s*\(/.test(content)) continue;
 
-    // Check if standalone is already set
-    if (/standalone\s*:\s*(true|false)/.test(content)) {
+    // NgModule-declared artifacts must explicitly opt out of Angular's standalone default.
+    if (/standalone\s*:\s*false/.test(content)) {
       alreadySet.push(file);
     } else {
       missing.push(file);
@@ -276,16 +278,7 @@ function applyRegexFix(files, overrides) {
     }
     let content = fs.readFileSync(file, 'utf-8');
     const before = content;
-
-    // Insert standalone: false after the decorator opening
-    content = content.replace(
-      /(@(?:Component|Directive|Pipe)\s*\(\s*\{)(\s*)/,
-      (match, decorator, whitespace) => {
-        // Detect indentation from next line
-        const indent = whitespace.includes('\n') ? whitespace.replace(/\n/, '\n  standalone: false,\n') : '\n  standalone: false,' + whitespace;
-        return decorator + indent;
-      }
-    );
+    content = setStandaloneFalse(content);
 
     if (content !== before) {
       fs.writeFileSync(file, content, 'utf-8');
@@ -300,16 +293,10 @@ function applyRegexFix(files, overrides) {
     for (const { base, override } of overrides) {
       let content = readSafe(override);
       if (!content) continue;
-      if (/standalone\s*:/.test(content)) continue;
+      if (/standalone\s*:\s*false/.test(content)) continue;
 
       const before = content;
-      content = content.replace(
-        /(@(?:Component|Directive|Pipe)\s*\(\s*\{)(\s*)/,
-        (match, decorator, whitespace) => {
-          const indent = whitespace.includes('\n') ? whitespace.replace(/\n/, '\n  standalone: false,\n') : '\n  standalone: false,' + whitespace;
-          return decorator + indent;
-        }
-      );
+      content = setStandaloneFalse(content);
 
       if (content !== before) {
         fs.writeFileSync(override, content, 'utf-8');
@@ -320,6 +307,93 @@ function applyRegexFix(files, overrides) {
   }
 
   return modified;
+}
+
+// Keys after which `standalone` belongs (order of @angular-eslint/sort-keys-in-type-decorator)
+const STANDALONE_ANCHOR_KEYS = {
+  Component: ['selector', 'imports'],
+  Directive: ['selector'],
+  Pipe: ['name'],
+};
+
+function setStandaloneFalse(content) {
+  if (/standalone\s*:\s*false/.test(content)) return content;
+  if (/standalone\s*:\s*true/.test(content)) {
+    return content.replace(/standalone\s*:\s*true/, 'standalone: false');
+  }
+
+  const decorator = /@(Component|Directive|Pipe)\s*\(\s*\{/.exec(content);
+  if (!decorator) return content;
+
+  const bodyStart = decorator.index + decorator[0].length;
+  const anchor = findDecoratorProperties(content, bodyStart)
+    .filter(prop => STANDALONE_ANCHOR_KEYS[decorator[1]].includes(prop.key))
+    .pop();
+
+  // No anchor key (e.g. selector-less component): standalone goes first
+  if (!anchor) {
+    return content.replace(/(@(?:Component|Directive|Pipe)\s*\(\s*\{)(\s*)/, (match, decoratorStart, whitespace) => {
+      const indent = whitespace.includes('\n')
+        ? whitespace.replace(/\n/, '\n  standalone: false,\n')
+        : '\n  standalone: false,' + whitespace;
+      return decoratorStart + indent;
+    });
+  }
+
+  const lineStart = content.lastIndexOf('\n', anchor.start) + 1;
+  const indent = content.slice(lineStart, anchor.start).match(/^\s*/)[0];
+  const multiline = /\n/.test(content.slice(bodyStart, anchor.start));
+
+  // Anchor followed by a comma: insert after it
+  if (content[anchor.end] === ',') {
+    const insert = multiline ? `\n${indent}standalone: false,` : ' standalone: false,';
+    return content.slice(0, anchor.end + 1) + insert + content.slice(anchor.end + 1);
+  }
+
+  // Anchor is the last property without trailing comma
+  const valueEnd = content.slice(0, anchor.end).trimEnd().length;
+  const insert = multiline ? `,\n${indent}standalone: false,` : ', standalone: false';
+  return content.slice(0, valueEnd) + insert + content.slice(valueEnd);
+}
+
+// Top-level properties of the object literal starting at `start` (after `{`): key, key position and
+// index of the `,` or `}` terminating the value
+function findDecoratorProperties(content, start) {
+  const properties = [];
+  let i = start;
+  for (;;) {
+    const key = /^(\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*)['"]?(\w+)['"]?\s*:/.exec(content.slice(i));
+    if (!key) return properties;
+    const end = findValueEnd(content, i + key[0].length);
+    properties.push({ key: key[2], start: i + key[1].length, end });
+    if (content[end] !== ',') return properties;
+    i = end + 1;
+  }
+}
+
+// Index of the `,` or closing bracket ending the value at `i` (skips strings, comments and nested brackets)
+function findValueEnd(content, i) {
+  let depth = 0;
+  for (; i < content.length; i++) {
+    const c = content[i];
+    if (c === '/' && content[i + 1] === '/') {
+      i = content.indexOf('\n', i);
+    } else if (c === '/' && content[i + 1] === '*') {
+      i = content.indexOf('*/', i) + 1;
+    } else if (c === '"' || c === "'" || c === '`') {
+      for (i++; i < content.length && content[i] !== c; i++) {
+        if (content[i] === '\\') i++;
+      }
+    } else if ('([{'.includes(c)) {
+      depth++;
+    } else if (')]}'.includes(c)) {
+      if (depth === 0) return i;
+      depth--;
+    } else if (c === ',' && depth === 0) {
+      return i;
+    }
+  }
+  return content.length;
 }
 
 function applyViaAngularSchematic() {

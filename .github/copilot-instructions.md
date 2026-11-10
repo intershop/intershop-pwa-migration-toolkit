@@ -11,10 +11,12 @@ Use only relative project paths such as `--project-dir ../custom-pwa`; never wri
 ## Workflow
 
 1. Detect source/target versions from `package.json` in the custom project
-2. Run detection scripts to assess scope
-3. Use automated migration scripts for known patterns
-4. Build, verify, fix remaining issues manually
-5. **Always prefer toolkit scripts over manual fixes**
+2. **Customized project? Capture the regression baseline first** (before any migration change) – `.github/skills/pwa-regression-testing.SKILL.md`
+3. Run detection scripts to assess scope
+4. Use automated migration scripts for known patterns
+5. Build, verify, fix remaining issues manually
+6. **Compare with the regression baseline** and fix all unintended differences
+7. **Always prefer toolkit scripts over manual fixes**
 
 ## Available Scripts
 
@@ -56,6 +58,16 @@ Use only relative project paths such as `--project-dir ../custom-pwa`; never wri
 | `merge:docker` | Merge docker-compose files |
 | `update:snapshots` | Update test snapshots after migration |
 
+### Regression Testing (customized projects)
+
+| npm script | Purpose |
+|---|---|
+| `regression:init` | Test selection: environment (test / production read-only), viewports, order types, My Account, user account |
+| `regression:inventory` | Test plan of custom and overridden pages |
+| `regression:capture` | `--label before` / `--label after`: Jest + Playwright browser tests + screenshots |
+| `regression:compare` | Compare an after run with the baseline → HTML report |
+| `regression:findings` | Document differences, `--triage`, `--set`, `--check` (exit criteria) |
+
 ### Additional scripts (run via `node scripts/<file>`)
 
 | Script | Purpose |
@@ -74,5 +86,6 @@ For detailed guidance, read these files when relevant:
 - **Version-specific guides**: `.github/instructions/migration-pwa10.instructions.md`, `migration-pwa11.instructions.md`, `migration-pwa12.instructions.md`
 - **Pattern detection**: `.github/instructions/migration-pattern-detection.instructions.md`, `migration-patterns.instructions.md`
 - **Git operations**: `.github/instructions/migration-git.instructions.md`
+- **Regression testing (baseline / before-after comparison)**: `.github/instructions/migration-regression-testing.instructions.md`, `.github/skills/pwa-regression-testing.SKILL.md`, `docs/guides/regression-testing-guide.md`
 - **Troubleshooting**: `.github/skills/pwa-troubleshooting.SKILL.md`
 - **Full migration planning**: `.github/skills/pwa-migration.SKILL.md`

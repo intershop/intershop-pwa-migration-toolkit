@@ -137,6 +137,22 @@ if (fs.existsSync('i18n-merge-report.json')) {
 
 const overall = buildStatus.includes('Success') ? '✅ Ready for review' : '⚠️ Needs attention';
 
+// Regression testing (baseline / after comparison)
+let regressionStatus = 'Not done';
+let regressionSection = 'No regression findings found (`migration-qa/findings.md`).\n\nFor customized projects see `docs/guides/regression-testing-guide.md`.';
+const findingsFile = path.join(projectDir, 'migration-qa', 'findings.md');
+if (fs.existsSync(findingsFile)) {
+  const header = '| ID | Step | Viewport | Type | Description | Classification | Cause | Decision | Status | Reference | Found | Last seen |';
+  const rows = fs.readFileSync(findingsFile, 'utf-8').split(/\r?\n/).filter(line => /^\|\s*F-\d+/.test(line));
+  const cells = rows.map(line => line.split(/(?<!\\)\|/).map(c => c.trim()));
+  const openBugs = cells.filter(c => c[6] === 'unintended' && ['open', 'fixed'].includes(c[9])).length;
+  const untriaged = cells.filter(c => c[6] === '?').length;
+  regressionStatus = openBugs || untriaged ? `⚠️ ${openBugs} unintended open, ${untriaged} not triaged` : `✅ ${rows.length} finding(s), none unintended open`;
+  regressionSection = rows.length
+    ? `**Status:** ${regressionStatus}\n\n${header}\n|${header.split('|').slice(1, -1).map(() => '---').join('|')}|\n${rows.join('\n')}`
+    : '**Status:** ✅ No differences to the baseline.';
+}
+
 // Generate report
 console.log(chalk.blue(`📝 Generating report: ${reportFile}\n`));
 
@@ -156,6 +172,7 @@ const reportContent = `# PWA Migration Report
 | **Build** | ${buildStatus} |
 | **Tests** | ${testStatus} |
 | **Lint** | ${lintStatus} |
+| **Regression testing** | ${regressionStatus} |
 | **Overall** | ${overall} |
 
 ---
@@ -213,6 +230,12 @@ ${testOutput}
 
 ### Lint: ${lintStatus}
 ${lintStatus !== '✅ No issues' ? `- **Errors:** ${lintErrors}\n- **Warnings:** ${lintWarnings}` : ''}
+
+---
+
+## Regression Testing
+
+${regressionSection}
 
 ---
 

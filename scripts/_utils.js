@@ -232,6 +232,47 @@ function askInput(question) {
   });
 }
 
+/**
+ * Ask a single-choice question. Repeats until a valid option is chosen.
+ * @param {string} question
+ * @param {{ value: string, label: string }[]} options
+ * @returns {Promise<string>} - value of the chosen option
+ */
+async function askChoice(question, options) {
+  console.log(`\n${chalk.cyan(question)}`);
+  options.forEach((o, i) => console.log(`  ${i + 1}) ${o.label}`));
+  for (;;) {
+    const answer = await askInput(`Choose 1-${options.length}:`);
+    const idx = parseInt(answer, 10) - 1;
+    if (options[idx]) return options[idx].value;
+    log.warning('Please enter the number of one option.');
+  }
+}
+
+/**
+ * Ask a multiple-choice question. Answers are comma-separated numbers (e.g. "1,3").
+ * @param {string} question
+ * @param {{ value: string, label: string }[]} options
+ * @param {object} [opts]
+ * @param {number} [opts.min=0] - Minimum number of options to select
+ * @returns {Promise<string[]>} - values of the chosen options
+ */
+async function askMultiChoice(question, options, opts = {}) {
+  const { min = 0 } = opts;
+  console.log(`\n${chalk.cyan(question)}`);
+  options.forEach((o, i) => console.log(`  ${i + 1}) ${o.label}`));
+  for (;;) {
+    const hint = min > 0 ? `at least ${min}` : 'empty for none';
+    const answer = await askInput(`Choose one or more, comma-separated (${hint}):`);
+    const parts = answer.split(',').map(p => p.trim()).filter(Boolean);
+    const indexes = parts.map(p => parseInt(p, 10) - 1);
+    if (indexes.every(i => options[i]) && new Set(indexes).size >= min) {
+      return [...new Set(indexes)].sort((a, b) => a - b).map(i => options[i].value);
+    }
+    log.warning(`Please enter valid option numbers (${hint}).`);
+  }
+}
+
 // ─── Temp Files ─────────────────────────────────────────────────────────────
 
 const os = require('os');
@@ -290,6 +331,8 @@ module.exports = {
   grepFiles,
   askYesNo,
   askInput,
+  askChoice,
+  askMultiChoice,
   tempFile,
   findMatchingBracket,
   findPropertyArray,

@@ -187,6 +187,18 @@ node scripts/analyze-migration.js 4.0.0 10.0.0
 # Use --quick to skip interactive questions
 ```
 
+**Customized PWA (customer or partner project)? Capture the regression baseline first:**
+
+```bash
+npx playwright install chromium                                  # once
+node scripts/regression-init.js --project-dir ../custom-pwa
+node scripts/regression-inventory.js --project-dir ../custom-pwa
+node scripts/regression-capture.js --project-dir ../custom-pwa --label before
+```
+
+After the migration compare with `regression:capture --label after`, `regression:compare` and
+`regression:findings` – see the [Regression Testing Guide](docs/guides/regression-testing-guide.md).
+
 **Start your migration:**
 
 ```bash

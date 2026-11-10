@@ -856,7 +856,7 @@ git push -u gitlab migration/training-to-9.1-retry
 - [ ] Both Browser and Server (SSR) builds succeed
 - [ ] All custom features present in bundle (check lazy chunks)
 - [ ] Unit tests pass (or failures documented)
-- [ ] Manual smoke test of custom features succeeds
+- [ ] Regression testing done for customized projects: no unintended difference to the baseline open (`migration-regression-testing.instructions.md`)
 - [ ] Documentation updated
 - [ ] Migration branch pushed to project remote (NOT Intershop remote)
 - [ ] Pull request created for review

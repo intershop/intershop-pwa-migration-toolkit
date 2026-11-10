@@ -37,6 +37,21 @@ User: "Build is broken with 'Undefined variable $theme-color'"
 AI: [Invokes pwa-troubleshooting skill]
 ```
 
+### 🧪 [pwa-regression-testing.SKILL.md](pwa-regression-testing.SKILL.md)
+**Baseline/after regression testing of customized PWA projects**
+
+**Use for:**
+- Capturing a baseline before the migration (Jest, test plan of custom/overridden pages, screenshots)
+- Repeating the tests after the migration in the same viewports
+- Comparing before/after and triaging every difference (intended / unintended)
+- Tracking fixes until no unintended difference is open
+
+**Example invocation:**
+```
+User: "Test our customer PWA before we migrate it to 12.1"
+AI: [Invokes pwa-regression-testing skill]
+```
+
 ## Skills vs Instructions
 
 ### Instructions (`.github/instructions/*.instructions.md`)
@@ -61,6 +76,7 @@ PWA Migration Toolkit
 │
 └── Skills (Active Orchestration)
     ├── pwa-migration → Plans and executes migrations
+    ├── pwa-regression-testing → Baseline, before/after comparison, triage of differences
     └── pwa-troubleshooting → Diagnoses and fixes issues
 ```
 
@@ -89,6 +105,8 @@ Skills **complement** rather than **replace** instructions:
 | migration-examples.instructions.md | both | Code examples |
 | migration-checklist.instructions.md | pwa-migration | Validation checklist |
 | migration-pattern-detection.instructions.md | pwa-migration | Detection system guide |
+| migration-regression-testing.instructions.md | pwa-regression-testing, pwa-migration | Regression testing rules, selectors, comparison, findings |
+| migration-progress.instructions.md | all | Progress steps incl. `regression-*` |
 
 Skills orchestrate **when** and **how** to use these resources.
 

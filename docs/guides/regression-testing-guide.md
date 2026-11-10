@@ -135,31 +135,33 @@ The test sequence is built from the answers of `regression:init`:
 ```
 for each selected viewport:
   1. Homepage
-  2. Category / navigation           → remember the name of a SECOND product from the product list
-  3. Product detail page             (first product)
-  4. Header search                   → search for the remembered second product:
-                                       suggestions → search result page → open the product
-  5. Add to basket → basket          (second product, opened from the search result)
-  6a. [order as guest]       guest checkout: address → shipping → payment → review → (confirmation)
-  6b. [order as reg. user]   login → checkout: address → shipping → payment → review → (confirmation)
-  7.  [My Account]           login (if needed) → overview, orders, addresses, profile, …
-  8.  pages and features from the test plan (inventory)
+  2. Category / navigation   → remember product 1 and product 2 from the product list
+  3. Open product 1          → product detail page
+  4. Add product 1 to basket
+  5. Header search           → search for product 2: suggestions → search result page
+  6. Open product 2          → from the search result
+  7. Add product 2 to basket → basket (2 products)
+  8a. [order as guest]       guest checkout: address → shipping → payment → review → (confirmation)
+  8b. [order as reg. user]   login → checkout: address → shipping → payment → review → (confirmation)
+  9.  [My Account]           login (if needed) → overview, orders, addresses, profile, …
+  10. pages and features from the test plan (inventory)
 ```
 
 If no order type is selected, the happy path ends at the basket.
 
-**Header search:** The search term is taken from the product list of the category navigation, so no
-search term has to be configured. It is deliberately a **different** product than the one opened in
-step 3, so the search does not just return a product that was already visited. If the category
-contains only one product, the second product is taken from another category; if no second product
-can be found at all, the search step is skipped and the run log records the reason.
-The suggestion layer and the search result page are captured, and the test checks that the product
-is contained in the search result. A missing product is recorded as a difference, not only visible
-in the screenshot.
+**Two products:** Both products are taken from the product list of the category, so no product or
+search term has to be configured. Product 1 is reached via the navigation, product 2 via the header
+search – this way both entry points and a basket with more than one product are tested. If the
+category contains only one product, product 2 is taken from another category; if no second product
+can be found at all, the search steps (5–7) are skipped and the run log records the reason.
+
+**Header search:** The suggestion layer and the search result page are captured, and the test
+checks that product 2 is contained in the search result. A missing product is recorded as a
+difference, not only visible in the screenshot.
 
 **Same path in every run:** The baseline run records the category path and both products it used.
-All *after* runs follow exactly the same path, open the same product and search for the same
-product name, so the screenshots show the same content.
+All *after* runs follow exactly the same path with the same two products, so the screenshots show
+the same content.
 
 Every step produces a full-page screenshot. In addition, console errors and failed requests
 (4xx/5xx) are recorded per step.

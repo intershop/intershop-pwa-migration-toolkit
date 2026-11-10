@@ -58,6 +58,16 @@ Use only relative project paths such as `--project-dir ../custom-pwa`; never wri
 | `merge:docker` | Merge docker-compose files |
 | `update:snapshots` | Update test snapshots after migration |
 
+### Regression Testing (customized projects)
+
+| npm script | Purpose |
+|---|---|
+| `regression:init` | Test selection: environment (test / production read-only), viewports, order types, My Account, user account |
+| `regression:inventory` | Test plan of custom and overridden pages |
+| `regression:capture` | `--label before` / `--label after`: Jest + Playwright browser tests + screenshots |
+| `regression:compare` | Compare an after run with the baseline → HTML report |
+| `regression:findings` | Document differences, `--triage`, `--set`, `--check` (exit criteria) |
+
 ### Additional scripts (run via `node scripts/<file>`)
 
 | Script | Purpose |

@@ -42,8 +42,26 @@ Phase 6  New after round + compare against the baseline → back to Phase 4 unti
 
 Track the phases with `migration-progress.js` (step IDs `regression-*`, see `migration-progress.instructions.md`).
 
-If the toolkit provides `regression:*` npm scripts, use them. Otherwise perform the phases directly with
-Playwright (optional toolkit dependency, browser: `npx playwright install chromium`) following the rules below.
+## Toolkit Scripts
+
+Always use these scripts (all accept `--project-dir`, options via `--help`). The rules below describe what
+they do and apply equally when a step has to be done by hand (e.g. a project-specific selector).
+
+| Phase | Command | Does |
+|---|---|---|
+| 0.1 | `npm run regression:init` | Asks the test selection (or `--environment --viewports --orders --my-account --account --base-url`), writes `regression.config.json` and the `.gitignore` entries |
+| 0.3 | `npm run regression:inventory` | Test plan of custom and overridden pages (`--source-tag` if `package.json` has no upstream version) |
+| 0.2 + 0.4 | `npm run regression:capture -- --label before` | Jest + browser tests + screenshots, discovers path and products, registers the test user, locks the configuration |
+| 2 / 6 | `npm run regression:capture -- --label after [--base-url <url>]` | Same tests on the same path; aborts if the configuration differs from the baseline |
+| 3 | `npm run regression:compare` | Pixel, functional, console/request and Jest comparison → HTML report + `compare.json` |
+| 4–6 | `npm run regression:findings [--triage \| --set <ID> … \| --check]` | Maintains `findings.md`, triage, status updates, exit criteria (exit code 1 while not met) |
+
+Prerequisite: `npm install` in the toolkit (Playwright, pixelmatch, pngjs are optional dependencies) and
+`npx playwright install chromium` once.
+
+When the user must answer interactively (questions of `regression:init`, the order question, manual login,
+`--triage`), run the command in a terminal the user can see – or ask the questions in chat and pass the
+answers as options (`regression:init`, `regression:findings --set`). Never answer the order question for the user.
 
 ## Phase 0.1 – Test Selection (ask the user)
 

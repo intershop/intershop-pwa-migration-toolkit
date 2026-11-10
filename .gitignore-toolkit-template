@@ -42,6 +42,8 @@ scripts/update-*.sh
 scripts/validate-*.sh
 scripts/pre-commit-*.sh
 scripts/verify-*.sh
+scripts/regression-*.js
+scripts/_regression.js
 scripts/migration-helper.js
 
 # Pattern database
@@ -50,6 +52,7 @@ data/pattern-migrations.json
 # Migration guides
 docs/guides/migration-*.md
 docs/guides/customization-*.md
+docs/guides/regression-*.md
 
 # Migration reports (optional - comment out if you want to commit these)
 migration-report-*.md

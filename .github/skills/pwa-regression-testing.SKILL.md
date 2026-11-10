@@ -70,45 +70,65 @@ Ask, one after another:
 ```
 
 Then ask whether dynamic areas should be masked (sliders, dates, random recommendations) – everything is
-locked after the baseline. Write `migration-qa/regression.config.json` and the `.gitignore` entries,
-summarize the selection and update progress: `node scripts/migration-progress.js update regression-setup completed`.
+locked after the baseline. Write the configuration with the answers as options:
+
+```bash
+npm run regression:init -- --project-dir ../custom-pwa --base-url <url> --environment <test|production> \
+  --viewports mobile,desktop --orders guest,user --my-account yes --account new
+```
+
+Add masks (`"mask": [".swiper", …]`) to `migration-qa/regression.config.json` if needed, summarize the
+selection and update progress: `node scripts/migration-progress.js update regression-setup completed`.
 
 ### Step 2 – Jest baseline (Phase 0.2)
 
-Run all Jest tests on the **unchanged** project state and store the JSON result in the baseline run folder.
+Done by `regression:capture --label before` (Step 4) on the **unchanged** project state; the JSON result is
+stored in the baseline run folder (`--skip-jest` only if the user explicitly wants to skip it).
 Report: total / passed / failed / skipped. Failing tests are documented, not fixed now.
 
 ### Step 3 – Inventory and test plan (Phase 0.3)
 
-1. Determine custom files, customized standard files and theme overrides compared to the upstream tag of
-   the **source** version (`git diff --name-status <source-tag> HEAD -- src projects`,
-   `node scripts/analyze-customizations.js --json`).
-2. Map them to pages / routes; mark pages covered by the happy path.
-3. Write `migration-qa/test-plan.json` and `test-plan.md`.
-4. Present the list grouped (new pages · overridden pages · overridden components → pages · non-visual
-   changes) and ask the user to review it: add missing pages (with URL), disable irrelevant ones.
+1. Run `npm run regression:inventory -- --project-dir ../custom-pwa` (`--source-tag <tag>` if the project's
+   `package.json` version is not an upstream tag). It compares with the upstream tag of the **source**
+   version (custom files, customized standard files, theme overrides), maps them to routes and marks
+   pages covered by the happy path.
+2. Present `migration-qa/test-plan.md` grouped (new pages · overridden pages · pages using changed
+   components · components without known page · non-visual changes) and ask the user to review it:
+   enter URLs for routes with parameters, disable irrelevant entries (`"enabled": false`), add missing
+   pages as manual entries (`{ "id": "M-001", "manual": true, "enabled": true, "title": "…", "url": "/…", "requiresLogin": false }`).
+   Re-running the inventory keeps manual entries and edits.
 
 ### Step 4 – Baseline capture (Phase 0.4)
 
-1. Production mode: show `🔒 PRODUCTION MODE (read-only): no orders are submitted, no users are created.`
-2. Discover the category path and two simple orderable products (desktop context), record them.
-3. "Create a new user" (test systems): register the test user once, store `.credentials.json` (git-ignored).
-4. Run the test sequence for every selected viewport (see instructions). At the review page, ask the
-   order question (test systems only) – default No.
-5. Report per viewport: steps ok / failed / skipped with notes. Failed steps in the baseline are not
+Run `npm run regression:capture -- --project-dir ../custom-pwa --label before` in a terminal the user can see
+(order question, manual login). It:
+
+1. shows `🔒 PRODUCTION MODE (read-only): no orders are submitted, no users are created.` in production mode,
+2. runs all Jest tests,
+3. discovers the category path and two simple orderable products, records them,
+4. registers the test user once for "create a new user" (test systems), stores `.credentials.json` (git-ignored),
+5. runs the test sequence for every selected viewport and asks the order question on the review page
+   (test systems only, default No),
+6. locks the configuration.
+
+Then:
+
+1. Report per viewport: steps ok / failed / skipped with notes. Failed steps in the baseline are not
    migration bugs – note them and ask whether the path/selection should be adjusted **before** the baseline
-   is accepted.
-6. Ask the user to commit `regression.config.json` and the test plan. Update progress:
+   is accepted (`--force-new-baseline` to capture it again).
+2. Ask the user to commit `regression.config.json` and the test plan. Update progress:
    `node scripts/migration-progress.js update regression-baseline completed "<run>, <n> steps, <m> failed"`.
 
 Only now hand back to the migration.
 
 ### Step 5 – After tests and comparison (Phases 2 + 3)
 
-1. Check that the configuration still matches the baseline (locked fields). If not: stop and explain.
-2. Ask for the URL of the migrated PWA (e.g. local docker / `serve:ssr` against the same ICM).
-3. Run Jest and the same test sequence → new round `after`, `after-2`, ….
-4. Compare against the baseline: visual, functional, console errors / failed requests, Jest.
+1. Ask for the URL of the migrated PWA (e.g. local docker / `serve:ssr` against the same ICM).
+2. `npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url <url>` – aborts if the
+   locked configuration differs from the baseline; new round `after`, `after-2`, ….
+3. `npm run regression:compare -- --project-dir ../custom-pwa` – visual, functional, console errors / failed
+   requests, Jest; report in `migration-qa/reports/<before>-vs-<after>/index.html`.
+4. `npm run regression:findings -- --project-dir ../custom-pwa` – takes the differences over into `findings.md`.
 5. Summarize: number of identical steps, differences per type, new Jest failures.
 
 ### Step 6 – Triage (Phase 4)
@@ -127,20 +147,23 @@ Is this difference ① intended  ② unintended (bug)?
 
 - Intended → ask for/confirm the justification (upstream changelog reference) → status *accepted*.
 - Unintended → propose the cause; ask: fix now or won't fix (reason + who decided)?
-- Record everything in `migration-qa/findings.md`.
+- Record each answer: `npm run regression:findings -- --set F-004 --classification unintended --decision fix --cause "<cause>"`
+  (intended: `--classification intended --reference "<justification>"`; won't fix: `--decision "won't fix" --reference "<reason, who decided>"`).
+  The user can also triage in the terminal with `npm run regression:findings -- --triage`.
 
 ### Step 7 – Fix and re-compare (Phases 5 + 6)
 
 1. Fix **all** unintended differences decided as "fix" (prefer theme overrides and CUSTOMIZATION markers –
-   see `docs/guides/customization-best-practices.md`), then rebuild.
-2. New after round → compare against the **baseline** → update `findings.md` (verified / open again / new).
-3. Repeat until the exit criteria are met. Report only what remains.
+   see `docs/guides/customization-best-practices.md`), then rebuild. Mark them:
+   `npm run regression:findings -- --set F-004 --status fixed --reference "commit <hash>"`.
+2. New after round → `regression:compare` → `regression:findings` (verified / open again / new).
+3. Repeat until `npm run regression:findings -- --check` passes. Report only what remains.
 
 ### Step 8 – Done
 
-Check the exit criteria (instructions). Summarize: rounds, findings by classification and status, Jest
-comparison. Update progress: `node scripts/migration-progress.js update regression-recheck completed`.
-Add the findings table to the migration report.
+`npm run regression:findings -- --check` exits with 0. Summarize: rounds, findings by classification and
+status, Jest comparison. Update progress: `node scripts/migration-progress.js update regression-recheck completed`.
+`generate-migration-report.js` adds the findings table to the migration report.
 
 ## Example Invocation
 

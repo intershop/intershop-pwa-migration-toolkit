@@ -58,6 +58,7 @@ Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows 
 
 ## 🆕 Recent Updates (July 2026)
 
+- ✅ **Regression testing for customized projects** (November 2026) - Baseline before the migration (Jest, test plan of custom/overridden pages, Playwright screenshots in fixed viewports), same tests after the migration, pixel/functional/Jest comparison, findings triage until no unintended difference is open → [Regression Testing Guide](docs/guides/regression-testing-guide.md)
 - ✅ **PWA 12.0.0 support** - Migration patterns for latest release (Angular 19, ngx-translate 18, Swiper 12)
 - ✅ **ngx-translate migration script** - Automated detection and fix for ngx-translate 17+18 breaking changes
 - ✅ **Version-agnostic approach** - Works with ANY PWA version (not hardcoded to specific versions)
@@ -74,7 +75,7 @@ Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows 
 
 ## 📦 What's Included (36 Files Total)
 
-### Migration Instructions (11 files in `.github/instructions/`)
+### Migration Instructions (12 files in `.github/instructions/`)
 - `migration-patterns.instructions.md` - Comprehensive patterns reference (index)
 - `migration-checklist.instructions.md` - Pre/post-migration checklists with tier guidance
 - `migration-approaches.instructions.md` - Three proven migration strategies (cherry-pick/rebase/merge)
@@ -86,6 +87,7 @@ Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows 
 - `migration-git.instructions.md` - Git operations, conflict resolution, AI merge guidance
 - `migration-examples.instructions.md` - Concrete code examples
 - `migration-pattern-detection.instructions.md` - Pattern detection system guide
+- `migration-regression-testing.instructions.md` - **NEW:** Baseline/after regression testing of customized projects (rules, selectors, comparison, findings)
 
 ### Migration Scripts (25 files in `scripts/`)
 
@@ -121,16 +123,25 @@ Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows 
   - ✅ Reports themed templates separately for easy review
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
 
+#### Regression Testing (customized projects)
+- `regression-init.js` (`npm run regression:init`) - **NEW:** Test selection: environment (test / production read-only), viewports, order types, My Account, user account
+- `regression-inventory.js` (`npm run regression:inventory`) - **NEW:** Test plan of custom and overridden pages (diff to the upstream tag, mapped to routes)
+- `regression-capture.js` (`npm run regression:capture`) - **NEW:** Jest + Playwright happy path (home → category → product → search → basket → checkout → My Account) + test plan pages, screenshots per viewport; never submits an order without confirmation, read-only on production
+- `regression-compare.js` (`npm run regression:compare`) - **NEW:** Pixel, functional, console/request and Jest comparison with the baseline → HTML report
+- `regression-findings.js` (`npm run regression:findings`) - **NEW:** Findings documentation, triage, status tracking and exit criteria check
+
 > **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
 ### Pattern Database (1 file in `data/`)
 - `pattern-migrations.json` - **Enhanced:** Comprehensive breaking change patterns with SCSS variable renames, API changes, ICM requirements
 
-### Documentation Guides (1 file in `docs/guides/`)
+### Documentation Guides (2 files in `docs/guides/`)
 - `customization-best-practices.md` - Comprehensive guide for migration-friendly customizations (copy vs override, markers, anti-patterns)
+- `regression-testing-guide.md` - **NEW:** Prove that custom features and pages work as before: baseline, comparison, triage, fix loop
 
-### Migration Skills (3 files in `.github/skills/`)
+### Migration Skills (4 files in `.github/skills/`)
 - `pwa-migration.SKILL.md` - Expert migration planning and execution workflow
+- `pwa-regression-testing.SKILL.md` - **NEW:** Guided baseline/after regression testing and triage of differences
 - `pwa-troubleshooting.SKILL.md` - Specialized debugging and conflict resolution
 - `README.md` - Skills usage guide and architecture
 
@@ -591,9 +602,12 @@ scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
+scripts/regression-*.js
+scripts/_regression.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
+docs/guides/regression-*.md
 EOF
 
 # OR use the pre-made template:
@@ -641,9 +655,12 @@ scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
+scripts/regression-*.js
+scripts/_regression.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
+docs/guides/regression-*.md
 "@ | Add-Content .gitignore
 
 # OR use the pre-made template:
@@ -709,6 +726,7 @@ git check-ignore data/pattern-migrations.json
 
 echo "Checking docs/guides..."
 git check-ignore docs/guides/migration-*.md docs/guides/customization-*.md
+docs/guides/regression-*.md
 ```
 
 **All 41 toolkit files are covered:**
@@ -884,6 +902,20 @@ node scripts/migrate-custom-branch.js \
 
 ---
 
+### STEP 2.5: Capture the Regression Baseline (customized projects)
+
+Before the first migration change, test the unchanged project so you can prove afterwards that all custom
+features and pages still work. Details: [Regression Testing Guide](docs/guides/regression-testing-guide.md).
+
+```bash
+npx playwright install chromium                                  # once
+npm run regression:init -- --project-dir ../custom-pwa           # environment, viewports, order types, My Account
+npm run regression:inventory -- --project-dir ../custom-pwa      # test plan → review with the team
+npm run regression:capture -- --project-dir ../custom-pwa --label before
+```
+
+---
+
 ### STEP 3: Execute Migration
 
 ```bash
@@ -919,6 +951,13 @@ npm test
 # NEW: Smart snapshot update handling (saves 20-40 minutes)
 # If tests fail due to snapshots:
 node scripts/update-snapshots.js --interactive
+
+# NEW: Regression comparison with the baseline (customized projects)
+npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url http://localhost:4200
+npm run regression:compare -- --project-dir ../custom-pwa
+npm run regression:findings -- --project-dir ../custom-pwa --triage
+# fix all unintended differences, capture + compare again until:
+npm run regression:findings -- --project-dir ../custom-pwa --check
 
 # Generate comprehensive migration report
 node scripts/generate-migration-report.js
@@ -999,9 +1038,12 @@ scripts/sync-*.js
 scripts/update-*.js
 scripts/validate-*.js
 scripts/pre-commit-*.js
+scripts/regression-*.js
+scripts/_regression.js
 data/pattern-migrations.json
 docs/guides/migration-*.md
 docs/guides/customization-*.md
+docs/guides/regression-*.md
 EOF
 
 # OR use the pre-made template:

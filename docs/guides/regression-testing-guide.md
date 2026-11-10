@@ -2,12 +2,25 @@
 
 > **For AI agents:** the binding rules are in `.github/instructions/migration-regression-testing.instructions.md`,
 > the guided workflow in `.github/skills/pwa-regression-testing.SKILL.md`.
->
-> **Status:** The `regression:*` scripts named in this guide are planned. Until they are available, the AI agent
-> performs the phases directly (Playwright) – or the steps are followed manually.
 
 This guide describes how to make sure that a **customized PWA** (customer or partner project) behaves
 exactly as before after a migration to a new Intershop PWA version.
+
+**Quick start** (run in the toolkit, `--project-dir` points to the customer project):
+
+```bash
+npm install                                   # once – includes the optional Playwright dependencies
+npx playwright install chromium               # once – browser for the tests
+npm run regression:init -- --project-dir ../custom-pwa
+npm run regression:inventory -- --project-dir ../custom-pwa
+npm run regression:capture -- --project-dir ../custom-pwa --label before
+# … migration …
+npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url http://localhost:4200
+npm run regression:compare -- --project-dir ../custom-pwa
+npm run regression:findings -- --project-dir ../custom-pwa
+npm run regression:findings -- --project-dir ../custom-pwa --triage
+npm run regression:findings -- --project-dir ../custom-pwa --check
+```
 
 ---
 
@@ -27,28 +40,28 @@ explain every difference.
 ```
 Phase 0  Baseline (before ANY migration change, on the unchanged project state)
          ├─ regression:init        → select environment, viewports, order types, My Account, user account mode
-         ├─ run all Jest tests     → store results
          ├─ regression:inventory   → list of custom/overridden pages and features → test plan
-         └─ regression:capture --label before → browser tests + screenshots
+         └─ regression:capture --label before → all Jest tests + browser tests + screenshots
 Phase 1  Migration (regular toolkit workflow)
 Phase 2  regression:capture --label after   → same tests, same viewports, same environment
 Phase 3  regression:compare                 → list of differences (screenshots + Jest + console errors)
-Phase 4  regression:findings                → triage each difference: intended | unintended (bug)
-Phase 5  Fix ALL unintended differences
+Phase 4  regression:findings [--triage]     → document + triage each difference: intended | unintended (bug)
+Phase 5  Fix ALL unintended differences     → regression:findings --set <ID> --status fixed
 Phase 6  Capture + compare again (always against the baseline) → back to Phase 4
-         until no unintended difference is open
+         until regression:findings --check passes
 ```
 
 | Phase | npm script | Result |
 |---|---|---|
 | 0 | `regression:init` | `migration-qa/regression.config.json` |
 | 0 | `regression:inventory` | `migration-qa/test-plan.json` + `test-plan.md` |
-| 0 | `regression:capture -- --label before` | `migration-qa/runs/<date>-before/` |
+| 0 | `regression:capture -- --label before` | `migration-qa/runs/<date>-before/` (screenshots, `run-log.json`, `jest-results.json`) |
 | 2, 6 | `regression:capture -- --label after` | `migration-qa/runs/<date>-after[-n]/` |
-| 3, 6 | `regression:compare` | `migration-qa/reports/<before>-vs-<after>/index.html` |
-| 4 | `regression:findings` | `migration-qa/findings.md` |
+| 3, 6 | `regression:compare` | `migration-qa/reports/<before>-vs-<after>/index.html` + `compare.json` |
+| 4–6 | `regression:findings` (`--triage`, `--set`, `--check`) | `migration-qa/findings.md` |
 
-All scripts accept `--project-dir` (or use `PWA_PROJECT_DIR`) like every other toolkit script.
+All scripts accept `--project-dir` (or use `PWA_PROJECT_DIR`) like every other toolkit script and show
+their options with `--help`. `regression:capture -- --skip-jest` skips the Jest run.
 
 ---
 
@@ -64,7 +77,8 @@ All scripts accept `--project-dir` (or use `PWA_PROJECT_DIR`) like every other t
   ICM – also in production mode).
 - **Same build mode for before and after.** Prefer a production-like build (SSR, e.g. docker or
   `serve:ssr`). Do not compare a dev server run with a production build.
-- **Playwright** is an optional toolkit dependency. Install the browser once:
+- **Playwright, pixelmatch and pngjs** are optional toolkit dependencies (installed with `npm install`
+  in the toolkit). Install the browser once:
   ```bash
   npx playwright install chromium
   ```
@@ -113,7 +127,7 @@ viewport.
 ### 0.3 Run all Jest tests
 
 All unit tests of the project are run once and the results are stored with the baseline run
-(`jest-results.json`). This documents the state before the migration – including tests that already
+(`jest-results.json`) – `regression:capture` does this at the start of every run. This documents the state before the migration – including tests that already
 fail before the migration.
 
 ### 0.4 Inventory of custom pages and features: `regression:inventory`
@@ -261,7 +275,8 @@ Run the migration with the regular toolkit workflow (see [README](../../README.m
 ## Phase 2 – Test Again: `regression:capture --label after`
 
 - Same environment, same ICM, same test data, same build mode as the baseline.
-- The configuration from Phase 0 is reused and must not be changed.
+- The configuration from Phase 0 is reused and must not be changed. If the migrated PWA runs under a
+  different URL (e.g. locally), pass it with `--base-url` – the URL is not part of the locked configuration.
 - Jest is run again and stored with the run.
 - Results go to `migration-qa/runs/<date>-after/` (subsequent rounds: `-after-2`, `-after-3`, …).
   Runs never overwrite each other.
@@ -298,7 +313,17 @@ comparison round, never overwritten, and committed with the migration.
 | Decision | **fix** \| **won't fix** (with reason and who decided) |
 | Status | open → fixed → verified \| accepted |
 | Reference | commit, issue, upstream changelog entry |
-| Round | comparison round in which the difference was found / verified |
+| Found / Last seen | comparison round in which the difference was found / last seen (`gone in after-2`) |
+
+Commands:
+
+```bash
+npm run regression:findings                         # take over the latest comparison
+npm run regression:findings -- --triage             # classify untriaged findings interactively
+npm run regression:findings -- --set F-003 --classification intended --reference "changelog 12.0 #1234"
+```
+
+The table can also be edited by hand – keep one finding per row.
 
 Rules:
 
@@ -314,7 +339,11 @@ Rules:
 ## Phase 5 – Fix
 
 Fix **all** unintended differences decided as *fix* first. Then compare again – do not compare after
-every single fix.
+every single fix. Mark fixed findings with the commit:
+
+```bash
+npm run regression:findings -- --set F-003 --status fixed --reference "commit abc1234"
+```
 
 ---
 
@@ -322,8 +351,9 @@ every single fix.
 
 1. `regression:capture --label after` (new round, e.g. `after-2`)
 2. `regression:compare` – **always against the baseline**, never against the previous after run
-3. Update `findings.md`: fixed entries become *verified*, new differences are triaged (Phase 4)
-4. Repeat Phases 4–6 until the exit criteria are met
+3. `regression:findings`: differences that disappeared become *verified*, differences still present
+   are *open* again, new differences are added and triaged (Phase 4)
+4. Repeat Phases 4–6 until `regression:findings -- --check` passes (exit code 0)
 
 ### Exit criteria
 

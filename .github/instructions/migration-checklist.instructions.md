@@ -59,6 +59,19 @@ node scripts/analyze-migration.js $SOURCE_VERSION $TARGET_VERSION
 ./scripts/detect-pattern-changes.js $SOURCE_VERSION $TARGET_VERSION
 ```
 
+### 0.5 Regression Baseline **[CRITICAL for customer/partner projects - BEFORE the first migration change]**
+
+If the PWA is customized, capture the baseline on the **unchanged** project state before any merge or
+migration script runs: test selection (environment, viewports, order types, My Account), all Jest tests,
+inventory/test plan of custom and overridden pages, browser tests with screenshots.
+
+- Rules and details: `migration-regression-testing.instructions.md`
+- Guided execution: `.github/skills/pwa-regression-testing.SKILL.md`
+- Progress steps: `regression-setup`, `regression-inventory`, `regression-baseline`
+
+Once the migration has started, the "before" state can only be captured from a running shop on the old
+version or from a checkout of the pre-migration commit.
+
 ### 1. Verify Git Remotes Setup
 
 - Identify your **Intershop PWA remote** (READ-ONLY) - for pulling updates (commonly `origin` or `upstream`)
@@ -615,8 +628,8 @@ ng version
 - [ ] **Localization files properly merged** (custom translations preserved, new PWA translations added)
 - [ ] Application tested in all supported locales
 - [ ] **Template syntax modernized** (empty paired tags converted to self-closing where appropriate)
-- [ ] Unit tests pass (or failures documented)
-- [ ] Manual smoke test of custom features succeeds
+- [ ] Unit tests pass (or failures documented) – **no new failures compared to the regression baseline**
+- [ ] **Regression testing done** (customized projects): after tests compared with the baseline, every difference documented in `migration-qa/findings.md`, **no unintended difference open** (see `migration-regression-testing.instructions.md` → Exit Criteria)
 - [ ] Documentation updated
 - [ ] **Migration report generated** (`node scripts/generate-migration-report.js`)
 - [ ] Migration branch pushed to project remote (NOT Intershop remote)

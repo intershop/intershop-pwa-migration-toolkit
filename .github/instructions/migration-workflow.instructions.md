@@ -395,6 +395,15 @@ npm run fix:templates
 
 ## Testing Strategy After Migration
 
+### Regression Testing of Customized Projects
+
+For customer and partner projects, the tests below are **not enough**: compare the migrated shop with the
+baseline captured **before** the migration (same happy path, same viewports, same products, screenshots,
+Jest, console errors), triage every difference and fix all unintended ones before the migration is done.
+
+- Rules and details: `migration-regression-testing.instructions.md`
+- Guided execution: `.github/skills/pwa-regression-testing.SKILL.md`
+
 ### Comprehensive Test Checklist
 
 ```bash
@@ -410,7 +419,10 @@ npm run lint               # Code quality
 # 4. E2E tests (if available)
 npm run e2e                # Critical user flows
 
-# 5. Manual testing focus areas
+# 5. Regression comparison with the baseline (customized projects)
+#    → pwa-regression-testing skill: after tests, compare, triage, fix, re-compare
+
+# 6. Manual testing focus areas (in addition, for anything not covered by the test plan)
 # - Custom theme rendering
 # - Custom extension features
 # - B2B-specific functionality

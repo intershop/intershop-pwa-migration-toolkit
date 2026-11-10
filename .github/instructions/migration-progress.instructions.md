@@ -59,6 +59,9 @@ node scripts/migration-progress.js note "Custom theme uses 4 non-standard variab
 | `angular-version-check` | Check Angular version compatibility |
 | `node-version-check` | Verify Node.js version requirements |
 | `git-remote-setup` | Configure git remotes |
+| `regression-setup` | Regression testing: select environment, viewports, order types, My Account |
+| `regression-inventory` | Regression testing: test plan of custom and overridden pages (reviewed) |
+| `regression-baseline` | Regression testing: Jest + browser tests + screenshots **before** the migration |
 | `branch-creation` | Create migration branch |
 | `theme-validation` | Validate custom theme completeness |
 | `theme-sync` | Sync missing theme variables |
@@ -73,7 +76,10 @@ node scripts/migration-progress.js note "Custom theme uses 4 non-standard variab
 | `clean-build` | Achieve clean build (browser + SSR) |
 | `lint-check` | Run and fix lint issues |
 | `test-run` | Run unit tests |
-| `smoke-test` | Manual smoke test of custom features |
+| `regression-after` | Regression testing: same tests + screenshots after the migration |
+| `regression-triage` | Regression testing: compare with baseline, classify and document differences |
+| `regression-fixes` | Regression testing: fix all unintended differences |
+| `regression-recheck` | Regression testing: re-compare until no unintended difference is open |
 | `documentation` | Update documentation and changelog |
 | `commit-and-push` | Final commit and push to project remote |
 

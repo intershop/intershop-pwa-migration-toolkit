@@ -1,7 +1,10 @@
 # PWA Migration Regression Testing Guide
 
-> **Status:** Concept. The `regression:*` scripts described here are being implemented on the
-> `feature/regression-testing` branch. The process itself applies today and can be followed manually.
+> **For AI agents:** the binding rules are in `.github/instructions/migration-regression-testing.instructions.md`,
+> the guided workflow in `.github/skills/pwa-regression-testing.SKILL.md`.
+>
+> **Status:** The `regression:*` scripts named in this guide are planned. Until they are available, the AI agent
+> performs the phases directly (Playwright) – or the steps are followed manually.
 
 This guide describes how to make sure that a **customized PWA** (customer or partner project) behaves
 exactly as before after a migration to a new Intershop PWA version.

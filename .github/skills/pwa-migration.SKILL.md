@@ -91,7 +91,8 @@ node scripts/analyze-migration.js <source-version> <target-version>
 3. Validate theme completeness (validate-theme-completeness.js)
 4. Check template syntax (check-template-syntax.js)
 5. Review existing CUSTOMIZATION markers in core files
-6. Document baseline state
+6. Capture the regression baseline (customized projects) – pwa-regression-testing skill:
+   test selection, Jest, test plan of custom/overridden pages, screenshots BEFORE any migration change
 ```
 
 ### Phase 3: Execution
@@ -112,8 +113,10 @@ node scripts/analyze-migration.js <source-version> <target-version>
 3. Suppress template linting temporarily (fix-template-linting.js)
 4. Run pre-commit customization checks (pre-commit-customization-check.js)
 5. Review customization health checklist (14 items in best-practices guide)
-6. Generate migration report (generate-migration-report.js)
-7. Verify all checklist items
+6. Regression comparison with the baseline (customized projects) – pwa-regression-testing skill:
+   after tests, compare, triage, fix all unintended differences, re-compare
+7. Generate migration report (generate-migration-report.js) incl. findings
+8. Verify all checklist items
 ```
 
 ## Tier Assessment Logic
@@ -391,6 +394,8 @@ This skill **supplements** rather than replaces the existing instruction files:
 - **migration-examples.instructions.md** → Code examples
 - **migration-checklist.instructions.md** → Validation checklist
 - **migration-pattern-detection.instructions.md** → Detection system guide
+- **migration-regression-testing.instructions.md** → Baseline/after regression testing of customized projects
+- **pwa-regression-testing.SKILL.md** → Guided regression testing (hand over before the first migration step and for validation)
 - **docs/guides/customization-best-practices.md** → Writing migration-friendly code
 
 The skill orchestrates these resources, deciding which to reference based on context.
@@ -401,7 +406,7 @@ A successful migration guided by this skill should:
 - ✅ Build without errors
 - ✅ All tests pass (or known failures documented)
 - ✅ Theme renders correctly
-- ✅ Custom components work as expected
+- ✅ Custom components work as expected – proven by the regression comparison (no unintended difference to the baseline open)
 - ✅ Git history preserved and clean
 - ✅ Migration report generated
 - ✅ Team can understand what was changed and why

@@ -33,6 +33,7 @@ const {
   DEFAULT_SETTINGS,
   DEFAULT_TEST_DATA,
   qaPaths,
+  readJson,
   saveConfig,
   validateConfig,
   ensureGitignore,
@@ -88,7 +89,7 @@ async function main() {
   log.info(`Project: ${projectDir}`);
 
   const paths = qaPaths(projectDir);
-  const existing = fs.existsSync(paths.config) ? JSON.parse(fs.readFileSync(paths.config, 'utf-8')) : null;
+  const existing = fs.existsSync(paths.config) ? readJson(paths.config) : null;
 
   if (existing && existing.baseline) {
     if (!force) {

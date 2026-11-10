@@ -49,6 +49,7 @@ const {
   ORDER_CREATION,
   CUSTOMER_CREATION,
   qaPaths,
+  readJson,
   loadConfig,
   saveConfig,
   assertValidConfig,
@@ -645,8 +646,9 @@ async function discoverPath(browser) {
     const button = probe.locator('ish-product-detail [data-testing-id="addToCartButton"]').first();
     const visible = await button.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
     const orderable = visible && await button.isEnabled();
-    const simple = !(await probe.evaluate(() => [...document.querySelectorAll('ish-product-page *')]
-      .some(el => /retail-set|bundle/.test(el.tagName.toLowerCase()))));
+    // set / bundle components exist on every product page – they only have content for sets and bundles
+    const simple = !(await probe.evaluate(() => [...document.querySelectorAll('ish-retail-set-parts, ish-product-bundle-parts')]
+      .some(el => el.textContent.trim().length > 0)));
     return { orderable, simple };
   };
 
@@ -704,7 +706,7 @@ function loadPlanPages() {
     log.warning('No test plan found (npm run regression:inventory) – only the happy path is tested.');
     return [];
   }
-  const plan = JSON.parse(fs.readFileSync(paths.testPlanJson, 'utf-8'));
+  const plan = readJson(paths.testPlanJson);
   return (plan.entries || [])
     .filter(e => e.enabled && e.url && !e.coveredBy)
     .map(e => ({ id: e.id, title: e.title || e.route || e.url, url: e.url, requiresLogin: !!e.requiresLogin }));
@@ -716,7 +718,7 @@ let loggedInState = null;
 
 function readCredentials() {
   if (!fs.existsSync(paths.credentials)) return null;
-  return JSON.parse(fs.readFileSync(paths.credentials, 'utf-8'));
+  return readJson(paths.credentials);
 }
 
 /** Register a new test user (test systems only, baseline only). */

@@ -81,6 +81,11 @@ function qaPaths(projectDir) {
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
+/** Read a JSON file; tolerates a UTF-8 BOM (files edited with Notepad / PowerShell). */
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf-8').replace(/^\uFEFF/, ''));
+}
+
 function loadConfig(projectDir) {
   const { config } = qaPaths(projectDir);
   if (!fs.existsSync(config)) {
@@ -88,7 +93,7 @@ function loadConfig(projectDir) {
     log.info('Run "npm run regression:init" first.');
     process.exit(1);
   }
-  return JSON.parse(fs.readFileSync(config, 'utf-8'));
+  return readJson(config);
 }
 
 function saveConfig(projectDir, config) {
@@ -194,7 +199,7 @@ function readRunLog(projectDir, runName) {
     log.error(`Run not found: ${runName}`);
     process.exit(1);
   }
-  return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  return readJson(file);
 }
 
 // ─── .gitignore ─────────────────────────────────────────────────────────────
@@ -239,6 +244,7 @@ module.exports = {
   ORDER_CREATION,
   CUSTOMER_CREATION,
   qaPaths,
+  readJson,
   loadConfig,
   saveConfig,
   validateConfig,

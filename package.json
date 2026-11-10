@@ -26,7 +26,12 @@
     "migrate:standalone": "node scripts/migrate-standalone-false.js",
     "merge:i18n": "node scripts/merge-i18n-files.js",
     "merge:docker": "node scripts/merge-docker-compose.js",
-    "update:snapshots": "node scripts/update-snapshots.js"
+    "update:snapshots": "node scripts/update-snapshots.js",
+    "regression:init": "node scripts/regression-init.js",
+    "regression:inventory": "node scripts/regression-inventory.js",
+    "regression:capture": "node scripts/regression-capture.js",
+    "regression:compare": "node scripts/regression-compare.js",
+    "regression:findings": "node scripts/regression-findings.js"
   },
   "dependencies": {
     "chalk": "^4.1.2",

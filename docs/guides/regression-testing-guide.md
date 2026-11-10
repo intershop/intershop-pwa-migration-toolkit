@@ -23,7 +23,7 @@ explain every difference.
 
 ```
 Phase 0  Baseline (before ANY migration change, on the unchanged project state)
-         ├─ regression:init        → select viewports, order types, My Account, user account mode
+         ├─ regression:init        → select environment, viewports, order types, My Account, user account mode
          ├─ run all Jest tests     → store results
          ├─ regression:inventory   → list of custom/overridden pages and features → test plan
          └─ regression:capture --label before → browser tests + screenshots
@@ -51,11 +51,14 @@ All scripts accept `--project-dir` (or use `PWA_PROJECT_DIR`) like every other t
 
 ## ✅ Prerequisites
 
-- **Test system only.** Run against a test/UAT ICM, **never against production**. The checkout tests
-  can create real orders (see [Order Submission](#-order-submission)).
+- **Test system preferred, production allowed read-only.** Prefer a test/UAT system. Testing against
+  production (e.g. the live shop as baseline) is allowed, but only in **production mode**: no order is
+  ever submitted and no user is ever created (see [Production Systems](#-production-systems)).
 - **Same environment for before and after.** Same ICM, same test data (categories, products with
   stock, usable payment and shipping methods), same channel/locale, same PWA configuration.
-  Otherwise you compare data instead of code.
+  Otherwise you compare data instead of code. A production baseline is only comparable if the
+  *after* runs use the same ICM data (e.g. the migrated PWA running locally against the production
+  ICM – also in production mode).
 - **Same build mode for before and after.** Prefer a production-like build (SSR, e.g. docker or
   `serve:ssr`). Do not compare a dev server run with a production build.
 - **Playwright** is an optional toolkit dependency. Install the browser once:
@@ -77,10 +80,11 @@ questions in chat.
 
 | # | Question | Options | Asked when |
 |---|---|---|---|
-| 1 | Which viewports? | ☐ mobile ☐ tablet ☐ desktop (at least one) | always |
-| 2 | Which order types? | ☐ order as guest ☐ order as registered user | always |
-| 3 | Test My Account? | yes / no | always |
-| 4 | User account? | ◯ create a new user ◯ I enter my credentials during the tests | only if "order as registered user" or "My Account" is selected |
+| 1 | Which environment? | ◯ test / UAT system ◯ production system (read-only) | always |
+| 2 | Which viewports? | ☐ mobile ☐ tablet ☐ desktop (at least one) | always |
+| 3 | Which order types? | ☐ order as guest ☐ order as registered user | always |
+| 4 | Test My Account? | yes / no | always |
+| 5 | User account? | ◯ create a new user ◯ I enter my credentials during the tests | only if "order as registered user" or "My Account" is selected; on production only the second option is offered |
 
 The answers are stored in `migration-qa/regression.config.json`. The *after* runs read this file and
 do **not** ask again – this guarantees that before and after use the same selection.
@@ -170,7 +174,7 @@ Every step produces a full-page screenshot. In addition, console errors and fail
 
 Only relevant if "order as registered user" or "My Account" is selected.
 
-- **Create a new user**
+- **Create a new user** (not available on production systems)
   - The baseline run registers a test user via the regular PWA registration with a unique e-mail
     address (timestamp).
   - The *after* runs reuse the **same** user. Otherwise My Account screenshots differ only because of
@@ -213,6 +217,34 @@ Submit the order now? (y/N)
   report shows a note, not a difference.
 - The Copilot skill asks the same question in chat, with the same warning. It never submits an order
   without explicit confirmation.
+- **On production systems this question is never asked** – see [Production Systems](#-production-systems).
+
+---
+
+## 🔒 Production Systems
+
+Testing against production (e.g. to capture the live shop as baseline) is allowed in
+**production mode** (question 1 of `regression:init`). Production mode is part of the locked
+configuration and applies to **all** runs – before and after.
+
+In production mode, **under no circumstances**:
+
+- **an order is submitted.** The checkout always ends on the review page. The submit button is
+  never clicked and the order question is not asked.
+- **a user is created.** The option "create a new user" is not offered; registered user checkout
+  and My Account only work with credentials the user enters manually during the tests.
+
+In addition to these rules, the test browser blocks the order creation and customer registration
+requests to the ICM REST API at network level. If such a request is attempted anyway, it is
+aborted, the run stops with an error, and the attempt is recorded in the run log. A configuration
+that would require one of these actions (e.g. "create a new user" together with production mode)
+is rejected by `regression:init` and `regression:capture`.
+
+At the start of every run in production mode the console shows:
+
+```
+🔒 PRODUCTION MODE (read-only): no orders are submitted, no users are created.
+```
 
 ---
 
@@ -335,5 +367,7 @@ migration-qa/reports/
 - Never change the viewports or the configuration after the baseline.
 - Always compare against the baseline and within the same viewport.
 - Never submit an order without explicit confirmation by the user.
+- On production systems never submit an order and never create a user – under no circumstances,
+  not even on request during a run.
 - Never store or log credentials entered by the user.
 - Report a migration as done only when the exit criteria are met.

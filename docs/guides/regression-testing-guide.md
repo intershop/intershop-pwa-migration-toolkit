@@ -136,15 +136,27 @@ The test sequence is built from the answers of `regression:init`:
 for each selected viewport:
   1. Homepage
   2. Category / navigation
-  3. Product detail page
-  4. Add to basket → basket
-  5a. [order as guest]       guest checkout: address → shipping → payment → review → (confirmation)
-  5b. [order as reg. user]   login → checkout: address → shipping → payment → review → (confirmation)
-  6.  [My Account]           login (if needed) → overview, orders, addresses, profile, …
-  7.  pages and features from the test plan (inventory)
+  3. Product detail page             → remember the product name
+  4. Header search                   → search for the remembered product name:
+                                       suggestions → search result page → open the product
+  5. Add to basket → basket
+  6a. [order as guest]       guest checkout: address → shipping → payment → review → (confirmation)
+  6b. [order as reg. user]   login → checkout: address → shipping → payment → review → (confirmation)
+  7.  [My Account]           login (if needed) → overview, orders, addresses, profile, …
+  8.  pages and features from the test plan (inventory)
 ```
 
 If no order type is selected, the happy path ends at the basket.
+
+**Header search:** The search uses the product found via the category navigation, so no search term
+has to be configured. The suggestion layer and the search result page are captured, and the test
+checks that the product is contained in the search result. A missing product is recorded as a
+difference, not only visible in the screenshot. If no product could be found via the category
+navigation, the search step is skipped and the run log records the reason.
+
+**Same path in every run:** The baseline run records the category path and the product it used.
+All *after* runs follow exactly the same path and search for the same product name, so the
+screenshots show the same content.
 
 Every step produces a full-page screenshot. In addition, console errors and failed requests
 (4xx/5xx) are recorded per step.
@@ -294,7 +306,7 @@ migration-qa/
 ├── runs/                    #                                                         (git-ignored)
 │   ├── <date>-before/
 │   │   ├── jest-results.json
-│   │   ├── run-log.json     # steps, console errors, failed requests, order submitted yes/no
+│   │   ├── run-log.json     # steps, category path + product used, console errors, failed requests, order submitted yes/no
 │   │   └── <viewport>/<step>.png
 │   ├── <date>-after/
 │   └── <date>-after-2/

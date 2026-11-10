@@ -49,12 +49,12 @@ they do and apply equally when a step has to be done by hand (e.g. a project-spe
 
 | Phase | Command | Does |
 |---|---|---|
-| 0.1 | `npm run regression:init` | Asks the test selection (or `--environment --viewports --orders --my-account --account --base-url`), writes `regression.config.json` and the `.gitignore` entries |
-| 0.3 | `npm run regression:inventory` | Test plan of custom and overridden pages (`--source-tag` if `package.json` has no upstream version) |
-| 0.2 + 0.4 | `npm run regression:capture -- --label before` | Jest + browser tests + screenshots, discovers path and products, registers the test user, locks the configuration |
-| 2 / 6 | `npm run regression:capture -- --label after [--base-url <url>]` | Same tests on the same path; aborts if the configuration differs from the baseline |
-| 3 | `npm run regression:compare` | Pixel, functional, console/request and Jest comparison → HTML report + `compare.json` |
-| 4–6 | `npm run regression:findings [--triage \| --set <ID> … \| --check]` | Maintains `findings.md`, triage, status updates, exit criteria (exit code 1 while not met) |
+| 0.1 | `node scripts/regression-init.js` | Asks the test selection (or `--environment --viewports --orders --my-account --account --base-url`), writes `regression.config.json` and the `.gitignore` entries |
+| 0.3 | `node scripts/regression-inventory.js` | Test plan of custom and overridden pages (`--source-tag` if `package.json` has no upstream version) |
+| 0.2 + 0.4 | `node scripts/regression-capture.js --label before` | Jest + browser tests + screenshots, discovers path and products, registers the test user, locks the configuration |
+| 2 / 6 | `node scripts/regression-capture.js --label after [--base-url <url>]` | Same tests on the same path; aborts if the configuration differs from the baseline |
+| 3 | `node scripts/regression-compare.js` | Pixel, functional, console/request and Jest comparison → HTML report + `compare.json` |
+| 4–6 | `node scripts/regression-findings.js [--triage \| --set <ID> … \| --check]` | Maintains `findings.md`, triage, status updates, exit criteria (exit code 1 while not met) |
 
 Prerequisite: `npm install` in the toolkit (Playwright, pixelmatch, pngjs are optional dependencies) and
 `npx playwright install chromium` once.

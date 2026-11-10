@@ -703,7 +703,7 @@ async function discoverPath(browser) {
 
 function loadPlanPages() {
   if (!fs.existsSync(paths.testPlanJson)) {
-    log.warning('No test plan found (npm run regression:inventory) – only the happy path is tested.');
+    log.warning('No test plan found (node scripts/regression-inventory.js) – only the happy path is tested.');
     return [];
   }
   const plan = readJson(paths.testPlanJson);
@@ -821,7 +821,9 @@ async function cleanUserBasket(page) {
   if (!remove) return `basket contained ${count} item(s) before the test`;
 
   for (let i = 0; i < 30 && await lineItemCount(page); i++) {
-    await page.locator('[data-testing-id="remove-line-item"]').filter({ visible: true }).first().click();
+    const removeButton = page.locator('[data-testing-id="remove-line-item"]').filter({ visible: true }).first();
+    if (!(await removeButton.count())) return `basket contains ${await lineItemCount(page)} item(s) that could not be removed`;
+    await removeButton.click();
     const confirm = page.locator('ish-modal-dialog .btn-primary, .modal-dialog .btn-primary').filter({ visible: true }).first();
     if (await confirm.waitFor({ state: 'visible', timeout: 1500 }).then(() => true).catch(() => false)) await confirm.click();
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
@@ -860,7 +862,8 @@ async function submitOrderIfConfirmed(session, type) {
   }
 
   const tac = page.locator('input[data-testing-id="termsAndConditions"]').first();
-  if (await tac.count()) await tac.check();
+  // custom checkbox styles often hide the native input
+  if (await tac.count()) await tac.check({ force: true });
   guard.allowOrder = true;
   try {
     const response = page.waitForResponse(
@@ -974,7 +977,12 @@ async function runViewport(browser, viewport) {
 
     // 3. Open product 1
     await runStep(session, '03-product-1', `Product 1: ${route.product1.name}`, async r => {
-      r.via = categoryOk ? await navigate(page, route.product1.href, 'ish-product-listing, ish-category-page, main') : (await goto(page, route.product1.href), 'url');
+      if (categoryOk) {
+        r.via = await navigate(page, route.product1.href, 'ish-product-listing, ish-category-page, main');
+      } else {
+        await goto(page, route.product1.href);
+        r.via = 'url';
+      }
       await page.locator('ish-product-detail').first().waitFor({ timeout: 20000 });
     });
 
@@ -1107,18 +1115,16 @@ async function runViewport(browser, viewport) {
       }
       for (const href of route.accountPages) {
         const slug = href.replace(/^\/account\/?/, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'overview';
-        await runStep(userSession, `09-account-${slug}`, `My Account ${href}`, async r => {
-          await goto(page, href);
-          r.via = 'url';
-        });
+        await runStep(userSession, `09-account-${slug}`, `My Account ${href}`, () => goto(page, href));
       }
     }
   } finally {
     if (userSession) await userSession.context.close();
   }
 
-  // 10. Pages from the test plan
+  // 10. Pages from the test plan (opened by URL; account pages already visited in step 9 are not repeated)
   for (const entry of route.planPages || []) {
+    if (config.myAccount && (route.accountPages || []).includes(entry.url)) continue;
     const slug = entry.url.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 40) || 'root';
     const id = `10-${entry.id}-${slug}`;
     if (entry.requiresLogin && !loggedInState) {
@@ -1131,7 +1137,7 @@ async function runViewport(browser, viewport) {
     try {
       await goto(planSession.page, entry.url);
       await acceptCookies(planSession.page);
-      await runStep(planSession, id, entry.title, async r => { r.via = 'url'; });
+      await runStep(planSession, id, entry.title, async () => {});
     } finally {
       await planSession.context.close();
     }
@@ -1197,7 +1203,7 @@ async function main() {
     log.success('Baseline captured. The configuration is now locked.');
     log.info('Commit migration-qa/regression.config.json and the test plan, then start the migration.');
   } else {
-    log.info('Next: npm run regression:compare');
+    log.info('Next: node scripts/regression-compare.js');
   }
 }
 

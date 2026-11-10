@@ -191,12 +191,12 @@ node scripts/analyze-migration.js 4.0.0 10.0.0
 
 ```bash
 npx playwright install chromium                                  # once
-npm run regression:init -- --project-dir ../custom-pwa
-npm run regression:inventory -- --project-dir ../custom-pwa
-npm run regression:capture -- --project-dir ../custom-pwa --label before
+node scripts/regression-init.js --project-dir ../custom-pwa
+node scripts/regression-inventory.js --project-dir ../custom-pwa
+node scripts/regression-capture.js --project-dir ../custom-pwa --label before
 ```
 
-After the migration compare with `regression:capture -- --label after`, `regression:compare` and
+After the migration compare with `regression:capture --label after`, `regression:compare` and
 `regression:findings` – see the [Regression Testing Guide](docs/guides/regression-testing-guide.md).
 
 **Start your migration:**

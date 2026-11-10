@@ -90,7 +90,7 @@ function loadConfig(projectDir) {
   const { config } = qaPaths(projectDir);
   if (!fs.existsSync(config)) {
     log.error(`No regression configuration found: ${config}`);
-    log.info('Run "npm run regression:init" first.');
+    log.info('Run "node scripts/regression-init.js" first.');
     process.exit(1);
   }
   return readJson(config);

@@ -187,7 +187,7 @@ async function main() {
   if (account) console.log(`  User account:  ${account === 'new' ? 'create a new user' : 'enter credentials during the tests'}`);
   console.log();
   log.info('Optional: adjust "mask" (selectors of dynamic areas) and "testData" in the configuration now – they are locked after the baseline.');
-  log.info('Next: npm run regression:inventory   (test plan of custom and overridden pages)');
+  log.info('Next: node scripts/regression-inventory.js   (test plan of custom and overridden pages)');
 }
 
 main().catch(err => {

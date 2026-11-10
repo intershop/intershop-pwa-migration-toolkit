@@ -11,16 +11,20 @@ exactly as before after a migration to a new Intershop PWA version.
 ```bash
 npm install                                   # once – includes the optional Playwright dependencies
 npx playwright install chromium               # once – browser for the tests
-npm run regression:init -- --project-dir ../custom-pwa
-npm run regression:inventory -- --project-dir ../custom-pwa
-npm run regression:capture -- --project-dir ../custom-pwa --label before
+node scripts/regression-init.js --project-dir ../custom-pwa
+node scripts/regression-inventory.js --project-dir ../custom-pwa
+node scripts/regression-capture.js --project-dir ../custom-pwa --label before
 # … migration …
-npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url http://localhost:4200
-npm run regression:compare -- --project-dir ../custom-pwa
-npm run regression:findings -- --project-dir ../custom-pwa
-npm run regression:findings -- --project-dir ../custom-pwa --triage
-npm run regression:findings -- --project-dir ../custom-pwa --check
+node scripts/regression-capture.js --project-dir ../custom-pwa --label after --base-url http://localhost:4200
+node scripts/regression-compare.js --project-dir ../custom-pwa
+node scripts/regression-findings.js --project-dir ../custom-pwa
+node scripts/regression-findings.js --project-dir ../custom-pwa --triage
+node scripts/regression-findings.js --project-dir ../custom-pwa --check
 ```
+
+The same scripts are available as `npm run regression:<name>`. Options after `--` are forwarded
+(`npm run regression:capture -- --label before`); in Windows PowerShell 5.1 the `--` must be quoted
+(`'--'`), otherwise npm swallows the options – `node scripts/…` works everywhere.
 
 ---
 
@@ -55,13 +59,13 @@ Phase 6  Capture + compare again (always against the baseline) → back to Phase
 |---|---|---|
 | 0 | `regression:init` | `migration-qa/regression.config.json` |
 | 0 | `regression:inventory` | `migration-qa/test-plan.json` + `test-plan.md` |
-| 0 | `regression:capture -- --label before` | `migration-qa/runs/<date>-before/` (screenshots, `run-log.json`, `jest-results.json`) |
-| 2, 6 | `regression:capture -- --label after` | `migration-qa/runs/<date>-after[-n]/` |
+| 0 | `regression:capture --label before` | `migration-qa/runs/<date>-before/` (screenshots, `run-log.json`, `jest-results.json`) |
+| 2, 6 | `regression:capture --label after` | `migration-qa/runs/<date>-after[-n]/` |
 | 3, 6 | `regression:compare` | `migration-qa/reports/<before>-vs-<after>/index.html` + `compare.json` |
 | 4–6 | `regression:findings` (`--triage`, `--set`, `--check`) | `migration-qa/findings.md` |
 
 All scripts accept `--project-dir` (or use `PWA_PROJECT_DIR`) like every other toolkit script and show
-their options with `--help`. `regression:capture -- --skip-jest` skips the Jest run.
+their options with `--help`. `regression:capture --skip-jest` skips the Jest run.
 
 ---
 
@@ -318,9 +322,9 @@ comparison round, never overwritten, and committed with the migration.
 Commands:
 
 ```bash
-npm run regression:findings                         # take over the latest comparison
-npm run regression:findings -- --triage             # classify untriaged findings interactively
-npm run regression:findings -- --set F-003 --classification intended --reference "changelog 12.0 #1234"
+node scripts/regression-findings.js                         # take over the latest comparison
+node scripts/regression-findings.js --triage             # classify untriaged findings interactively
+node scripts/regression-findings.js --set F-003 --classification intended --reference "changelog 12.0 #1234"
 ```
 
 The table can also be edited by hand – keep one finding per row.
@@ -342,7 +346,7 @@ Fix **all** unintended differences decided as *fix* first. Then compare again �
 every single fix. Mark fixed findings with the commit:
 
 ```bash
-npm run regression:findings -- --set F-003 --status fixed --reference "commit abc1234"
+node scripts/regression-findings.js --set F-003 --status fixed --reference "commit abc1234"
 ```
 
 ---
@@ -353,7 +357,7 @@ npm run regression:findings -- --set F-003 --status fixed --reference "commit ab
 2. `regression:compare` – **always against the baseline**, never against the previous after run
 3. `regression:findings`: differences that disappeared become *verified*, differences still present
    are *open* again, new differences are added and triaged (Phase 4)
-4. Repeat Phases 4–6 until `regression:findings -- --check` passes (exit code 0)
+4. Repeat Phases 4–6 until `regression:findings --check` passes (exit code 0)
 
 ### Exit criteria
 

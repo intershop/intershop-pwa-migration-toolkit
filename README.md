@@ -124,11 +124,11 @@ Windows support is additive: existing Linux, macOS, WSL, and Git Bash workflows 
 - `migrate-bootstrap-icons.js` - **NEW:** Font Awesome → Bootstrap Icons detection and migration
 
 #### Regression Testing (customized projects)
-- `regression-init.js` (`npm run regression:init`) - **NEW:** Test selection: environment (test / production read-only), viewports, order types, My Account, user account
-- `regression-inventory.js` (`npm run regression:inventory`) - **NEW:** Test plan of custom and overridden pages (diff to the upstream tag, mapped to routes)
-- `regression-capture.js` (`npm run regression:capture`) - **NEW:** Jest + Playwright happy path (home → category → product → search → basket → checkout → My Account) + test plan pages, screenshots per viewport; never submits an order without confirmation, read-only on production
-- `regression-compare.js` (`npm run regression:compare`) - **NEW:** Pixel, functional, console/request and Jest comparison with the baseline → HTML report
-- `regression-findings.js` (`npm run regression:findings`) - **NEW:** Findings documentation, triage, status tracking and exit criteria check
+- `regression-init.js` (`node scripts/regression-init.js`) - **NEW:** Test selection: environment (test / production read-only), viewports, order types, My Account, user account
+- `regression-inventory.js` (`node scripts/regression-inventory.js`) - **NEW:** Test plan of custom and overridden pages (diff to the upstream tag, mapped to routes)
+- `regression-capture.js` (`node scripts/regression-capture.js`) - **NEW:** Jest + Playwright happy path (home → category → product → search → basket → checkout → My Account) + test plan pages, screenshots per viewport; never submits an order without confirmation, read-only on production
+- `regression-compare.js` (`node scripts/regression-compare.js`) - **NEW:** Pixel, functional, console/request and Jest comparison with the baseline → HTML report
+- `regression-findings.js` (`node scripts/regression-findings.js`) - **NEW:** Findings documentation, triage, status tracking and exit criteria check
 
 > **Note:** All template migration scripts explicitly check themed template variants (e.g., `component.b2c.html`, `component.b2b.html`). See [Themed Templates Guide](docs/guides/customization-best-practices.md#-themed-templates-and-migration) for details.
 
@@ -909,9 +909,9 @@ features and pages still work. Details: [Regression Testing Guide](docs/guides/r
 
 ```bash
 npx playwright install chromium                                  # once
-npm run regression:init -- --project-dir ../custom-pwa           # environment, viewports, order types, My Account
-npm run regression:inventory -- --project-dir ../custom-pwa      # test plan → review with the team
-npm run regression:capture -- --project-dir ../custom-pwa --label before
+node scripts/regression-init.js --project-dir ../custom-pwa           # environment, viewports, order types, My Account
+node scripts/regression-inventory.js --project-dir ../custom-pwa      # test plan → review with the team
+node scripts/regression-capture.js --project-dir ../custom-pwa --label before
 ```
 
 ---
@@ -953,11 +953,11 @@ npm test
 node scripts/update-snapshots.js --interactive
 
 # NEW: Regression comparison with the baseline (customized projects)
-npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url http://localhost:4200
-npm run regression:compare -- --project-dir ../custom-pwa
-npm run regression:findings -- --project-dir ../custom-pwa --triage
+node scripts/regression-capture.js --project-dir ../custom-pwa --label after --base-url http://localhost:4200
+node scripts/regression-compare.js --project-dir ../custom-pwa
+node scripts/regression-findings.js --project-dir ../custom-pwa --triage
 # fix all unintended differences, capture + compare again until:
-npm run regression:findings -- --project-dir ../custom-pwa --check
+node scripts/regression-findings.js --project-dir ../custom-pwa --check
 
 # Generate comprehensive migration report
 node scripts/generate-migration-report.js

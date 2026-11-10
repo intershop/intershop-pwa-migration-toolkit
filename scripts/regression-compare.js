@@ -307,4 +307,4 @@ console.log(`  New Jest failures     ${String(summary.jest).padStart(4)}`);
 notes.forEach(n => log.dim(`  note: ${n}`));
 console.log();
 log.success(`Report: ${path.relative(projectDir, path.join(reportDir, 'index.html'))}`);
-log.info('Next: npm run regression:findings   (document and triage the differences)');
+log.info('Next: node scripts/regression-findings.js   (document and triage the differences)');

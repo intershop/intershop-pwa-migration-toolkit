@@ -115,7 +115,7 @@ function writeFindings(findings) {
     'Decision: `fix` | `won\'t fix` (reason + who decided in Cause/Reference).',
     'Status: `open` → `fixed` → `verified` | `accepted` (intended or won\'t fix).',
     '',
-    'Maintained by `npm run regression:findings` – cells can be edited by hand, keep one finding per row.',
+    'Maintained by `node scripts/regression-findings.js` – cells can be edited by hand, keep one finding per row.',
     '',
     `| ${COLUMNS.join(' | ')} |`,
     `|${COLUMNS.map(() => '---').join('|')}|`,
@@ -215,7 +215,7 @@ function update() {
   console.log();
   log.success(`Updated: ${path.relative(projectDir, paths.findings)}`);
   const untriaged = findings.filter(f => f.classification === '?').length;
-  if (untriaged) log.info(`Next: npm run regression:findings -- --triage   (${untriaged} finding(s) not triaged)`);
+  if (untriaged) log.info(`Next: node scripts/regression-findings.js --triage   (${untriaged} finding(s) not triaged)`);
   else check(false);
 }
 

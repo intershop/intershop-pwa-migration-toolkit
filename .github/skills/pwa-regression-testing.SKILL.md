@@ -73,7 +73,7 @@ Then ask whether dynamic areas should be masked (sliders, dates, random recommen
 locked after the baseline. Write the configuration with the answers as options:
 
 ```bash
-npm run regression:init -- --project-dir ../custom-pwa --base-url <url> --environment <test|production> \
+node scripts/regression-init.js --project-dir ../custom-pwa --base-url <url> --environment <test|production> \
   --viewports mobile,desktop --orders guest,user --my-account yes --account new
 ```
 
@@ -88,7 +88,7 @@ Report: total / passed / failed / skipped. Failing tests are documented, not fix
 
 ### Step 3 – Inventory and test plan (Phase 0.3)
 
-1. Run `npm run regression:inventory -- --project-dir ../custom-pwa` (`--source-tag <tag>` if the project's
+1. Run `node scripts/regression-inventory.js --project-dir ../custom-pwa` (`--source-tag <tag>` if the project's
    `package.json` version is not an upstream tag). It compares with the upstream tag of the **source**
    version (custom files, customized standard files, theme overrides), maps them to routes and marks
    pages covered by the happy path.
@@ -100,7 +100,7 @@ Report: total / passed / failed / skipped. Failing tests are documented, not fix
 
 ### Step 4 – Baseline capture (Phase 0.4)
 
-Run `npm run regression:capture -- --project-dir ../custom-pwa --label before` in a terminal the user can see
+Run `node scripts/regression-capture.js --project-dir ../custom-pwa --label before` in a terminal the user can see
 (order question, manual login). It:
 
 1. shows `🔒 PRODUCTION MODE (read-only): no orders are submitted, no users are created.` in production mode,
@@ -124,11 +124,11 @@ Only now hand back to the migration.
 ### Step 5 – After tests and comparison (Phases 2 + 3)
 
 1. Ask for the URL of the migrated PWA (e.g. local docker / `serve:ssr` against the same ICM).
-2. `npm run regression:capture -- --project-dir ../custom-pwa --label after --base-url <url>` – aborts if the
+2. `node scripts/regression-capture.js --project-dir ../custom-pwa --label after --base-url <url>` – aborts if the
    locked configuration differs from the baseline; new round `after`, `after-2`, ….
-3. `npm run regression:compare -- --project-dir ../custom-pwa` – visual, functional, console errors / failed
+3. `node scripts/regression-compare.js --project-dir ../custom-pwa` – visual, functional, console errors / failed
    requests, Jest; report in `migration-qa/reports/<before>-vs-<after>/index.html`.
-4. `npm run regression:findings -- --project-dir ../custom-pwa` – takes the differences over into `findings.md`.
+4. `node scripts/regression-findings.js --project-dir ../custom-pwa` – takes the differences over into `findings.md`.
 5. Summarize: number of identical steps, differences per type, new Jest failures.
 
 ### Step 6 – Triage (Phase 4)
@@ -147,21 +147,21 @@ Is this difference ① intended  ② unintended (bug)?
 
 - Intended → ask for/confirm the justification (upstream changelog reference) → status *accepted*.
 - Unintended → propose the cause; ask: fix now or won't fix (reason + who decided)?
-- Record each answer: `npm run regression:findings -- --set F-004 --classification unintended --decision fix --cause "<cause>"`
+- Record each answer: `node scripts/regression-findings.js --set F-004 --classification unintended --decision fix --cause "<cause>"`
   (intended: `--classification intended --reference "<justification>"`; won't fix: `--decision "won't fix" --reference "<reason, who decided>"`).
-  The user can also triage in the terminal with `npm run regression:findings -- --triage`.
+  The user can also triage in the terminal with `node scripts/regression-findings.js --triage`.
 
 ### Step 7 – Fix and re-compare (Phases 5 + 6)
 
 1. Fix **all** unintended differences decided as "fix" (prefer theme overrides and CUSTOMIZATION markers –
    see `docs/guides/customization-best-practices.md`), then rebuild. Mark them:
-   `npm run regression:findings -- --set F-004 --status fixed --reference "commit <hash>"`.
+   `node scripts/regression-findings.js --set F-004 --status fixed --reference "commit <hash>"`.
 2. New after round → `regression:compare` → `regression:findings` (verified / open again / new).
-3. Repeat until `npm run regression:findings -- --check` passes. Report only what remains.
+3. Repeat until `node scripts/regression-findings.js --check` passes. Report only what remains.
 
 ### Step 8 – Done
 
-`npm run regression:findings -- --check` exits with 0. Summarize: rounds, findings by classification and
+`node scripts/regression-findings.js --check` exits with 0. Summarize: rounds, findings by classification and
 status, Jest comparison. Update progress: `node scripts/migration-progress.js update regression-recheck completed`.
 `generate-migration-report.js` adds the findings table to the migration report.
 

@@ -372,4 +372,4 @@ if (manual.length) console.log(`  Manual entries (kept)               ${String(m
 console.log();
 log.success(`Test plan written: ${rel(paths.testPlanMd)} and ${rel(paths.testPlanJson)}`);
 log.info('Review the test plan with the team: enter missing URLs, disable irrelevant entries, add manual entries.');
-log.info('Next: npm run regression:capture -- --label before');
+log.info('Next: node scripts/regression-capture.js --label before');

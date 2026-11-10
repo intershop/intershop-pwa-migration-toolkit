@@ -135,11 +135,11 @@ The test sequence is built from the answers of `regression:init`:
 ```
 for each selected viewport:
   1. Homepage
-  2. Category / navigation
-  3. Product detail page             → remember the product name
-  4. Header search                   → search for the remembered product name:
+  2. Category / navigation           → remember the name of a SECOND product from the product list
+  3. Product detail page             (first product)
+  4. Header search                   → search for the remembered second product:
                                        suggestions → search result page → open the product
-  5. Add to basket → basket
+  5. Add to basket → basket          (second product, opened from the search result)
   6a. [order as guest]       guest checkout: address → shipping → payment → review → (confirmation)
   6b. [order as reg. user]   login → checkout: address → shipping → payment → review → (confirmation)
   7.  [My Account]           login (if needed) → overview, orders, addresses, profile, …
@@ -148,15 +148,18 @@ for each selected viewport:
 
 If no order type is selected, the happy path ends at the basket.
 
-**Header search:** The search uses the product found via the category navigation, so no search term
-has to be configured. The suggestion layer and the search result page are captured, and the test
-checks that the product is contained in the search result. A missing product is recorded as a
-difference, not only visible in the screenshot. If no product could be found via the category
-navigation, the search step is skipped and the run log records the reason.
+**Header search:** The search term is taken from the product list of the category navigation, so no
+search term has to be configured. It is deliberately a **different** product than the one opened in
+step 3, so the search does not just return a product that was already visited. If the category
+contains only one product, the second product is taken from another category; if no second product
+can be found at all, the search step is skipped and the run log records the reason.
+The suggestion layer and the search result page are captured, and the test checks that the product
+is contained in the search result. A missing product is recorded as a difference, not only visible
+in the screenshot.
 
-**Same path in every run:** The baseline run records the category path and the product it used.
-All *after* runs follow exactly the same path and search for the same product name, so the
-screenshots show the same content.
+**Same path in every run:** The baseline run records the category path and both products it used.
+All *after* runs follow exactly the same path, open the same product and search for the same
+product name, so the screenshots show the same content.
 
 Every step produces a full-page screenshot. In addition, console errors and failed requests
 (4xx/5xx) are recorded per step.
@@ -306,7 +309,7 @@ migration-qa/
 ├── runs/                    #                                                         (git-ignored)
 │   ├── <date>-before/
 │   │   ├── jest-results.json
-│   │   ├── run-log.json     # steps, category path + product used, console errors, failed requests, order submitted yes/no
+│   │   ├── run-log.json     # steps, category path + products used, console errors, failed requests, order submitted yes/no
 │   │   └── <viewport>/<step>.png
 │   ├── <date>-after/
 │   └── <date>-after-2/
